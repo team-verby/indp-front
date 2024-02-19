@@ -2,21 +2,23 @@
   <div class="wrap">
     <header id="header">
       <h1 class="logo">
-        <a href="#">
+        <a href="/">
           <img src="/images/logo.png" alt="VERBY 로고" />
         </a>
       </h1>
       <nav class="nav">
         <h2 class="hidden">메인 네비게이션</h2>
         <ul class="menus">
-          <li><a href="">SERVICE</a></li>
-          <li><a href="">PLAYLIST</a></li>
-          <li><a href="">ABOUT</a></li>
-          <li><a href="">CONTACT</a></li>
+          <li><NuxtLink to="/">SERVICE</NuxtLink></li>
+          <li><NuxtLink to="/playlist">PLAYLIST</NuxtLink></li>
+          <li><NuxtLink to="/about">ABOUT</NuxtLink></li>
+          <li><NuxtLink to="/contact">CONTACT</NuxtLink></li>
         </ul>
       </nav>
     </header>
-    <Nuxt />
+    <section id="container">
+      <Nuxt />
+    </section>
     <footer>
       <div class="logo">
         <img src="/images/logo.png" alt="VERBY 로고" /><span class="hidden"
