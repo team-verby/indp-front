@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <v-app>
     <div class="visual">
       <h3 class="visual__text">
         매장 음악 플레이리스트 <br />버비가 대신 만들어 드립니다.
@@ -68,7 +68,11 @@
             </li>
           </ul>
         </div>
-        <Button text="문의하기" arrow></Button>
+        <Button
+          text="문의하기"
+          arrow
+          @doAction="$router.push({ path: '/contact' })"
+        ></Button>
         <div class="service__contact">
           <dl>
             <dt class="hidden">연락처</dt>
@@ -78,70 +82,29 @@
           </dl>
         </div>
       </div>
-      <div class="content__place">
+      <div class="content__place" v-if="!isFirst && !paging.hasNext">
         <p>인디펜던트 뮤직 서비스를 <br />이용하고 있는 공간</p>
         <swiper class="swiper" :options="swiperOption">
-          <swiper-slide>
-            <img src="" alt="" />
+          <swiper-slide v-for="store in stores" :key="store.id">
+            <img :src="store.imageUrl" :alt="store.name" />
             <div class="place__info">
-              <span class="place__name">카페 공명1</span>
+              <span class="place__name">{{ store.name }}</span>
               <p class="place__address">
-                서울시 마포구 와우산로17길 11-8서울시 마포구 와우산로17길 11-8
-              </p>
-            </div>
-          </swiper-slide>
-          <swiper-slide>
-            <img src="" alt="" />
-            <div class="place__info">
-              <span class="place__name">카페 공명2</span>
-              <p class="place__address">
-                서울시 마포구 와우산로17길 11-8서울시 마포구 와우산로17길 11-8
-              </p>
-            </div>
-          </swiper-slide>
-          <swiper-slide>
-            <img src="" alt="" />
-            <div class="place__info">
-              <span class="place__name">카페 공명3</span>
-              <p class="place__address">
-                서울시 마포구 와우산로17길 11-8서울시 마포구 와우산로17길 11-8
-              </p>
-            </div>
-          </swiper-slide>
-          <swiper-slide>
-            <img src="" alt="" />
-            <div class="place__info">
-              <span class="place__name">카페 공명4</span>
-              <p class="place__address">
-                서울시 마포구 와우산로17길 11-8서울시 마포구 와우산로17길 11-8
-              </p>
-            </div>
-          </swiper-slide>
-          <swiper-slide>
-            <img src="" alt="" />
-            <div class="place__info">
-              <span class="place__name">카페 공명5</span>
-              <p class="place__address">
-                서울시 마포구 와우산로17길 11-8서울시 마포구 와우산로17길 11-8
-              </p>
-            </div>
-          </swiper-slide>
-          <swiper-slide>
-            <img src="" alt="" />
-            <div class="place__info">
-              <span class="place__name">카페 공명6</span>
-              <p class="place__address">
-                서울시 마포구 와우산로17길 11-8서울시 마포구 와우산로17길 11-8
+                {{ store.address }}
               </p>
             </div>
           </swiper-slide>
           <div class="swiper-button-prev" slot="button-prev"></div>
           <div class="swiper-button-next" slot="button-next"></div>
         </swiper>
-        <Button text="더 많은 공간 보러가기" arrow></Button>
+        <Button
+          text="더 많은 공간 보러가기"
+          arrow
+          @doAction="$router.push({ path: '/playlist' })"
+        ></Button>
       </div>
     </div>
-  </div>
+  </v-app>
 </template>
 
 <script>
@@ -150,12 +113,11 @@ import { Swiper, SwiperSlide } from "vue-awesome-swiper";
 import "swiper/css/swiper.css";
 
 export default {
-  name: "IndexPage",
+  name: "MainPage",
   data() {
     return {
-      testData: ["props-1", "props-2", "props-3"],
       swiperOption: {
-        slidesPerView: 6,
+        slidesPerView: "auto",
         spaceBetween: 30,
         loop: true,
         navigation: {
@@ -163,12 +125,71 @@ export default {
           prevEl: ".swiper-button-prev",
         },
       },
+      isFirst: true,
+      paging: {
+        page: 0,
+        hasNext: false,
+      },
+      stores: [],
     };
   },
   components: {
     Button,
     Swiper,
     SwiperSlide,
+  },
+  watch: {
+    isFirst: {
+      //첫번쨰 조회가 끝나고 data 개수가 6개보다 적으면 swiper-item 복제
+      handler(value) {
+        !value && !this.paging.hasNext && this.copySwiperItem();
+      },
+      immediate: true,
+    },
+  },
+  mounted() {
+    this.drawStoreList();
+  },
+  methods: {
+    copySwiperItem() {
+      //swiper item 개수가 6개보다 작을 때 복제해서 사용
+      if (this.stores.length < 6) {
+        for (let i = 0; i < 2; i++) {
+          if (this.stores.length > 8) {
+            break;
+          }
+          this.stores = this.stores.concat(this.stores);
+        }
+        this.stores = this.stores.map((store, index) => {
+          return { ...store, id: index };
+        });
+      }
+    },
+    async getStoreList() {
+      const { data } = await this.$axios
+        .get(`/api/main/stores?page=${this.paging.page}&size=2`)
+        .catch(function (error) {
+          alert(error.message);
+        });
+      this.paging.hasNext = data.pageInfo.hasNext;
+      return data.stores;
+    },
+    async drawStoreList() {
+      if (this.isFirst) {
+        this.stores = await this.getStoreList();
+        this.isFirst = false;
+        this.paging.hasNext && this.drawStoreList();
+      } else {
+        if (this.paging.hasNext) {
+          this.paging.page++;
+          const stores = await this.getStoreList();
+          this.stores = [...this.stores, ...stores];
+          this.paging.hasNext && this.drawStoreList();
+        } else {
+          return;
+        }
+      }
+    },
   },
 };
 </script>
@@ -388,6 +409,7 @@ $content-font: "NanumSquareNeo";
   .content__place {
     background: url(/images/bg_main03.png) no-repeat top left/100% 100%;
     padding: 150px 0;
+    overflow: hidden;
     p {
       font-family: $content-font;
       font-size: 40px;
@@ -396,17 +418,27 @@ $content-font: "NanumSquareNeo";
       color: #fff;
     }
     .swiper {
-      margin: 60px 0;
+      margin: 60px -25px;
       .swiper-slide {
         width: 304px !important;
         height: 434px;
         border-radius: 10px;
-        background-color: red;
+        background-color: #fff;
         overflow: hidden;
+        &.swiper-slide-active {
+          opacity: 0.7;
+          + .swiper-slide
+            + .swiper-slide
+            + .swiper-slide
+            + .swiper-slide
+            + .swiper-slide {
+            opacity: 0.7;
+          }
+        }
         img {
+          display: block;
           width: 100%;
           height: 300px;
-          background-color: yellow;
         }
         .place__info {
           height: calc(100% - 300px);
@@ -445,12 +477,17 @@ $content-font: "NanumSquareNeo";
           height: 28px;
         }
         &.swiper-button-prev {
-          left: 304px;
+          justify-content: flex-start;
+          padding-left: 24px;
+          left: 298px;
           &:after {
             background-image: url(/icons/icon_btn_arrow_left.png);
           }
         }
         &.swiper-button-next {
+          justify-content: flex-start;
+          padding-left: 30px;
+          right: 284px;
           &:after {
             background-image: url(/icons/icon_btn_arrow_right.png);
           }
