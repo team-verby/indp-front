@@ -1,5 +1,8 @@
 <template>
-  <button :class="[arrow ? 'arrow' : '']">
+  <button
+    :class="[arrow ? 'arrow' : '', disabled ? 'disabled' : '']"
+    @click="$emit('doAction')"
+  >
     <span>{{ text }}</span>
   </button>
 </template>
@@ -14,6 +17,14 @@ export default {
     arrow: {
       type: Boolean,
       default: false,
+    },
+    disabled: {
+      type: Boolean,
+      default: false,
+    },
+    doAction: {
+      type: Function,
+      default: () => {},
     },
   },
 };
@@ -52,6 +63,9 @@ button {
         background: url(/icons/icon_arrow_right.png) no-repeat center/100%;
       }
     }
+  }
+  &.disabled {
+    opacity: 0.4;
   }
 }
 </style>
