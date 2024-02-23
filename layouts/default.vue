@@ -56,7 +56,7 @@
 
 <script>
 export default {
-  name: "DefaultLayout",
+  name: "layout",
   data() {
     return {
       clipped: false,
