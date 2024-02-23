@@ -1,10 +1,13 @@
 @import url("./_reset.scss");
 @import url("./_font.scss");
 
+html {
+  overflow-x: scroll !important;
+}
+
 body {
   font-family: "Montserrat", sans-serif;
   width: 1920px;
-  overflow: hidden;
 }
 $content-font: "NanumSquareNeo";
 
@@ -54,13 +57,21 @@ $content-font: "NanumSquareNeo";
 .v-text-field--outlined > .v-input__control > .v-input__slot {
   border: 1px solid #2e3d4a !important;
 }
-.theme--light.v-label {
+.theme--light.v-label,
+.theme--dark.v-label {
   font-family: $content-font;
   font-size: 18px;
-  font-weight: 800;
+  font-weight: 400;
   line-height: 32px;
   color: #fff !important;
   margin-left: 10px;
+}
+.v-input--checkbox {
+  &.v-input--is-label-active {
+    .v-label {
+      font-weight: 800;
+    }
+  }
 }
 .v-input--selection-controls__input {
   width: 30px !important;
@@ -91,6 +102,7 @@ $content-font: "NanumSquareNeo";
   background-image: url(/icons/icon_check.png);
 }
 
+//text
 .hidden {
   position: absolute;
   width: 1px;
@@ -99,11 +111,10 @@ $content-font: "NanumSquareNeo";
   overflow: hidden;
   clip-path: polygon(0 0, 0 0, 0 0);
 }
-
 .text__blue {
   color: #2686d9;
 }
-.error {
+.error__text {
   font-family: $content-font;
   font-size: 18px;
   font-weight: 700;
@@ -111,6 +122,7 @@ $content-font: "NanumSquareNeo";
   color: #ff1800;
 }
 
+//layout
 .wrap {
   width: 100%;
   height: 100%;
