@@ -141,8 +141,11 @@ export default {
         content: this.form.question,
         phoneNumber: this.form.phone,
       };
-      console.log(payload);
-      const response = await this.$axios.post("/api/contacts", payload);
+      const response = await this.$axios
+        .post("/api/contacts", payload)
+        .catch(function (error) {
+          alert(error.message);
+        });
       if (response.status === 201) {
         this.form.alert = true;
       }
