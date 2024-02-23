@@ -1,109 +1,158 @@
 <template>
-  <div class="content">
-    <div class="title">
-      <h3>CONTACT</h3>
-      <p>문의를 남겨주시면 연락드리도록 하겠습니다.</p>
-    </div>
-    <v-form ref="form" v-model="valid" lazy-validation>
-      <span class="label">문의 내용 *</span>
-      <v-textarea
-        v-model="question"
-        height="300"
-        no-resize
-        outlined
-        :hide-details="true"
-        value="The Woodman set to work at once, and so sharp was his axe that the tree was soon chopped nearly through."
-      ></v-textarea>
-      <span class="label">문의자(본인) 성함 *</span>
-      <v-text-field
-        v-model="name"
-        :rules="emailRules"
-        :hide-details="true"
-        height="60"
-        outlined
-        required
-      ></v-text-field>
-      <span class="label">문의자(본인) 연락처 *</span>
-      <v-text-field
-        v-model="phone"
-        :rules="emailRules"
-        :hide-details="true"
-        height="60"
-        outlined
-        required
-      ></v-text-field>
-      <v-checkbox
-        v-model="checkbox"
-        :label="'개인 정보 수집 및 이용 동의'"
-        color="red"
-        :hide-details="true"
-        :ripple="false"
-      ></v-checkbox>
-      <div class="clause">
-        <p>
-          음악 추천하기 기능과 관련하여 아래와 같이 귀하의 개인정보를 수집 및
-          이용 내용을 개인정보보호법 제 15조(개인정보의 수집·이용) 및 통계법
-          33조(비밀의 보호 등)에 의거하여 안내드리니 확인하여 주시기 바랍니다.
-        </p>
-        <ul>
-          <li>
-            - 개인정보의 수집·이용 목적 : 음악 추천 신청과 연락을 위한 연락처
-            수집
-          </li>
-          <li>- 수집하려는 개인정보의 필수 항목 : 연락처</li>
-          <li>
-            - 개인정보의 보유 및 이용 기간 : 서비스 신청에 대한 절차 이후 폐기
-          </li>
-        </ul>
+  <v-app>
+    <div class="content">
+      <div class="title">
+        <h3>CONTACT</h3>
+        <p>문의를 남겨주시면 연락드리도록 하겠습니다.</p>
       </div>
-    </v-form>
-    <div class="form__submit">
-      <p :class="['error', !valid ? 'show' : '']">
-        필수 항목(*) 중 입력되지 않은 영역이 있습니다.
-      </p>
-      <Button text="문의 등록"></Button>
-    </div>
-    <div class="logo__floating">
-      <span class="hidden">VERBY</span>
-    </div>
-  </div>
+      <v-form ref="form" dark>
+        <span class="label">문의 내용 *</span>
+        <v-textarea
+          v-model="form.question"
+          height="300"
+          maxlength="150"
+          dark
+          no-resize
+          outlined
+          :hide-details="true"
+        ></v-textarea>
+        <span class="label">문의자(본인) 성함 *</span>
+        <v-text-field
+          v-model="form.name"
+          height="60"
+          maxlength="50"
+          dark
+          outlined
+          required
+          :hide-details="true"
+        ></v-text-field>
+        <span class="label">문의자(본인) 연락처 *</span>
+        <v-text-field
+          v-model="form.phone"
+          type="number"
+          height="60"
+          maxlength="50"
+          dark
+          outlined
+          required
+          :hide-details="true"
+          :hide-spin-buttons="true"
+        ></v-text-field>
+        <v-checkbox
+          v-model="form.checkbox"
+          :label="'개인 정보 수집 및 이용 동의'"
+          :hide-details="true"
+          :ripple="false"
+        ></v-checkbox>
+        <div class="clause">
+          <p>
+            음악 추천하기 기능과 관련하여 아래와 같이 귀하의 개인정보를 수집 및
+            이용 내용을 개인정보보호법 제 15조(개인정보의 수집·이용) 및 통계법
+            33조(비밀의 보호 등)에 의거하여 안내드리니 확인하여 주시기 바랍니다.
+          </p>
+          <ul>
+            <li>
+              - 개인정보의 수집·이용 목적 : 음악 추천 신청과 연락을 위한 연락처
+              수집
+            </li>
+            <li>- 수집하려는 개인정보의 필수 항목 : 연락처</li>
+            <li>
+              - 개인정보의 보유 및 이용 기간 : 서비스 신청에 대한 절차 이후 폐기
+            </li>
+          </ul>
+        </div>
+      </v-form>
+      <div class="form__submit">
+        <p class="error__text" v-show="!form.isFirstValidCheck && !form.valid">
+          필수 항목(*) 중 입력되지 않은 영역이 있습니다.
+        </p>
+        <Button
+          text="문의 등록"
+          @doAction="validCheck"
+          :disabled="!activeFormBtn"
+        ></Button>
+      </div>
+      <div class="logo__floating">
+        <span class="hidden">VERBY</span>
+      </div>
+      <Alert
+        title="문의 등록 성공"
+        content="문의 남겨주셔서 감사합니다. <br/>
+빠른 시일 내 연락드리도록 하겠습니다."
+        :dialog="form.alert"
+        @doAction="resetForm"
+      >
+      </Alert></div
+  ></v-app>
 </template>
 <script>
 import Button from "@/components/Button";
+import Alert from "@/components/Alert";
 
 export default {
-  name: "IndexPage",
+  name: "ContactPage",
   data() {
     return {
-      valid: false,
-      question: "",
-      name: "",
-      nameRules: [
-        (v) => !!v || "Name is required",
-        (v) => (v && v.length <= 10) || "Name must be less than 10 characters",
-      ],
-      phone: "",
-      emailRules: [
-        (v) => !!v || "E-mail is required",
-        (v) => /.+@.+\..+/.test(v) || "E-mail must be valid",
-      ],
-      select: null,
-      items: ["Item 1", "Item 2", "Item 3", "Item 4"],
-      checkbox: false,
+      form: {
+        valid: false,
+        isFirstValidCheck: true,
+        question: "",
+        name: "",
+        phone: "",
+        checkbox: false,
+        alert: false,
+      },
     };
   },
   components: {
     Button,
   },
+  computed: {
+    activeFormBtn() {
+      //문의등록 버튼 활성화 조건
+      return (
+        this.form.question &&
+        this.form.name &&
+        this.form.phone &&
+        this.form.checkbox
+      );
+    },
+  },
   methods: {
-    validate() {
-      this.$refs.form.validate();
+    validCheck() {
+      this.form.isFirstValidCheck = false; //처음 팝업 진입 시에는 오류 메세지 안 보이고 전송 버튼 눌렀을 때 보이도록
+      if (
+        this.form.question &&
+        this.form.name &&
+        this.form.phone &&
+        this.form.checkbox
+      ) {
+        //필수항목 다 입력
+        this.form.valid = true;
+        this.sendQuestion();
+      } else {
+        //필수항목 중 미입력값 있음
+        this.form.valid = false;
+      }
     },
-    reset() {
-      this.$refs.form.reset();
+    async sendQuestion() {
+      const payload = {
+        userName: this.form.name,
+        content: this.form.question,
+        phoneNumber: this.form.phone,
+      };
+      console.log(payload);
+      const response = await this.$axios.post("/api/contacts", payload);
+      if (response.status === 201) {
+        this.form.alert = true;
+      }
     },
-    resetValidation() {
-      this.$refs.form.resetValidation();
+    resetForm() {
+      this.form.alert = false;
+      this.form.question = "";
+      this.form.name = "";
+      this.form.phone = "";
+      this.form.checkbox = false;
     },
   },
 };
@@ -180,12 +229,8 @@ $content-font: "NanumSquareNeo";
   }
   .form__submit {
     margin-top: 120px;
-    .error {
-      display: none;
-      &.show {
-        display: block;
-        margin-bottom: 40px;
-      }
+    .error__text {
+      margin-bottom: 40px;
     }
   }
 }
