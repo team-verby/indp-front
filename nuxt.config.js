@@ -1,4 +1,7 @@
 import colors from "vuetify/es5/util/colors";
+import dotenv from "dotenv";
+const envPath = ".env";
+dotenv.config({ path: envPath });
 
 export default {
   // Disable server-side rendering: https://go.nuxtjs.dev/ssr-mode
@@ -7,14 +10,19 @@ export default {
   // Global page headers: https://go.nuxtjs.dev/config-head
   head: {
     titleTemplate: "%s - indp-web",
-    title: "indp-web",
+    title: "VERBY",
     htmlAttrs: {
-      lang: "en",
+      lang: "ko",
     },
     meta: [
       { charset: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { hid: "description", name: "description", content: "" },
+      {
+        hid: "description",
+        name: "description",
+        content: "인디펜던트 뮤직은 공간 음악 큐레이팅 서비스입니다.",
+      },
+      { name: "author", content: "VERBY" },
       { name: "format-detection", content: "telephone=no" },
     ],
     link: [
@@ -43,7 +51,18 @@ export default {
   ],
 
   // Modules: https://go.nuxtjs.dev/config-modules
-  modules: [],
+  modules: ["@nuxtjs/axios", "@nuxtjs/proxy"],
+  axios: {
+    baseURL: "http://localhost:3000",
+    credentials: true,
+    proxy: true,
+  },
+  proxy: {
+    "/api/": {
+      target: "https://api.verby.co.kr/",
+      changeOrigin: true,
+    },
+  },
 
   // Vuetify module configuration: https://go.nuxtjs.dev/config-vuetify
   vuetify: {
