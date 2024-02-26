@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "nuxt",
-    "build": "nuxt build",
-    "start": "nuxt start",
+    "dev": "nuxt --dotenv .env.development",
+    "build": "nuxt build --dotenv .env.production",
+    "start": "nuxt start --dotenv .env.production",
     "generate": "nuxt generate"
   },
   "dependencies": {
