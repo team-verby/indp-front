@@ -142,7 +142,7 @@ export default {
         phoneNumber: this.form.phone,
       };
       const response = await this.$axios
-        .post("/api/contacts", payload)
+        .post("https://api.verby.co.kr/api/contacts", payload)
         .catch(function (error) {
           alert(error.message);
         });

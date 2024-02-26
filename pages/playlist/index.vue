@@ -208,8 +208,8 @@ export default {
     async getStoreList() {
       const url =
         this.selectedRegion === this.tabItems[0] //"전체"
-          ? `/api/stores?page=${this.paging.page}&size=10`
-          : `/api/stores?page=${this.paging.page}&size=10&region=${this.selectedRegion}`;
+          ? `https://api.verby.co.kr/api/stores?page=${this.paging.page}&size=10`
+          : `https://api.verby.co.kr/api/stores?page=${this.paging.page}&size=10&region=${this.selectedRegion}`;
       const { data } = await this.$axios.get(url).catch(function (error) {
         alert(error.message);
       });
@@ -254,7 +254,7 @@ export default {
         phoneNumber: this.form.phone,
       };
       const response = await this.$axios.post(
-        "/api/music/recommendations",
+        "https://api.verby.co.kr/api/music/recommendations",
         payload
       );
       if (response.status === 201) {
