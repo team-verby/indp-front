@@ -167,7 +167,7 @@ export default {
     },
     async getStoreList() {
       const { data } = await this.$axios
-        .get(`/api/main/stores?page=${this.paging.page}&size=2`)
+        .get(`/api/main/stores?page=${this.paging.page}&size=10`)
         .catch(function (error) {
           alert(error.message);
         });

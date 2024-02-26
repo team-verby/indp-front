@@ -314,7 +314,6 @@ $content-font: "NanumSquareNeo";
           display: block;
           width: 100%;
           height: 300px;
-          background-color: blue;
         }
         .place__tag {
           position: absolute;
