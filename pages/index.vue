@@ -117,12 +117,17 @@ export default {
   data() {
     return {
       swiperOption: {
-        slidesPerView: "auto",
         spaceBetween: 30,
         loop: true,
         navigation: {
           nextEl: ".swiper-button-next",
           prevEl: ".swiper-button-prev",
+        },
+        breakpoints: {
+          1920: { slidesPerView: "auto" },
+          1680: {
+            slidesPerView: 4,
+          },
         },
       },
       isFirst: true,
@@ -197,6 +202,7 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+@import "../assets/scss/mixin";
 $content-font: "NanumSquareNeo";
 .visual {
   display: flex;
@@ -206,7 +212,6 @@ $content-font: "NanumSquareNeo";
   position: relative;
   width: 100%;
   height: 950px;
-  padding: 0 309px;
   background: url(/images/bg_main01.png) no-repeat top left/100% 100%;
   .visual__text {
     font-size: 68px;
@@ -248,6 +253,7 @@ $content-font: "NanumSquareNeo";
 }
 .content {
   text-align: center;
+  padding: 0 !important;
   & > div {
     padding: 0 309px;
   }
@@ -269,7 +275,7 @@ $content-font: "NanumSquareNeo";
         font-size: 22px;
         line-height: 32px;
         color: rgba(255, 255, 255, 0.8);
-        margin-bottom: 20px;
+        margin-bottom: 20px !important;
       }
       strong {
         font-weight: 800;
@@ -412,7 +418,7 @@ $content-font: "NanumSquareNeo";
     background: url(/images/bg_main03.png) no-repeat top left/100% 100%;
     padding: 150px 0;
     overflow: hidden;
-    p {
+    > p {
       font-family: $content-font;
       font-size: 40px;
       font-weight: 900;
@@ -452,19 +458,18 @@ $content-font: "NanumSquareNeo";
             font-family: $content-font;
             font-size: 18px;
             font-weight: 800;
-            line-height: 32px;
             color: #000;
           }
           .place__address {
             font-family: $content-font;
             font-size: 16px;
             font-weight: 400;
-            line-height: 24px;
             color: #000;
             overflow: hidden;
             display: -webkit-box;
             -webkit-box-orient: vertical;
             -webkit-line-clamp: 2;
+            margin-top: 12px;
           }
         }
       }
@@ -492,6 +497,51 @@ $content-font: "NanumSquareNeo";
           right: 284px;
           &:after {
             background-image: url(/icons/icon_btn_arrow_right.png);
+          }
+        }
+      }
+    }
+  }
+}
+@include desktopToLaptop {
+  .content {
+    & > div {
+      padding: 0 180px;
+    }
+    .content__place {
+      background: url(/images/bg_main03.png) no-repeat top left/100% 100%;
+      padding: 150px 180px;
+      width: 100%;
+      position: relative;
+      .swiper {
+        margin: 60px 0;
+        position: unset;
+        .swiper-slide {
+          width: calc((100% - 90px) / 4) !important;
+          height: 379px;
+          &.swiper-slide-active {
+            opacity: 1;
+            + .swiper-slide
+              + .swiper-slide
+              + .swiper-slide
+              + .swiper-slide
+              + .swiper-slide {
+              opacity: 1;
+            }
+          }
+          img {
+            height: 245px;
+          }
+          .place__info {
+            height: calc(100% - 245px);
+          }
+        }
+        div[class^="swiper-button"] {
+          &.swiper-button-prev {
+            left: 144px;
+          }
+          &.swiper-button-next {
+            right: 144px;
           }
         }
       }

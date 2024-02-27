@@ -167,7 +167,8 @@ $content-font: "NanumSquareNeo";
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 250px 309px 150px;
+  padding-top: 250px;
+  padding-bottom: 150px;
   background-color: #161617;
   background-image: url("/images/bg_gradient01.png"),
     url("/images/bg_gradient02.png");

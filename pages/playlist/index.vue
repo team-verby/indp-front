@@ -254,7 +254,7 @@ export default {
         phoneNumber: this.form.phone,
       };
       const response = await this.$axios.post(
-        "https://api.verby.co.kr/api/music/recommendations",
+        "/api/music/recommendations",
         payload
       );
       if (response.status === 201) {
@@ -272,12 +272,14 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+@import "../../assets/scss/mixin";
 $content-font: "NanumSquareNeo";
 .content {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 250px 309px 150px;
+  padding-top: 250px;
+  padding-bottom: 150px;
   background-color: #161617;
   background-image: url("/images/bg_gradient01.png"),
     url("/images/bg_gradient02.png");
@@ -370,6 +372,7 @@ $content-font: "NanumSquareNeo";
             }
           }
           .place__playlist {
+            width: 100%;
             height: 134px;
             display: flex;
             flex-direction: column;
@@ -380,6 +383,9 @@ $content-font: "NanumSquareNeo";
               font-size: 21px;
               font-weight: 800;
               line-height: 29px;
+              display: -webkit-box;
+              -webkit-box-orient: vertical;
+              -webkit-line-clamp: 2;
               .text__blue {
                 font-weight: 900;
               }
@@ -468,6 +474,33 @@ $content-font: "NanumSquareNeo";
     }
     .v-card__actions {
       padding: 64px;
+    }
+  }
+}
+
+@include desktopToLaptop {
+  .content {
+    .wrapper__tab {
+      .wrapper__place__list {
+        display: flex;
+        gap: 30px;
+        flex-wrap: wrap;
+        margin-top: 55px;
+        li {
+          width: calc((100% - 60px) / 3);
+          .place__info {
+            padding: 40px 25px;
+            .place__playlist {
+              button {
+                width: 100% !important;
+              }
+            }
+          }
+        }
+      }
+    }
+    .service__request p {
+      font-size: 38px;
     }
   }
 }

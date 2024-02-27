@@ -125,6 +125,7 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+@import "../../assets/scss/mixin";
 $content-font: "NanumSquareNeo";
 .visual {
   display: flex;
@@ -164,7 +165,8 @@ $content-font: "NanumSquareNeo";
   }
 }
 .content {
-  padding: 150px 309px;
+  padding-top: 150px;
+  padding-bottom: 150px;
   background-color: #161617;
   text-align: center;
   .content__title {
@@ -297,6 +299,30 @@ $content-font: "NanumSquareNeo";
           line-height: 27px;
           color: rgba(255, 255, 255, 0.7);
           margin-top: 20px;
+        }
+      }
+    }
+  }
+}
+
+@include desktopToLaptop {
+  .content {
+    .content__logo__img {
+      .logo__info {
+        .logo__info__img {
+          .img__box {
+            width: calc((100% - 60px) / 3);
+          }
+        }
+      }
+    }
+    .content__logo__style {
+      .logo__style__list {
+        .logo__type {
+          width: calc((100% - 80px) / 2);
+          .box {
+            width: 100%;
+          }
         }
       }
     }
