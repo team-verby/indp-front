@@ -169,9 +169,7 @@ export default {
     },
     async getStoreList() {
       const { data } = await this.$axios
-        .get(
-          `https://api.verby.co.kr/api/main/stores?page=${this.paging.page}&size=10`
-        )
+        .get(`/api/main/stores?page=${this.paging.page}&size=10`)
         .catch(function (error) {
           alert(error.message);
         });
@@ -426,7 +424,7 @@ $content-font: "NanumSquareNeo";
       margin: 60px -25px;
       .swiper-slide {
         width: 304px !important;
-        height: 434px;
+        height: 446px;
         border-radius: 10px;
         background-color: #fff;
         overflow: hidden;
@@ -446,11 +444,11 @@ $content-font: "NanumSquareNeo";
           height: 300px;
         }
         .place__info {
-          height: calc(100% - 300px);
+          height: auto;
           display: flex;
           flex-direction: column;
-          justify-content: center;
-          padding: 0 36px;
+          justify-content: flex-start;
+          padding: 30px 36px;
           .place__name {
             font-family: $content-font;
             font-size: 18px;
@@ -515,7 +513,6 @@ $content-font: "NanumSquareNeo";
         position: unset;
         .swiper-slide {
           width: calc((100% - 90px) / 4) !important;
-          height: 379px;
           &.swiper-slide-active {
             opacity: 1;
             + .swiper-slide
@@ -525,12 +522,6 @@ $content-font: "NanumSquareNeo";
               + .swiper-slide {
               opacity: 1;
             }
-          }
-          img {
-            height: 245px;
-          }
-          .place__info {
-            height: calc(100% - 245px);
           }
         }
         div[class^="swiper-button"] {
