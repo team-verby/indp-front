@@ -1,5 +1,12 @@
-@import url("./_reset.scss");
-@import url("./_font.scss");
+@import url("./reset.scss");
+@import url("./font.scss");
+@import "./mixin";
+
+.v-application {
+  p {
+    margin-bottom: 0 !important;
+  }
+}
 
 html {
   overflow-x: scroll !important;
@@ -152,6 +159,7 @@ $content-font: "NanumSquareNeo";
     display: flex;
     justify-content: space-between;
     gap: 100px;
+    margin-left: 430px;
     li {
       a {
         font-size: 20px;
@@ -176,6 +184,14 @@ $content-font: "NanumSquareNeo";
     width: 70px;
     height: 70px;
     background: url(/images/logo_floating.png) no-repeat center/100%;
+  }
+  .visual {
+    padding-left: 309px;
+    padding-right: 309px;
+  }
+  .content {
+    padding-left: 309px;
+    padding-right: 309px;
   }
 }
 
@@ -217,6 +233,38 @@ footer {
       }
       .footer__copyright {
         color: rgba(255, 255, 255, 0.4);
+      }
+    }
+  }
+}
+
+@include desktopToLaptop {
+  html {
+    overflow-x: hidden !important;
+  }
+  body {
+    width: 100vw;
+  }
+  #header {
+    padding: 0 180px;
+  }
+  #container {
+    .visual {
+      padding-left: 180px;
+      padding-right: 180px;
+    }
+    .content {
+      padding-left: 180px;
+      padding-right: 180px;
+    }
+  }
+  footer {
+    padding: 60px 180px;
+    .footer__content {
+      div {
+        ul {
+          gap: 30px;
+        }
       }
     }
   }
