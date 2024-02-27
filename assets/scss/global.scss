@@ -147,6 +147,9 @@ $content-font: "NanumSquareNeo";
   height: 100px;
   padding: 0 309px;
   z-index: 100;
+  &.on {
+    background-color: #0f4c82;
+  }
   .logo {
     width: 176px;
     height: 30px;

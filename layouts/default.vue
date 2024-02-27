@@ -1,18 +1,50 @@
 <template>
   <div class="wrap">
-    <header id="header">
+    <header id="header" :class="gnbHoverState ? 'on' : ''">
       <h1 class="logo">
-        <a href="/">
+        <NuxtLink
+          to="/"
+          @mouseover.native="gnbHoverState = true"
+          @mouseleave.native="gnbHoverState = false"
+        >
           <img src="/images/logo.png" alt="VERBY 로고" />
-        </a>
+        </NuxtLink>
       </h1>
       <nav class="nav">
         <h2 class="hidden">메인 네비게이션</h2>
         <ul class="menus">
-          <li><NuxtLink to="/">SERVICE</NuxtLink></li>
-          <li><NuxtLink to="/playlist">PLAYLIST</NuxtLink></li>
-          <li><NuxtLink to="/about">ABOUT</NuxtLink></li>
-          <li><NuxtLink to="/contact">CONTACT</NuxtLink></li>
+          <li>
+            <NuxtLink
+              to="/"
+              @mouseover.native="gnbHoverState = true"
+              @mouseleave.native="gnbHoverState = false"
+              >SERVICE</NuxtLink
+            >
+          </li>
+          <li>
+            <NuxtLink
+              to="/playlist"
+              @mouseover.native="gnbHoverState = true"
+              @mouseleave.native="gnbHoverState = false"
+              >PLAYLIST</NuxtLink
+            >
+          </li>
+          <li>
+            <NuxtLink
+              to="/about"
+              @mouseover.native="gnbHoverState = true"
+              @mouseleave.native="gnbHoverState = false"
+              >ABOUT</NuxtLink
+            >
+          </li>
+          <li>
+            <NuxtLink
+              to="/contact"
+              @mouseover.native="gnbHoverState = true"
+              @mouseleave.native="gnbHoverState = false"
+              >CONTACT</NuxtLink
+            >
+          </li>
         </ul>
       </nav>
     </header>
@@ -48,9 +80,6 @@
         </div>
       </div>
     </footer>
-    <!-- <v-footer :absolute="!fixed" app>
-      <span>&copy; {{ new Date().getFullYear() }}</span>
-    </v-footer> -->
   </div>
 </template>
 
@@ -58,7 +87,14 @@
 export default {
   name: "layout",
   data() {
-    return {};
+    return {
+      gnbHoverState: false,
+    };
+  },
+  methods: {
+    test() {
+      console.log("test");
+    },
   },
 };
 </script>
