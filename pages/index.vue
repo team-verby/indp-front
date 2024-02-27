@@ -10,9 +10,6 @@
         <strong>플레이리스트 설정</strong>해 드릴게요!
       </p>
       <a href="#main" class="scroll">SCROLL</a>
-      <div class="logo__floating">
-        <span class="hidden">VERBY</span>
-      </div>
     </div>
     <div class="content">
       <div id="main" class="content__main">

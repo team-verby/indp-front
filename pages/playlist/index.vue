@@ -57,9 +57,6 @@
         <p>우리 매장도 <strong>인디피 서비스</strong>를 이용하고 싶어요!</p>
         <Button text="이용 문의하기" arrow></Button>
       </div>
-      <div class="logo__floating">
-        <span class="hidden">VERBY</span>
-      </div>
 
       <v-dialog dark v-model="dialog" max-width="1000px">
         <v-card>

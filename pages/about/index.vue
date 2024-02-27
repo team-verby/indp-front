@@ -12,9 +12,6 @@
         듣는 이를 변화시키고 더 나아가 세상을 아름답게 만들어 보겠습니다.
       </p>
       <p>두근거리는 여정을 버비와 함께하세요!</p>
-      <div class="logo__floating">
-        <span class="hidden">VERBY</span>
-      </div>
     </div>
     <div class="content">
       <p class="content__title">
