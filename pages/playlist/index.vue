@@ -351,7 +351,7 @@ $content-font: "NanumSquareNeo";
       li {
         position: relative;
         width: 410px;
-        height: 628px;
+        height: auto;
         border-radius: 10px;
         overflow: hidden;
         background-color: #fff;
@@ -405,7 +405,7 @@ $content-font: "NanumSquareNeo";
               font-weight: 800;
             }
             .place__address {
-              margin-top: 20px;
+              margin-top: 16px;
               font-size: 18px;
               font-weight: 400;
               overflow: hidden;
@@ -422,10 +422,12 @@ $content-font: "NanumSquareNeo";
             justify-content: space-between;
             align-items: center;
             text-align: center;
+            margin-top: 26px;
             .place__genre {
               font-size: 21px;
               font-weight: 800;
               line-height: 29px;
+              overflow: hidden;
               display: -webkit-box;
               -webkit-box-orient: vertical;
               -webkit-line-clamp: 2;
@@ -445,6 +447,9 @@ $content-font: "NanumSquareNeo";
                   }
                 }
               }
+            }
+            button {
+              margin-top: 20px;
             }
           }
         }
@@ -535,7 +540,6 @@ $content-font: "NanumSquareNeo";
         li {
           width: calc((100% - 60px) / 3);
           .place__info {
-            padding: 40px 25px;
             .place__playlist {
               button {
                 width: 100% !important;
