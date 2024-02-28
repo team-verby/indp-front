@@ -28,8 +28,8 @@
         ></v-text-field>
         <span class="label">문의자(본인) 연락처 *</span>
         <v-text-field
-          v-model="form.phone"
-          type="number"
+          :value="form.phone"
+          type="text"
           height="60"
           maxlength="50"
           dark
@@ -37,6 +37,9 @@
           required
           :hide-details="true"
           :hide-spin-buttons="true"
+          ref="phoneRef"
+          @input="bindInputPhone"
+          @keyup.delete="bindDeletePhone"
         ></v-text-field>
         <v-checkbox
           v-model="form.checkbox"
@@ -63,7 +66,10 @@
         </div>
       </v-form>
       <div class="form__submit">
-        <p class="error__text" v-show="!form.isFirstValidCheck && !form.valid">
+        <p
+          class="error__text"
+          v-show="!form.isFirstValidCheck && showErrorText"
+        >
           필수 항목(*) 중 입력되지 않은 영역이 있습니다.
         </p>
         <Button
@@ -102,6 +108,7 @@ export default {
         checkbox: false,
         alert: false,
       },
+      showErrorText: false,
     };
   },
   components: {
@@ -110,15 +117,39 @@ export default {
   computed: {
     activeFormBtn() {
       //문의등록 버튼 활성화 조건
-      return (
+      if (
         this.form.question &&
         this.form.name &&
         this.form.phone &&
         this.form.checkbox
-      );
+      ) {
+        this.showErrorText = false;
+        return true;
+      } else {
+        return false;
+      }
     },
   },
   methods: {
+    bindInputPhone(value) {
+      //연락처필드 숫자 제외 입력 방지
+      const latestInputWord = value[value.length - 1];
+      const REG_PHONE = /[0-9]+$/;
+      if (REG_PHONE.test(latestInputWord)) {
+        this.$refs.phoneRef.lazyValue = value;
+        this.form.phone = value;
+      } else {
+        this.$refs.phoneRef.lazyValue = value.replace(latestInputWord, "");
+      }
+    },
+    bindDeletePhone() {
+      //연락처필드 backspace 이벤트 감지 후 value binding
+      if (this.$refs.phoneRef.value.length === 1) {
+        this.form.phone = "";
+      } else {
+        this.form.phone = this.$refs.phoneRef.value;
+      }
+    },
     validCheck() {
       this.form.isFirstValidCheck = false; //처음 팝업 진입 시에는 오류 메세지 안 보이고 전송 버튼 눌렀을 때 보이도록
       if (
@@ -133,6 +164,7 @@ export default {
       } else {
         //필수항목 중 미입력값 있음
         this.form.valid = false;
+        this.showErrorText = true;
       }
     },
     async sendQuestion() {
@@ -156,6 +188,7 @@ export default {
       this.form.name = "";
       this.form.phone = "";
       this.form.checkbox = false;
+      this.showErrorText = false;
     },
   },
 };
@@ -234,7 +267,7 @@ $content-font: "NanumSquareNeo";
   .form__submit {
     margin-top: 120px;
     .error__text {
-      margin-bottom: 40px;
+      margin-bottom: 40px !important;
     }
   }
 }

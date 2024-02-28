@@ -91,8 +91,8 @@
               ></v-text-field>
               <span class="label">추천인 연락처 *</span>
               <v-text-field
-                v-model="form.phone"
-                type="number"
+                :value="form.phone"
+                type="text"
                 maxlength="50"
                 height="60"
                 :hide-details="true"
@@ -100,6 +100,9 @@
                 placeholder="음악을 추천해 주시는 분의 연락처를 적어주세요!"
                 outlined
                 required
+                ref="phoneRef"
+                @input="bindInputPhone"
+                @keyup.delete="bindDeletePhone"
               ></v-text-field>
               <v-checkbox
                 v-model="form.checkbox"
@@ -131,7 +134,7 @@
           <v-card-actions class="d-flex flex-column justify-center">
             <p
               class="error__text"
-              v-show="!form.isFirstValidCheck && form.btnDisabled"
+              v-show="!form.isFirstValidCheck && showErrorText"
             >
               필수 항목(*) 중 입력되지 않은 영역이 있습니다.
             </p>
@@ -178,22 +181,33 @@ export default {
         musicInfo: "",
         phone: "",
         checkbox: false,
-        btnDisabled: true,
         alert: false,
         filledAll: false,
       },
       dialog: false,
+      showErrorText: false,
     };
   },
   components: {
     Button,
   },
+  watch: {
+    dialog: {
+      //음악추천 팝업 닫히면 form 리셋
+      handler(value, oldValue) {
+        !value && this.resetForm();
+      },
+      immediate: true,
+    },
+  },
   computed: {
     activeFormBtn() {
       //음악 추천 팝업 > 전송 버튼 활성화 조건
       if (this.form.musicInfo && this.form.phone && this.form.checkbox) {
-        this.form.btnDisabled = false;
+        this.showErrorText = false;
         return true;
+      } else {
+        return false;
       }
     },
   },
@@ -201,6 +215,25 @@ export default {
     this.drawStoreList();
   },
   methods: {
+    bindInputPhone(value) {
+      //연락처필드 숫자 제외 입력 방지
+      const latestInputWord = value[value.length - 1];
+      const REG_PHONE = /[0-9]+$/;
+      if (REG_PHONE.test(latestInputWord)) {
+        this.$refs.phoneRef.lazyValue = value;
+        this.form.phone = value;
+      } else {
+        this.$refs.phoneRef.lazyValue = value.replace(latestInputWord, "");
+      }
+    },
+    bindDeletePhone() {
+      //연락처필드 backspace 이벤트 감지 후 value binding
+      if (this.$refs.phoneRef.value.length === 1) {
+        this.form.phone = "";
+      } else {
+        this.form.phone = this.$refs.phoneRef.value;
+      }
+    },
     selectTab(tabItem) {
       this.selectedRegion = tabItem;
       //탭 선택 시 리스트 관련 데이터 초기화
@@ -213,8 +246,8 @@ export default {
     async getStoreList() {
       const url =
         this.selectedRegion === this.tabItems[0] //"전체"
-          ? `/api/stores?page=${this.paging.page}&size=10`
-          : `/api/stores?page=${this.paging.page}&size=10&region=${this.selectedRegion}`;
+          ? `https://api.verby.co.kr/api/stores?page=${this.paging.page}&size=10`
+          : `https://api.verby.co.kr/api/stores?page=${this.paging.page}&size=10&region=${this.selectedRegion}`;
       const { data } = await this.$axios.get(url).catch(function (error) {
         alert(error.message);
       });
@@ -246,11 +279,13 @@ export default {
       if (this.form.musicInfo && this.form.phone && this.form.checkbox) {
         //필수항목 다 입력
         this.form.valid = true;
+        this.showErrorText = false;
         this.sendRecommend();
       } else {
         //필수항목 중 미입력값 있음
         this.errorTextFirstShow = false;
         this.form.valid = false;
+        this.showErrorText = true;
       }
     },
     async sendRecommend() {
@@ -260,7 +295,7 @@ export default {
         phoneNumber: this.form.phone,
       };
       const response = await this.$axios.post(
-        "/api/music/recommendations",
+        "https://api.verby.co.kr/api/music/recommendations",
         payload
       );
       if (response.status === 201) {
@@ -272,6 +307,8 @@ export default {
       this.form.musicInfo = "";
       this.form.phone = "";
       this.form.checkbox = false;
+      this.showErrorText = false;
+      this.dialog = false;
     },
   },
 };
