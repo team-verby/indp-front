@@ -108,6 +108,7 @@
 import Button from "@/components/Button";
 import { Swiper, SwiperSlide } from "vue-awesome-swiper";
 import "swiper/css/swiper.css";
+import swiper from "swiper";
 
 export default {
   name: "MainPage",
@@ -150,9 +151,17 @@ export default {
     },
   },
   mounted() {
+    window.addEventListener("resize", this.handleResize);
     this.drawStoreList();
   },
   methods: {
+    handleResize() {
+      //해상도 1680 이하일 때 스와이프 4개 노출 & 업데이트
+      let width = window.innerWidth;
+      if (width <= 1680) {
+        swiper.update();
+      }
+    },
     copySwiperItem() {
       //swiper item 개수가 6개보다 작을 때 복제해서 사용
       if (this.stores.length < 6) {
