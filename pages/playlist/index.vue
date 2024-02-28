@@ -55,7 +55,11 @@
       </div>
       <div class="service__request">
         <p>우리 매장도 <strong>인디피 서비스</strong>를 이용하고 싶어요!</p>
-        <Button text="이용 문의하기" arrow></Button>
+        <Button
+          text="이용 문의하기"
+          arrow
+          @doAction="$router.push({ path: '/contact' })"
+        ></Button>
       </div>
 
       <v-dialog dark v-model="dialog" max-width="1000px">
@@ -127,7 +131,7 @@
           <v-card-actions class="d-flex flex-column justify-center">
             <p
               class="error__text"
-              v-show="!form.isFirstValidCheck && !form.valid"
+              v-show="!form.isFirstValidCheck && form.btnDisabled"
             >
               필수 항목(*) 중 입력되지 않은 영역이 있습니다.
             </p>
@@ -176,6 +180,7 @@ export default {
         checkbox: false,
         btnDisabled: true,
         alert: false,
+        filledAll: false,
       },
       dialog: false,
     };
@@ -186,7 +191,10 @@ export default {
   computed: {
     activeFormBtn() {
       //음악 추천 팝업 > 전송 버튼 활성화 조건
-      return this.form.musicInfo && this.form.phone && this.form.checkbox;
+      if (this.form.musicInfo && this.form.phone && this.form.checkbox) {
+        this.form.btnDisabled = false;
+        return true;
+      }
     },
   },
   mounted() {
@@ -205,8 +213,8 @@ export default {
     async getStoreList() {
       const url =
         this.selectedRegion === this.tabItems[0] //"전체"
-          ? `https://api.verby.co.kr/api/stores?page=${this.paging.page}&size=10`
-          : `https://api.verby.co.kr/api/stores?page=${this.paging.page}&size=10&region=${this.selectedRegion}`;
+          ? `/api/stores?page=${this.paging.page}&size=10`
+          : `/api/stores?page=${this.paging.page}&size=10&region=${this.selectedRegion}`;
       const { data } = await this.$axios.get(url).catch(function (error) {
         alert(error.message);
       });
@@ -241,6 +249,7 @@ export default {
         this.sendRecommend();
       } else {
         //필수항목 중 미입력값 있음
+        this.errorTextFirstShow = false;
         this.form.valid = false;
       }
     },
@@ -471,6 +480,9 @@ $content-font: "NanumSquareNeo";
     }
     .v-card__actions {
       padding: 64px;
+      .error__text {
+        margin-bottom: 16px !important;
+      }
     }
   }
 }
