@@ -115,6 +115,7 @@ export default {
   data() {
     return {
       swiperOption: {
+        slidesPerView: "auto",
         spaceBetween: 30,
         loop: true,
         navigation: {
@@ -122,8 +123,10 @@ export default {
           prevEl: ".swiper-button-prev",
         },
         breakpoints: {
-          1920: { slidesPerView: "auto" },
-          1680: {
+          1920: {
+            slidesPerView: "auto",
+          },
+          1919: {
             slidesPerView: 4,
           },
         },
@@ -156,11 +159,14 @@ export default {
   },
   methods: {
     handleResize() {
-      //해상도 1680 이하일 때 스와이프 4개 노출 & 업데이트
-      let width = window.innerWidth;
-      if (width <= 1680) {
-        swiper.update();
-      }
+      //window resize시 스와이프 업데이트
+      const swiper = document.querySelector(".swiper-container").swiper;
+      swiper.update();
+      // //1920보다 작을 때 스와이프 4개 노출 & 업데이트
+      // let width = window.innerWidth;
+      // if (width < 1920) {
+      //   swiper.update();
+      // }
     },
     copySwiperItem() {
       //swiper item 개수가 6개보다 작을 때 복제해서 사용
@@ -524,6 +530,9 @@ $content-font: "NanumSquareNeo";
         position: unset;
         .swiper-slide {
           width: calc((100% - 90px) / 4) !important;
+          .place__info {
+            padding: 30px 24px;
+          }
           &.swiper-slide-active {
             opacity: 1;
             + .swiper-slide
