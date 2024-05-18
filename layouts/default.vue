@@ -91,10 +91,6 @@ export default {
       gnbHoverState: false,
     };
   },
-  methods: {
-    test() {
-      console.log("test");
-    },
-  },
+  methods: {},
 };
 </script>
