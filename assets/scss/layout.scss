@@ -97,13 +97,14 @@ footer {
         &.footer__text-col2 {
           display: flex;
         }
+        div {
+          display: flex;
+        }
         span {
-          &:first-child {
-            color: rgba(255, 255, 255, 0.4);
-          }
+          color: rgba(255, 255, 255, 0.4);
         }
         + li {
-          margin-top: 8px;
+          margin-top: 6px;
         }
       }
     }
