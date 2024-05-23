@@ -6,7 +6,7 @@
         <strong>음악</strong>이 나오고 있을까?
       </h3>
 
-      <div class="wrapper__tab">
+      <div class="place-list__tab">
         <v-tabs
           v-model="tab"
           height="auto"
@@ -24,19 +24,19 @@
 
         <v-window v-model="tab">
           <v-window-item v-for="n in tabItems.length" :key="n">
-            <ul class="wrapper__place__list">
-              <li v-for="store in stores" :key="store.id">
+            <ul class="place-list">
+              <li class="place" v-for="store in stores" :key="store.id">
                 <img :src="store.imageUrl" :alt="store.name" />
                 <div class="place__tag">
                   <span v-for="theme in store.themes">#{{ theme }}</span>
                 </div>
                 <div class="place__info">
-                  <div class="place">
-                    <span class="place__name">{{ store.name }}</span>
-                    <p class="place__address">{{ store.address }}</p>
+                  <div class="place__info-text">
+                    <span class="place__info-text__name">{{ store.name }}</span>
+                    <p class="place__info-text__address">{{ store.address }}</p>
                   </div>
-                  <div class="place__playlist">
-                    <p class="place__genre">
+                  <div class="place__info-playlist">
+                    <p class="place__info-playlist-genre">
                       <strong class="text__blue">곡 구성 : </strong>
                       <span v-for="songForm in store.songForms">{{
                         songForm
@@ -315,243 +315,5 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-@import "../../assets/scss/mixin";
-$content-font: "NanumSquareNeo";
-.content {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding-top: 250px;
-  padding-bottom: 150px;
-  background-color: #161617;
-  background-image: url("/images/bg_gradient01.png"),
-    url("/images/bg_gradient02.png");
-  background-size: 100% 100%, 100% 100%;
-  background-position: left top, right bottom;
-  h3 {
-    font-family: $content-font;
-    font-size: 58px;
-    font-weight: 400;
-    line-height: 74px;
-    color: #fff;
-    text-align: center;
-    strong {
-      font-weight: 900;
-    }
-  }
-  .wrapper__tab {
-    width: 100%;
-    margin-top: 100px;
-
-    .wrapper__place__list {
-      display: flex;
-      gap: 35px;
-      flex-wrap: wrap;
-      margin-top: 55px;
-      li {
-        position: relative;
-        width: 410px;
-        height: auto;
-        border-radius: 10px;
-        overflow: hidden;
-        background-color: #fff;
-        img {
-          display: block;
-          width: 100%;
-          height: 300px;
-        }
-        .place__tag {
-          position: absolute;
-          left: 20px;
-          top: 20px;
-          span {
-            display: inline-block;
-            width: 106px;
-            height: 40px;
-            border-radius: 20.5px;
-            background-color: rgba(255, 255, 255, 0.7);
-            font-family: $content-font;
-            font-size: 18px;
-            font-weight: 800;
-            line-height: 40px;
-            text-align: center;
-            + span {
-              margin-left: 6px;
-            }
-            &:nth-child(3n + 1) {
-              margin-left: 0;
-            }
-            &:nth-child(n + 4) {
-              margin-top: 10px;
-            }
-          }
-        }
-        .place__info {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: space-between;
-          width: 100%;
-          height: calc(100% - 300px);
-          padding: 40px 35px;
-          font-family: $content-font;
-          color: #000;
-          .place {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            .place__name {
-              font-size: 26px;
-              font-weight: 800;
-            }
-            .place__address {
-              margin-top: 16px;
-              font-size: 18px;
-              font-weight: 400;
-              overflow: hidden;
-              display: -webkit-box;
-              -webkit-box-orient: vertical;
-              -webkit-line-clamp: 2;
-            }
-          }
-          .place__playlist {
-            width: 100%;
-            height: 134px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            align-items: center;
-            text-align: center;
-            margin-top: 26px;
-            .place__genre {
-              font-size: 21px;
-              font-weight: 800;
-              line-height: 29px;
-              overflow: hidden;
-              display: -webkit-box;
-              -webkit-box-orient: vertical;
-              -webkit-line-clamp: 2;
-              .text__blue {
-                font-weight: 900;
-              }
-              span {
-                display: inline-block;
-                position: relative;
-                + span {
-                  padding-left: 8px;
-                  &:before {
-                    content: ",";
-                    display: block;
-                    position: absolute;
-                    left: 0;
-                  }
-                }
-              }
-            }
-            button {
-              margin-top: 20px;
-            }
-          }
-        }
-      }
-    }
-  }
-  .service__request {
-    display: flex;
-    gap: 40px;
-    margin-top: 100px;
-    p {
-      font-family: $content-font;
-      font-size: 48px;
-      font-weight: 400;
-      line-height: 64px;
-      color: #fff;
-      strong {
-        font-weight: 900;
-      }
-    }
-  }
-}
-
-.v-dialog {
-  .v-card {
-    .v-card__title {
-      font-family: $content-font;
-      font-size: 32px;
-      font-weight: 800;
-      padding: 64px;
-    }
-    .v-card__text {
-      padding: 0 64px;
-      .v-form {
-        width: 100%;
-        & > * {
-          font-family: $content-font;
-        }
-        .label {
-          display: inline-block;
-          font-size: 18px;
-          font-weight: 800;
-          line-height: 32px;
-          color: #fff;
-          margin-bottom: 20px;
-        }
-        .v-input {
-          + .label {
-            margin-top: 38px;
-          }
-        }
-        .v-input--checkbox {
-          margin-top: 60px;
-        }
-        .clause {
-          font-size: 18px;
-          font-weight: 400;
-          color: rgba(255, 255, 255, 0.7);
-          margin-top: 20px;
-          ul {
-            margin-top: 12px;
-            li {
-              + li {
-                margin-top: 12px;
-              }
-            }
-          }
-        }
-      }
-    }
-    .v-card__actions {
-      padding: 64px;
-      .error__text {
-        margin-bottom: 16px !important;
-      }
-    }
-  }
-}
-
-@include desktopToLaptop {
-  .content {
-    .wrapper__tab {
-      .wrapper__place__list {
-        display: flex;
-        gap: 30px;
-        flex-wrap: wrap;
-        margin-top: 55px;
-        li {
-          width: calc((100% - 60px) / 3);
-          .place__info {
-            .place__playlist {
-              button {
-                width: 100% !important;
-              }
-            }
-          }
-        }
-      }
-    }
-    .service__request p {
-      font-size: 38px;
-    }
-  }
-}
+@import "../../assets/scss/playlist.scss";
 </style>

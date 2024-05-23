@@ -1,0 +1,111 @@
+//layout
+.wrap {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+#header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: max-content;
+  min-width: 100%;
+  height: 100px;
+  padding: 0 309px;
+  z-index: 100;
+  &.on {
+    background-color: #0f4c82;
+  }
+  .logo {
+    width: 176px;
+    height: 30px;
+    img {
+      width: 176px;
+      height: 30px;
+    }
+  }
+  .menus {
+    display: flex;
+    justify-content: space-between;
+    gap: 100px;
+    margin-left: 430px;
+    li {
+      a {
+        font-size: 20px;
+        font-weight: 800;
+        line-height: 40px;
+        color: rgba(255, 255, 255, 0.3);
+        &.nuxt-link-exact-active {
+          color: #fff;
+        }
+      }
+    }
+  }
+}
+
+#container {
+  width: 100%;
+  position: relative;
+  .logo__floating {
+    position: absolute;
+    right: 30px;
+    bottom: 30px;
+    width: 70px;
+    height: 70px;
+    background: url(/images/logo_floating.png) no-repeat center/100%;
+  }
+  .visual {
+    padding-left: 309px;
+    padding-right: 309px;
+  }
+  .content {
+    padding-left: 309px;
+    padding-right: 309px;
+  }
+}
+
+footer {
+  padding: 60px 309px;
+  background-color: #000;
+  .logo {
+    width: 178px;
+    height: 30px;
+    img {
+      width: 100%;
+      height: 100%;
+    }
+  }
+  .footer__content {
+    font-family: "NanumSquareNeo san-serif";
+    font-size: 16px;
+    font-weight: 300;
+    margin-top: 42px;
+    color: rgba(255, 255, 255, 0.8);
+    .footer__title {
+      font-size: 20px;
+      font-weight: 600;
+    }
+    ul {
+      margin-top: 16px;
+      li {
+        display: flex;
+        gap: 16px;
+        &.footer__text-col2 {
+          display: flex;
+        }
+        span {
+          &:first-child {
+            color: rgba(255, 255, 255, 0.4);
+          }
+        }
+        + li {
+          margin-top: 8px;
+        }
+      }
+    }
+  }
+}

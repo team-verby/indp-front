@@ -1,0 +1,78 @@
+$content-font: "NanumSquareNeo";
+.content {
+  padding-top: 250px;
+  padding-bottom: 150px;
+  background-color: #161617;
+  background-image: url("/images/bg_gradient01.png"),
+    url("/images/bg_gradient02.png");
+  background-size: 100% 100%, 100% 100%;
+  background-position: left top, right bottom;
+
+  &.contact {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    .contact__title {
+      font-family: $content-font;
+      color: #fff;
+      text-align: center;
+      h3 {
+        font-size: 58px;
+        font-weight: 900;
+        line-height: 74px;
+      }
+      p {
+        font-size: 22px;
+        font-weight: 400;
+        line-height: 32px;
+        margin-top: 40px;
+      }
+    }
+    .v-form {
+      width: 100%;
+      margin-top: 100px;
+      & > * {
+        font-family: $content-font;
+      }
+      .contact__label {
+        display: inline-block;
+        font-size: 18px;
+        font-weight: 800;
+        line-height: 32px;
+        color: #fff;
+        margin-bottom: 20px;
+      }
+      .v-input {
+        + .contact__label {
+          margin-top: 38px;
+        }
+      }
+      .v-input--checkbox {
+        margin-top: 60px;
+        .v-label {
+          color: #fff !important;
+        }
+      }
+      .contact__clause {
+        font-size: 18px;
+        font-weight: 400;
+        color: rgba(255, 255, 255, 0.7);
+        margin-top: 20px;
+        ul {
+          margin-top: 12px;
+          li {
+            + li {
+              margin-top: 12px;
+            }
+          }
+        }
+      }
+    }
+    .contact__form-submit {
+      margin-top: 120px;
+      .error__text {
+        margin-bottom: 40px !important;
+      }
+    }
+  }
+}

@@ -4,20 +4,20 @@
       <h3 class="visual__text">
         매장 음악 플레이리스트 <br />버비가 대신 만들어 드립니다.
       </h3>
-      <p>
+      <p class="visual__description">
         매일 똑같은 음악, 지겨우시죠? 아침마다 음악 고르기, 힘드시죠? <br />
         <strong>매장분위기</strong>와 <strong>영업시간</strong>에 맞게
         <strong>플레이리스트 설정</strong>해 드릴게요!
       </p>
-      <a href="#main" class="scroll">SCROLL</a>
+      <a href="#main" class="visual__scroll">SCROLL</a>
     </div>
     <div class="content">
       <div id="main" class="content__main">
-        <h3>
+        <h3 class="content__main-title">
           <p>버비가 제공하는 인디펜던트 뮤직 서비스</p>
           <strong>INDIE-PENDANT MUSIC</strong>이란?
         </h3>
-        <div class="content__main__text">
+        <div class="content__main-text">
           <p>
             인디펜던트 뮤직은 공간 음악 큐레이팅 서비스입니다. <br />
             매장 분위기와 컨셉에 잘 어울리는 음악으로 당신의 매장을 인테리어
@@ -30,35 +30,35 @@
         </div>
       </div>
       <div class="content__service">
-        <p>서비스는 어떻게 진행하나요?</p>
-        <div class="wrap__service__step">
-          <ul class="service__steps">
-            <li>
-              <strong class="text__step">STEP 1</strong>
-              <p class="cont">
+        <p class="content__service-title">서비스는 어떻게 진행하나요?</p>
+        <div class="content__service-steps">
+          <ul class="service-steps">
+            <li class="service-steps__step">
+              <strong class="service-steps__step-text">STEP 1</strong>
+              <p class="service-steps__step-content">
                 아래 <span class="text__blue">연락처</span>혹은 <br />
                 <span class="text__blue">‘문의하기'</span> 버튼을 통해
                 <br />문의를 남겨주세요.
               </p>
             </li>
-            <li>
-              <strong class="text__step">STEP 2</strong>
-              <p class="cont">
+            <li class="service-steps__step">
+              <strong class="service-steps__step-text">STEP 2</strong>
+              <p class="service-steps__step-content">
                 매장 방문을 위한 <br /><span class="text__blue">스케쥴</span>을
                 조율합니다.
               </p>
             </li>
-            <li>
-              <strong class="text__step">STEP 3</strong>
-              <p class="cont">
+            <li class="service-steps__step">
+              <strong class="service-steps__step-text">STEP 3</strong>
+              <p class="service-steps__step-content">
                 직접 매장에 방문하여 <br />
                 <span class="text__blue">사진 촬영</span> 및
                 <span class="text__blue">매장 분석</span>을 <br />진행합니다.
               </p>
             </li>
-            <li>
-              <strong class="text__step">STEP 4</strong>
-              <p class="cont">
+            <li class="service-steps__step">
+              <strong class="service-steps__step-text">STEP 4</strong>
+              <p class="service-steps__step-content">
                 매장 분석이 완료되면 <br />사용하고 계신 플랫폼에 맞게<br />
                 <span class="text__blue">플레이리스트</span>를 전달드립니다.
               </p>
@@ -71,16 +71,18 @@
           @doAction="$router.push({ path: '/contact' })"
         ></Button>
         <div class="service__contact">
-          <dl>
+          <dl class="contact-details">
             <dt class="hidden">연락처</dt>
-            <dd class="contact__phone">010-6310-4478</dd>
+            <dd class="contact-details__phone">010-6310-4478</dd>
             <dt class="hidden">메일</dt>
-            <dd class="contact__mail">verbykorea@gmail.com</dd>
+            <dd class="contact-details__mail">verbykorea@gmail.com</dd>
           </dl>
         </div>
       </div>
       <div class="content__place" v-if="!isFirst && !paging.hasNext">
-        <p>인디펜던트 뮤직 서비스를 <br />이용하고 있는 공간</p>
+        <p class="content__place-title">
+          인디펜던트 뮤직 서비스를 <br />이용하고 있는 공간
+        </p>
         <swiper class="swiper" :options="swiperOption">
           <swiper-slide v-for="store in stores" :key="store.id">
             <img :src="store.imageUrl" :alt="store.name" />
@@ -184,9 +186,7 @@ export default {
     },
     async getStoreList() {
       const { data } = await this.$axios
-        .get(
-          `https://api.verby.co.kr/api/main/stores?page=${this.paging.page}&size=10`
-        )
+        .get(`/api/main/stores?page=${this.paging.page}&size=10`)
         .catch(function (error) {
           alert(error.message);
         });
@@ -214,346 +214,5 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-@import "../assets/scss/mixin";
-$content-font: "NanumSquareNeo";
-.visual {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  width: 100%;
-  height: 950px;
-  background: url(/images/bg_main01.png) no-repeat top left/100% 100%;
-  .visual__text {
-    font-size: 68px;
-    color: #fff;
-    font-weight: 800;
-    text-align: center;
-    line-height: 82px;
-    & + p {
-      font-family: $content-font;
-      font-weight: 400;
-      margin-top: 60px;
-      color: rgba(255, 255, 255, 0.8);
-      font-size: 22px;
-      line-height: 32px;
-      strong {
-        font-weight: 800;
-      }
-    }
-  }
-  .scroll {
-    position: absolute;
-    bottom: 40px;
-    left: 0;
-    right: 0;
-    text-align: center;
-    font-family: $content-font;
-    font-weight: 400;
-    line-height: 32px;
-    color: #fff;
-    &:after {
-      content: "";
-      display: block;
-      width: 15px;
-      height: 18px;
-      margin: 0 auto;
-      background: url(/icons/icon_scroll.png) no-repeat center/100%;
-    }
-  }
-}
-.content {
-  text-align: center;
-  padding: 0 !important;
-  & > div {
-    padding: 0 309px;
-  }
-  .content__main {
-    padding: 150px 0;
-    background-color: #010a14;
-    background-image: url(/images/bg_main02.png);
-    background-repeat: no-repeat;
-    background-position: center;
-    background-size: cover;
-    h3 {
-      font-weight: 800;
-      font-size: 54px;
-      line-height: 32px;
-      color: rgba(255, 255, 255, 0.7);
-      p {
-        font-family: $content-font;
-        font-weight: 400;
-        font-size: 22px;
-        line-height: 32px;
-        color: rgba(255, 255, 255, 0.8);
-        margin-bottom: 20px !important;
-      }
-      strong {
-        font-weight: 800;
-        font-size: 70px;
-        line-height: 32px;
-        color: #2686d9;
-        margin-right: 15px;
-      }
-    }
-    .content__main__text {
-      margin-top: 100px;
-      p {
-        font-family: $content-font;
-        &:first-of-type {
-          font-weight: 800;
-          font-size: 36px;
-          line-height: 46px;
-          color: rgba(255, 255, 255, 0.8);
-        }
-        &:last-of-type {
-          font-weight: 400;
-          font-size: 22px;
-          line-height: 32px;
-          color: #fff;
-          margin-top: 40px;
-        }
-      }
-    }
-  }
-  .content__service {
-    padding-top: 150px;
-    padding-bottom: 80px;
-    background-color: #09121b;
-    p {
-      font-family: $content-font;
-      font-size: 42px;
-      font-weight: 900;
-      line-height: 54px;
-      color: #fff;
-    }
-    .wrap__service__step {
-      margin-top: 60px;
-      .service__steps {
-        display: flex;
-        justify-content: space-between;
-        gap: 34px;
-        li {
-          display: flex;
-          flex-direction: column;
-          width: 300px;
-          height: 300px;
-          padding: 39px 0 45px;
-          background-color: #172028;
-          border: 1px solid #2e3d4a;
-          border-radius: 10px;
-          .text__step {
-            font-family: $content-font;
-            font-size: 24px;
-            line-height: 28px;
-            font-weight: 900;
-            color: #fff;
-            &:after {
-              content: "";
-              display: block;
-              width: 50px;
-              height: 50px;
-              margin: 42px auto 0;
-              background-repeat: no-repeat;
-              background-size: 100%;
-            }
-          }
-          .cont {
-            font-size: 18px;
-            font-weight: 400;
-            line-height: 28px;
-            color: #fff;
-            margin-top: 29px;
-            .text__blue {
-              font-weight: 800;
-            }
-          }
-        }
-        @for $i from 1 through 4 {
-          li:nth-child(#{$i}) {
-            .text__step {
-              &:after {
-                background-image: url(/icons/icon_step0#{$i}.png);
-              }
-            }
-          }
-        }
-      }
-    }
-    button {
-      margin-top: 40px;
-    }
-    .service__contact {
-      margin-top: 48px;
-      dl {
-        display: flex;
-        justify-content: center;
-        gap: 27px;
-        dd {
-          position: relative;
-          padding-left: 34px;
-          font-family: $content-font;
-          font-size: 18px;
-          line-height: 32px;
-          font-weight: 400;
-          color: #fff;
-          &:before {
-            content: "";
-            position: absolute;
-            left: 0;
-            top: 0;
-            bottom: 0;
-            margin: auto;
-            display: block;
-            width: 24px;
-            background-repeat: no-repeat;
-            background-size: 100%;
-          }
-          &.contact__phone {
-            &:before {
-              height: 24px;
-              background-image: url(/icons/icon_phone.png);
-            }
-          }
-          &.contact__mail {
-            &:before {
-              height: 18px;
-              background-image: url(/icons/icon_email.png);
-            }
-          }
-        }
-      }
-    }
-  }
-  .content__place {
-    background: url(/images/bg_main03.png) no-repeat top left/100% 100%;
-    padding: 150px 0;
-    overflow: hidden;
-    > p {
-      font-family: $content-font;
-      font-size: 40px;
-      font-weight: 900;
-      line-height: 52px;
-      color: #fff;
-    }
-    .swiper {
-      margin: 60px -25px;
-      .swiper-slide {
-        width: 304px !important;
-        height: 446px;
-        border-radius: 10px;
-        background-color: #fff;
-        overflow: hidden;
-        &.swiper-slide-active {
-          opacity: 0.7;
-          + .swiper-slide
-            + .swiper-slide
-            + .swiper-slide
-            + .swiper-slide
-            + .swiper-slide {
-            opacity: 0.7;
-          }
-        }
-        img {
-          display: block;
-          width: 100%;
-          height: 300px;
-        }
-        .place__info {
-          height: auto;
-          display: flex;
-          flex-direction: column;
-          justify-content: flex-start;
-          padding: 30px 36px;
-          .place__name {
-            font-family: $content-font;
-            font-size: 18px;
-            font-weight: 800;
-            color: #000;
-          }
-          .place__address {
-            font-family: $content-font;
-            font-size: 16px;
-            font-weight: 400;
-            color: #000;
-            overflow: hidden;
-            display: -webkit-box;
-            -webkit-box-orient: vertical;
-            -webkit-line-clamp: 2;
-            margin-top: 12px;
-          }
-        }
-      }
-      div[class^="swiper-button"] {
-        width: 72px;
-        height: 72px;
-        border-radius: 50%;
-        background-color: #fff;
-        &:after {
-          content: "";
-          width: 18px;
-          height: 28px;
-        }
-        &.swiper-button-prev {
-          justify-content: flex-start;
-          padding-left: 24px;
-          left: 298px;
-          &:after {
-            background-image: url(/icons/icon_btn_arrow_left.png);
-          }
-        }
-        &.swiper-button-next {
-          justify-content: flex-start;
-          padding-left: 30px;
-          right: 284px;
-          &:after {
-            background-image: url(/icons/icon_btn_arrow_right.png);
-          }
-        }
-      }
-    }
-  }
-}
-@include desktopToLaptop {
-  .content {
-    & > div {
-      padding: 0 180px;
-    }
-    .content__place {
-      background: url(/images/bg_main03.png) no-repeat top left/100% 100%;
-      padding: 150px 180px;
-      width: 100%;
-      position: relative;
-      .swiper {
-        margin: 60px 0;
-        position: unset;
-        .swiper-slide {
-          width: calc((100% - 90px) / 4) !important;
-          .place__info {
-            padding: 30px 24px;
-          }
-          &.swiper-slide-active {
-            opacity: 1;
-            + .swiper-slide
-              + .swiper-slide
-              + .swiper-slide
-              + .swiper-slide
-              + .swiper-slide {
-              opacity: 1;
-            }
-          }
-        }
-        div[class^="swiper-button"] {
-          &.swiper-button-prev {
-            left: 144px;
-          }
-          &.swiper-button-next {
-            right: 144px;
-          }
-        }
-      }
-    }
-  }
-}
+@import "../assets/scss/main.scss";
 </style>

@@ -1,0 +1,202 @@
+@import "./mixin";
+$content-font: "NanumSquareNeo";
+.visual {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  width: 100%;
+  height: 950px;
+  padding: 0 309px;
+  background: url(/images/bg_about.png) no-repeat top left/100% 100%;
+  .visual__text {
+    font-family: $content-font;
+    font-size: 58px;
+    color: #fff;
+    font-weight: 900;
+    text-align: center;
+    line-height: 72px;
+    margin-top: 40px;
+    + p {
+      margin-top: 60px;
+    }
+  }
+  p {
+    font-family: $content-font;
+    font-weight: 400;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 22px;
+    line-height: 32px;
+    text-align: center;
+    strong {
+      font-weight: 800;
+    }
+    + p {
+      margin-top: 36px;
+    }
+  }
+}
+.content {
+  padding-top: 150px;
+  padding-bottom: 150px;
+  background-color: #161617;
+  text-align: center;
+  .content__title {
+    span {
+      display: inline-block;
+      font-size: 54px;
+      font-weight: 700;
+      line-height: 64px;
+      color: #fff;
+      + span {
+        position: relative;
+        padding-left: 36px;
+        &:before {
+          content: "";
+          position: absolute;
+          display: block;
+          left: 16px;
+          top: 0;
+          bottom: 0;
+          margin: auto;
+          width: 4px;
+          height: 38px;
+          background-color: rgba(255, 255, 255, 0.4);
+        }
+      }
+    }
+  }
+  .content__logo {
+    margin-top: 60px;
+    .content__logo-img {
+      position: relative;
+      width: 100%;
+      height: 318px;
+      border: 1px solid #333;
+      border-radius: 10px;
+      img {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 88px;
+        margin: auto;
+      }
+    }
+    .content__logo-info {
+      margin: 60px 0;
+      font-family: $content-font;
+      .content__logo-info-title {
+        font-size: 28px;
+        font-weight: 800;
+        line-height: 58px;
+        color: #fff;
+      }
+      .content__logo-info-text {
+        font-size: 22px;
+        font-weight: 400;
+        line-height: 32px;
+        color: rgba(255, 255, 255, 0.6);
+        margin-top: 30px;
+      }
+      .content__logo-info-img {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 60px;
+        .content__logo-info-img-box {
+          width: 410px;
+          height: 628px;
+          border-radius: 10px;
+          overflow: hidden;
+          img {
+            width: 100%;
+            height: 100%;
+          }
+        }
+      }
+    }
+  }
+  .content__logo-style {
+    .content__logo-style-title {
+      font-size: 28px;
+      font-weight: 700;
+      line-height: 48px;
+      color: #fff;
+    }
+    .content__logo-style-text {
+      font-size: 22px;
+      font-weight: 400;
+      line-height: 32px;
+      color: rgba(255, 255, 255, 0.7);
+      margin-top: 30px;
+    }
+    .content__logo-style-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 40px;
+      margin-top: 60px;
+      .content__logo-type {
+        &:nth-child(n + 3) {
+          margin-top: 58px;
+        }
+        .content__logo-type-box {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          width: 630px;
+          height: 150px;
+          border-radius: 30px;
+          &.content__logo-type-box--white {
+            background-color: #fff;
+          }
+          &.content__logo-type-box--black {
+            background-color: #000;
+          }
+          &.content__logo-type-box--blue {
+            background-color: #0f4c81;
+          }
+        }
+      }
+      .content__logo-type-info {
+        margin-top: 30px;
+        .content__logo-type-color {
+          font-family: $content-font;
+          font-size: 26px;
+          font-weight: 800;
+          line-height: 37px;
+          color: #fff;
+        }
+        .content__logo-type-style {
+          font-size: 18px;
+          font-weight: 500;
+          line-height: 27px;
+          color: rgba(255, 255, 255, 0.7);
+          margin-top: 20px;
+        }
+      }
+    }
+  }
+}
+@include desktopToLaptop {
+  .content {
+    .content__logo {
+      .content__logo-info {
+        .content__logo-info-img {
+          .content__logo-info-img-box {
+            width: calc((100% - 60px) / 3);
+          }
+        }
+      }
+    }
+    .content__logo-style {
+      .content__logo-style-list {
+        .content__logo-type {
+          width: calc((100% - 80px) / 2);
+          .content__logo-type-box {
+            width: 100%;
+          }
+        }
+      }
+    }
+  }
+}
