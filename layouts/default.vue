@@ -58,26 +58,30 @@
         >
       </div>
       <div class="footer__content">
-        <p class="footer__text">주식회사 버비</p>
-        <div>
-          <ul>
-            <li>
-              <span>대표자</span>
+        <p class="footer__title">버비컴퍼니</p>
+        <ul>
+          <li class="footer__text-col2">
+            <div>
+              <span>대표:</span>
               <span class="footer__text">박완</span>
-            </li>
-            <li>
-              <span>사업자 등록번호</span>
+            </div>
+            <div>
+              <span>사업자 등록번호:</span>
               <span class="footer__text">123-45-67890</span>
-            </li>
-            <li>
-              <span>이메일</span>
-              <span class="footer__text">verbykorea@gmail.com</span>
-            </li>
-          </ul>
-          <p class="footer__copyright">
-            ⓒ2024 Verby.CO.,LTD. All rights reserved.
-          </p>
-        </div>
+            </div>
+          </li>
+          <li>
+            <span>주소:</span>
+            <span class="footer__text"
+              >03628 서울특별시 서대문구 통일로 484 서대문구창업지원센터 321호
+              버비컴퍼니</span
+            >
+          </li>
+          <li>
+            <span>고객 문의:</span>
+            <span class="footer__text">verbykorea@gmail.com</span>
+          </li>
+        </ul>
       </div>
     </footer>
   </div>
