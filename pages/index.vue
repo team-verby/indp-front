@@ -186,7 +186,9 @@ export default {
     },
     async getStoreList() {
       const { data } = await this.$axios
-        .get(`/api/main/stores?page=${this.paging.page}&size=10`)
+        .get(
+          `https://api.verby.co.kr/api/main/stores?page=${this.paging.page}&size=10`
+        )
         .catch(function (error) {
           alert(error.message);
         });

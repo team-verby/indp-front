@@ -43,7 +43,7 @@ export default {
   modules: ["@nuxtjs/axios", "@nuxtjs/proxy"],
   axios: {
     credentials: true,
-    proxy: process.env.NODE_ENV === "development" ? true : false,
+    proxy: process.env.NODE_ENV === "production" ? false : true,
   },
   proxy: {
     "/api/": {
