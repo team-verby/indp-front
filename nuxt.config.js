@@ -22,6 +22,7 @@ export default {
       },
       { name: "author", content: "VERBY" },
       { name: "format-detection", content: "telephone=no" },
+      { name: "naver-site-verification", content: "ea05ce8eec4b6f1048f7ba093e795e4ce35077a0"}
     ],
     link: [
       {
