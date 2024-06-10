@@ -3,7 +3,7 @@
 @import "./layout.scss";
 @import "./_mixin.scss";
 
-$content-font: "NanumSquareNeo";
+$content-font: "NanumSquareNeo" sans-serif;
 
 .v-application {
   p {

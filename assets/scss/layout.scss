@@ -1,4 +1,4 @@
-//layout
+$content-font: "NanumSquareNeo" sans-serif;
 .wrap {
   position: relative;
   width: 100%;
@@ -80,7 +80,7 @@ footer {
     }
   }
   .footer__content {
-    font-family: "NanumSquareNeo san-serif";
+    font-family: $content-font;
     font-size: 16px;
     font-weight: 300;
     margin-top: 42px;
