@@ -22,13 +22,17 @@ export default {
       },
       { name: "author", content: "VERBY" },
       { name: "format-detection", content: "telephone=no" },
-      { name: "naver-site-verification", content: "ea05ce8eec4b6f1048f7ba093e795e4ce35077a0"}
+      { name: "naver-site-verification", content: "ea05ce8eec4b6f1048f7ba093e795e4ce35077a0"},
     ],
     link: [
       {
         rel: "stylesheet",
         type: "text/css",
         href: "https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap",
+      },
+      {
+        rel: "icon",
+        href: "/favicon.png"
       },
     ],
   },
