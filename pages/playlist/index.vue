@@ -166,7 +166,7 @@ export default {
   data() {
     return {
       tab: 0,
-      tabItems: ["전체", "서울", "경기", "대전"],
+      tabItems: ["전체", "서울", "경기", "대전", "부산"],
       selectedRegion: "전체",
       stores: [],
       isFirst: true,
