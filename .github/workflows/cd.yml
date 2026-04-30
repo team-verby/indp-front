@@ -2,7 +2,7 @@ name: CD
 
 on:
   push:
-    branches: [ "dev" ]
+    branches: [ "dev", "main" ]
 
 jobs:
   deploy:
@@ -18,8 +18,26 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS }}
 
-      - name: Upload to S3
+      - name: Set BASE_URL for dev
+        if: github.ref == 'refs/heads/dev'
+        run: sed -i "s|const BASE_URL = '.*'|const BASE_URL = 'http://16.184.46.185:8090'|" api.js
+
+      - name: Set BASE_URL for prod
+        if: github.ref == 'refs/heads/main'
+        run: sed -i "s|const BASE_URL = '.*'|const BASE_URL = 'http://16.184.46.185'|" api.js
+
+      - name: Deploy to dev S3
+        if: github.ref == 'refs/heads/dev'
         run: aws s3 sync . s3://indp-front/ --delete --exclude ".git/*" --exclude ".github/*"
 
-      - name: Invalidate CloudFront cache
+      - name: Deploy to prod S3
+        if: github.ref == 'refs/heads/main'
+        run: aws s3 sync . s3://indp-front-prod/ --delete --exclude ".git/*" --exclude ".github/*"
+
+      - name: Invalidate dev CloudFront
+        if: github.ref == 'refs/heads/dev'
         run: aws cloudfront create-invalidation --distribution-id E3BF46XPKD4GJC --paths "/*"
+
+      - name: Invalidate prod CloudFront
+        if: github.ref == 'refs/heads/main'
+        run: aws cloudfront create-invalidation --distribution-id E37T4J4C6L6M14 --paths "/*"
