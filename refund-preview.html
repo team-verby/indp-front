@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>환불 패널 프리뷰</title>
+  <link href="https://fonts.googleapis.com/css2?family=SUIT:wght@100..900&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'SUIT', sans-serif;
+      background: #111114;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+
+    .preview-card {
+      background: #18181c;
+      border-radius: 20px;
+      padding: 28px;
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .section-title {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      color: rgba(255,255,255,0.25);
+      margin-bottom: 14px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+
+    /* 결제 내역 아이템 */
+    .adm-pay-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 12px 10px;
+      border-radius: 10px;
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .adm-pay-item:hover { background: rgba(255,255,255,0.04); }
+    .adm-pay-item.selected { background: rgba(255,92,92,0.08); border-color: rgba(255,92,92,0.35); }
+
+    .adm-pay-radio {
+      width: 16px; height: 16px;
+      border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.2);
+      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      transition: border-color 0.15s;
+    }
+    .adm-pay-item.selected .adm-pay-radio { border-color: #ff5c5c; }
+    .adm-pay-radio-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #ff5c5c;
+      display: none;
+    }
+    .adm-pay-item.selected .adm-pay-radio-dot { display: block; }
+
+    .adm-pay-date { flex-shrink: 0; min-width: 90px; }
+    .adm-pay-date-main { font-size: 13px; font-weight: 700; color: rgba(255,255,255,0.85); }
+    .adm-pay-date-time { font-size: 11px; color: rgba(255,255,255,0.35); margin-top: 2px; }
+    .adm-pay-info { flex: 1; min-width: 0; }
+    .adm-pay-plan { font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.85); }
+    .adm-pay-amount { flex-shrink: 0; font-size: 14px; font-weight: 700; color: rgba(255,255,255,0.85); }
+
+    /* 환불 패널 */
+    .refund-panel {
+      overflow: hidden;
+      max-height: 0;
+      transition: max-height 0.25s ease, opacity 0.2s ease;
+      opacity: 0;
+    }
+    .refund-panel.open { max-height: 120px; opacity: 1; }
+    .refund-panel-inner {
+      margin-top: 12px;
+      background: rgba(255,92,92,0.06);
+      border: 1px solid rgba(255,92,92,0.2);
+      border-radius: 12px;
+      padding: 14px;
+    }
+    .refund-panel-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: #ff5c5c;
+      margin-bottom: 10px;
+    }
+    .refund-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .refund-input {
+      flex: 1;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 14px;
+      font-weight: 500;
+      color: rgba(255,255,255,0.85);
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .refund-input::placeholder { color: rgba(255,255,255,0.25); }
+    .refund-input:focus { border-color: rgba(255,92,92,0.5); }
+    .refund-unit {
+      font-size: 14px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.45);
+      flex-shrink: 0;
+    }
+    .btn-refund {
+      background: #ff5c5c;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 10px 18px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      flex-shrink: 0;
+      transition: opacity 0.15s;
+    }
+    .btn-refund:hover { opacity: 0.85; }
+
+    .hint {
+      font-size: 12px;
+      color: rgba(255,255,255,0.2);
+      text-align: center;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="preview-card">
+    <p class="section-title">결제 내역</p>
+
+    <div class="adm-pay-item" onclick="selectItem(this, 990000)">
+      <div class="adm-pay-radio"><div class="adm-pay-radio-dot"></div></div>
+      <div class="adm-pay-date">
+        <div class="adm-pay-date-main">2026년 04월 01일</div>
+        <div class="adm-pay-date-time">14:32</div>
+      </div>
+      <div class="adm-pay-info">
+        <div class="adm-pay-plan">Plan B 프리미엄 요금제</div>
+      </div>
+      <div class="adm-pay-amount">990,000원</div>
+    </div>
+
+    <div class="adm-pay-item" onclick="selectItem(this, 590000)">
+      <div class="adm-pay-radio"><div class="adm-pay-radio-dot"></div></div>
+      <div class="adm-pay-date">
+        <div class="adm-pay-date-main">2025년 10월 01일</div>
+        <div class="adm-pay-date-time">09:15</div>
+      </div>
+      <div class="adm-pay-info">
+        <div class="adm-pay-plan">Plan A 기본 요금제</div>
+      </div>
+      <div class="adm-pay-amount">590,000원</div>
+    </div>
+
+    <div class="refund-panel" id="refund-panel">
+      <div class="refund-panel-inner">
+        <p class="refund-panel-label">환불 처리</p>
+        <div class="refund-row">
+          <input type="number" class="refund-input" id="refund-amount" placeholder="환불 금액 입력" min="0" />
+          <span class="refund-unit">원</span>
+          <button class="btn-refund" onclick="doRefund()">환불</button>
+        </div>
+      </div>
+    </div>
+
+    <p class="hint">결제 내역을 선택하면 환불 처리 영역이 나타납니다</p>
+  </div>
+
+  <script>
+    function selectItem(el, amount) {
+      document.querySelectorAll('.adm-pay-item').forEach(i => i.classList.remove('selected'));
+      el.classList.add('selected');
+      document.getElementById('refund-panel').classList.add('open');
+      document.getElementById('refund-amount').value = amount;
+    }
+
+    function doRefund() {
+      const amount = parseInt(document.getElementById('refund-amount').value, 10);
+      if (!amount || amount <= 0) { alert('환불 금액을 입력해 주세요.'); return; }
+      alert(`${amount.toLocaleString()}원 환불 처리 (프리뷰)`);
+    }
+  </script>
+</body>
+</html>

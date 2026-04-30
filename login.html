@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>로그인 - 인디피 뮤직</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=SUIT:wght@100..900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="shared.css" />
+  <style>
+    html, body {
+      height: 100%;
+    }
+
+    .login-page {
+      display: flex;
+      height: 100vh;
+      min-height: 600px;
+    }
+
+    /* ── Left Column ── */
+    .login-left {
+      flex: 1;
+      padding: 24px;
+      display: flex;
+      align-items: stretch;
+    }
+
+    .login-photo {
+      width: 100%;
+      border-radius: 32px;
+      object-fit: cover;
+      object-position: center;
+      display: block;
+    }
+
+    /* ── Right Column ── */
+    .login-right {
+      flex: 0 0 480px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 48px 56px;
+      background: white;
+    }
+
+    .login-form-wrap {
+      width: 100%;
+      max-width: 360px;
+    }
+
+    .login-vinyl {
+      width: 120px;
+      height: auto;
+      display: block;
+      margin-bottom: 28px;
+    }
+
+    .login-title {
+      font-size: 32px;
+      font-weight: 800;
+      color: var(--dark);
+      margin-bottom: 8px;
+    }
+
+    .login-subtitle {
+      font-size: 16px;
+      color: var(--text-gray);
+      margin-bottom: 36px;
+    }
+
+    .pw-wrap {
+      position: relative;
+    }
+
+    .pw-wrap .form-input {
+      padding-right: 48px;
+    }
+
+    .pw-toggle {
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 18px;
+      color: var(--text-gray);
+      padding: 0;
+      display: flex;
+      align-items: center;
+    }
+
+    .btn-login {
+      width: 100%;
+      background: var(--dark);
+      color: white;
+      border: none;
+      border-radius: 100px;
+      padding: 18px;
+      font-size: 17px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      margin-top: 8px;
+      transition: opacity 0.15s;
+    }
+
+    .btn-login:hover { opacity: 0.85; }
+
+    @media (max-width: 900px) {
+      .login-left { display: none; }
+      .login-right { flex: 1; padding: 40px 32px; }
+    }
+
+    @media (max-width: 768px) {
+      .login-page {
+        min-height: 100svh;
+        align-items: center;
+      }
+
+      .login-right {
+        padding: 40px 24px;
+      }
+
+      .login-title {
+        font-size: 26px;
+      }
+
+      .login-subtitle {
+        font-size: 14px;
+        margin-bottom: 28px;
+      }
+
+      .login-vinyl {
+        width: 90px;
+        margin-bottom: 20px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .login-right {
+        padding: 32px 20px;
+      }
+
+      .login-title {
+        font-size: 22px;
+      }
+
+      .btn-login {
+        padding: 16px;
+        font-size: 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="login-page">
+
+    <!-- Left: Photo -->
+    <div class="login-left">
+      <img src="photo2.png" alt="매장 사진" class="login-photo" />
+    </div>
+
+    <!-- Right: Form -->
+    <div class="login-right">
+      <div class="login-form-wrap">
+
+        <a href="index.html" style="display:inline-flex;align-items:center;gap:6px;font-size:14px;font-weight:600;color:var(--text-gray);text-decoration:none;margin-bottom:24px;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><polyline points="12 19 5 12 12 5"/></svg>
+          홈으로
+        </a>
+
+        <img src="vinyl.png" alt="인디피 뮤직" class="login-vinyl" />
+
+        <h1 class="login-title">매장 관리자 로그인</h1>
+        <p class="login-subtitle">인디피 뮤직 매장 관리 시스템</p>
+
+        <div class="form-group">
+          <label class="form-label" for="username">아이디</label>
+          <input type="text" id="username" class="form-input" placeholder="아이디를 입력해 주세요" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="password">비밀번호</label>
+          <div class="pw-wrap">
+            <input type="password" id="password" class="form-input" placeholder="비밀번호를 입력해 주세요" />
+            <button class="pw-toggle" type="button" onclick="togglePw()" aria-label="비밀번호 표시/숨기기">
+              <svg id="eye-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <button class="btn-login" onclick="handleLogin()">로그인</button>
+
+      </div>
+    </div>
+
+  </div>
+
+  <script src="api.js"></script>
+  <script>
+    function togglePw() {
+      const pw = document.getElementById('password');
+      const icon = document.getElementById('eye-icon');
+      if (pw.type === 'password') {
+        pw.type = 'text';
+        icon.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
+      } else {
+        pw.type = 'password';
+        icon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+      }
+    }
+
+    async function handleLogin() {
+      const loginId = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value;
+      if (!loginId || !password) { alert('아이디와 비밀번호를 입력해 주세요.'); return; }
+      try {
+        const data = await apiFetch('POST', '/api/owner/login', { loginId, password });
+        setOwnerToken(data.accessToken);
+        try {
+          const storeList = await apiFetch('GET', '/api/owner/stores', undefined, data.accessToken);
+          const storesArr = Array.isArray(storeList) ? storeList
+            : Array.isArray(storeList.stores) ? storeList.stores
+            : storeList.storeId ? [storeList]
+            : storeList.store ? [storeList.store] : [];
+          const first = storesArr[0];
+          if (first && first.storeId) setOwnerStoreId(first.storeId);
+        } catch(e) {}
+        window.location.href = 'playlist.html';
+      } catch(e) {
+        alert('로그인에 실패했습니다. 아이디와 비밀번호를 확인해 주세요.');
+      }
+    }
+  </script>
+
+</body>
+</html>

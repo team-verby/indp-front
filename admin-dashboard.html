@@ -1,0 +1,3268 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>관리자 대시보드 - 인디피 뮤직</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=SUIT:wght@100..900&display=swap" rel="stylesheet" />
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+  <script src="api.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'SUIT', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #0f0f11;
+      color: #fff;
+      min-height: 100vh;
+      display: flex;
+    }
+
+    /* ── SIDEBAR ── */
+    .sidebar {
+      width: 240px;
+      flex-shrink: 0;
+      background: #141416;
+      border-right: 1px solid rgba(255,255,255,0.07);
+      display: flex;
+      flex-direction: column;
+      padding: 28px 0 24px;
+      position: fixed;
+      top: 0; left: 0;
+      height: 100vh;
+    }
+
+    .sidebar-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 24px 32px;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+      margin-bottom: 20px;
+    }
+
+    .sidebar-logo img {
+      height: 28px;
+      filter: brightness(0) invert(1);
+    }
+
+    .sidebar-logo-badge {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      color: #111;
+      background: #c6f135;
+      padding: 2px 8px;
+      border-radius: 100px;
+    }
+
+    .sidebar-nav { flex: 1; padding: 0 12px; }
+
+    .nav-section-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      color: rgba(255,255,255,0.25);
+      padding: 0 12px;
+      margin-bottom: 6px;
+      margin-top: 8px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 11px 12px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      color: rgba(255,255,255,0.45);
+      text-decoration: none;
+      transition: background 0.15s, color 0.15s;
+      margin-bottom: 2px;
+    }
+
+    .nav-item:hover { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.85); }
+    .nav-item.active { background: rgba(198,241,53,0.12); color: #c6f135; font-weight: 700; }
+    .nav-item svg { flex-shrink: 0; opacity: 0.6; }
+    .nav-item.active svg { opacity: 1; }
+
+    .sidebar-bottom {
+      padding: 16px 12px 0;
+      border-top: 1px solid rgba(255,255,255,0.07);
+    }
+
+    .admin-profile {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 10px;
+    }
+
+    .admin-avatar {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: #c6f135;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 800; color: #111;
+      flex-shrink: 0;
+    }
+
+    .admin-info { flex: 1; min-width: 0; }
+    .admin-name { font-size: 13px; font-weight: 700; color: rgba(255,255,255,0.85); }
+    .admin-role { font-size: 11px; color: rgba(255,255,255,0.3); }
+
+    .logout-btn {
+      background: none; border: none;
+      color: rgba(255,255,255,0.25);
+      cursor: pointer; padding: 4px;
+      display: flex; align-items: center;
+      transition: color 0.15s;
+    }
+    .logout-btn:hover { color: #ff5c5c; }
+
+    /* ── MAIN ── */
+    .main {
+      margin-left: 240px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    .topbar {
+      height: 60px;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 32px;
+      background: #0f0f11;
+      position: sticky; top: 0; z-index: 10;
+    }
+
+    .topbar-title { font-size: 16px; font-weight: 700; color: #fff; }
+    .topbar-date { font-size: 13px; color: rgba(255,255,255,0.3); }
+
+    .page-content { flex: 1; padding: 36px 32px; }
+
+    .section-panel { display: none; }
+    .section-panel.active { display: block; }
+
+    .panel-header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    .panel-title { font-size: 22px; font-weight: 800; color: #fff; }
+    .panel-subtitle { font-size: 14px; color: rgba(255,255,255,0.35); margin-top: 4px; }
+
+    /* ── Filter bar ── */
+    .filter-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .filter-search {
+      flex: 1;
+      background: #1a1a1e;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 14px;
+      font-family: inherit;
+      color: #fff;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .filter-search::placeholder { color: rgba(255,255,255,0.2); }
+    .filter-search:focus { border-color: rgba(198,241,53,0.5); }
+
+    .filter-select {
+      background: #1a1a1e;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 14px;
+      font-family: inherit;
+      color: rgba(255,255,255,0.6);
+      outline: none;
+      cursor: pointer;
+    }
+
+    /* ── Table ── */
+    .store-table-wrap {
+      background: #1a1a1e;
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+
+    .store-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    .store-table thead tr { border-bottom: 1px solid rgba(255,255,255,0.07); }
+
+    .store-table th {
+      padding: 13px 16px;
+      text-align: left;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.07em;
+      color: rgba(255,255,255,0.3);
+      white-space: nowrap;
+    }
+
+    .store-table tbody tr {
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      transition: background 0.15s;
+    }
+    .store-table tbody tr:last-child { border-bottom: none; }
+    .store-table tbody tr:hover { background: rgba(255,255,255,0.03); }
+
+    .store-table td {
+      padding: 14px 16px;
+      color: rgba(255,255,255,0.75);
+      white-space: nowrap;
+    }
+
+    .store-name-cell { display: flex; align-items: center; gap: 10px; }
+
+    .store-thumb {
+      width: 36px; height: 36px;
+      border-radius: 8px;
+      object-fit: cover;
+      background: #2a2a2e;
+      flex-shrink: 0;
+    }
+
+    .store-name-text { font-weight: 700; color: #fff; }
+    .store-addr-text { font-size: 12px; color: rgba(255,255,255,0.35); margin-top: 2px; }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      border-radius: 100px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .status-badge::before {
+      content: '';
+      width: 6px; height: 6px;
+      border-radius: 50%;
+    }
+    .status-active   { background: rgba(198,241,53,0.12);  color: #c6f135; }
+    .status-active::before   { background: #c6f135; }
+    .status-expired  { background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.35); }
+    .status-expired::before  { background: rgba(255,255,255,0.3); }
+    .status-pending-active  { background: rgba(99,179,255,0.12); color: #63b3ff; }
+    .status-pending-active::before  { background: #63b3ff; }
+    .status-pending-payment { background: rgba(255,180,0,0.12); color: #ffb400; }
+    .status-pending-payment::before { background: #ffb400; }
+
+    .plan-badge {
+      background: rgba(255,255,255,0.08);
+      color: rgba(255,255,255,0.6);
+      font-size: 12px;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 6px;
+    }
+
+    .btn-row { display: flex; gap: 6px; }
+
+    .btn-action {
+      background: rgba(255,255,255,0.06);
+      border: none; border-radius: 7px;
+      padding: 6px 12px;
+      font-size: 12px; font-weight: 600;
+      color: rgba(255,255,255,0.5);
+      font-family: inherit;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+    .btn-action:hover { background: rgba(255,255,255,0.12); color: #fff; }
+    .btn-action.approve { color: #c6f135; }
+    .btn-action.approve:hover { background: rgba(198,241,53,0.12); }
+    .btn-action.reject  { color: #ff5c5c; }
+    .btn-action.reject:hover  { background: rgba(255,92,92,0.1); }
+
+    /* ── DETAIL DRAWER ── */
+    .drawer-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 200;
+    }
+    .drawer-backdrop.open { display: block; }
+
+    .drawer {
+      position: fixed;
+      top: 0; right: 0;
+      width: 520px;
+      height: 100vh;
+      background: #18181b;
+      border-left: 1px solid rgba(255,255,255,0.08);
+      z-index: 201;
+      display: flex;
+      flex-direction: column;
+      transform: translateX(100%);
+      transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
+      overflow: hidden;
+    }
+    .drawer.open { transform: translateX(0); }
+
+    .drawer-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 22px 28px;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+      flex-shrink: 0;
+    }
+
+    .drawer-title { font-size: 17px; font-weight: 800; color: #fff; }
+    .drawer-subtitle { font-size: 13px; color: rgba(255,255,255,0.35); margin-top: 3px; }
+
+    .drawer-close {
+      background: rgba(255,255,255,0.07);
+      border: none;
+      border-radius: 8px;
+      width: 32px; height: 32px;
+      display: flex; align-items: center; justify-content: center;
+      color: rgba(255,255,255,0.5);
+      cursor: pointer;
+      font-size: 16px;
+      transition: background 0.15s;
+    }
+    .drawer-close:hover { background: rgba(255,255,255,0.12); color: #fff; }
+
+    /* Drawer tabs */
+    .drawer-tabs {
+      display: flex;
+      gap: 0;
+      padding: 0 28px;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+      flex-shrink: 0;
+    }
+
+    .drawer-tab {
+      padding: 13px 18px;
+      font-size: 14px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.35);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      transition: color 0.15s, border-color 0.15s;
+      white-space: nowrap;
+    }
+
+    .drawer-tab:hover { color: rgba(255,255,255,0.7); }
+    .drawer-tab.active { color: #fff; border-bottom-color: #c6f135; }
+
+    .drawer-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 28px;
+    }
+
+    .drawer-body::-webkit-scrollbar { width: 4px; }
+    .drawer-body::-webkit-scrollbar-track { background: transparent; }
+    .drawer-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+
+    .drawer-tab-panel { display: none; }
+    .drawer-tab-panel.active { display: block; }
+
+    /* 빈 탭 상태 */
+    .tab-empty {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 80px 0;
+      text-align: center;
+      color: rgba(255,255,255,0.2);
+      gap: 14px;
+    }
+
+    .tab-empty svg { opacity: 0.25; }
+    .tab-empty p { font-size: 14px; }
+
+    /* ── 플레이리스트 탭 ── */
+    .playlist-tab-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .playlist-tab-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.3);
+      letter-spacing: 0.05em;
+    }
+
+    .btn-add-slot {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(198,241,53,0.1);
+      color: #c6f135;
+      border: 1px solid rgba(198,241,53,0.2);
+      border-radius: 8px;
+      padding: 7px 12px;
+      font-size: 13px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .btn-add-slot:hover { background: rgba(198,241,53,0.18); }
+
+    .slot-list { display: flex; flex-direction: column; gap: 8px; }
+
+    .slot-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #111113;
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 12px;
+      padding: 12px 14px;
+      transition: border-color 0.2s;
+    }
+
+    .slot-item:hover { border-color: rgba(255,255,255,0.14); }
+
+    .slot-time {
+      font-size: 14px;
+      font-weight: 700;
+      color: #fff;
+      white-space: nowrap;
+      min-width: 120px;
+    }
+
+    .slot-separator {
+      font-size: 12px;
+      color: rgba(255,255,255,0.2);
+      flex-shrink: 0;
+    }
+
+    .slot-mood-select {
+      flex: 1;
+      background: #1e1e22;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 13px;
+      font-family: inherit;
+      color: rgba(255,255,255,0.8);
+      outline: none;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+
+    .slot-mood-select:focus { border-color: rgba(198,241,53,0.5); }
+
+    .slot-mood-select option { background: #1e1e22; }
+
+    .btn-del-slot {
+      background: none;
+      border: none;
+      color: rgba(255,255,255,0.2);
+      cursor: pointer;
+      padding: 4px;
+      display: flex;
+      align-items: center;
+      border-radius: 6px;
+      transition: color 0.15s, background 0.15s;
+      flex-shrink: 0;
+    }
+
+    .btn-del-slot:hover { color: #ff5c5c; background: rgba(255,92,92,0.1); }
+
+    .slot-save-row {
+      margin-top: 20px;
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .btn-save-slots {
+      background: #c6f135;
+      color: #111;
+      border: none;
+      border-radius: 10px;
+      padding: 11px 24px;
+      font-size: 14px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+
+    .btn-save-slots:hover { opacity: 0.85; }
+
+    /* ── 추천곡 관리 탭 ── */
+    .rec-section-title {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      color: rgba(255,255,255,0.25);
+      margin-bottom: 12px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .genre-block-wrap {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 28px;
+    }
+
+    .genre-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 7px 14px;
+      border-radius: 100px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1.5px solid rgba(255,255,255,0.12);
+      background: transparent;
+      color: rgba(255,255,255,0.55);
+      font-family: inherit;
+      transition: all 0.15s;
+      user-select: none;
+    }
+
+    .genre-chip:hover {
+      border-color: rgba(255,255,255,0.25);
+      color: rgba(255,255,255,0.8);
+    }
+
+    .genre-chip.blocked {
+      background: rgba(255,92,92,0.1);
+      border-color: rgba(255,92,92,0.35);
+      color: #ff5c5c;
+    }
+
+    .genre-chip.blocked::before {
+      content: '✕ ';
+      font-size: 11px;
+    }
+
+    /* 추천곡 목록 */
+    .rec-list { display: flex; flex-direction: column; gap: 8px; }
+
+    .rec-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: #111113;
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 12px;
+      padding: 12px 14px;
+    }
+
+    .rec-index {
+      font-size: 12px;
+      font-weight: 700;
+      color: rgba(255,255,255,0.2);
+      width: 20px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    .rec-info { flex: 1; min-width: 0; }
+
+    .rec-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #fff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .rec-artist {
+      font-size: 12px;
+      color: rgba(255,255,255,0.4);
+      margin-top: 2px;
+    }
+
+    .rec-meta {
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    .rec-who {
+      font-size: 12px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.5);
+    }
+
+    .rec-time {
+      font-size: 11px;
+      color: rgba(255,255,255,0.25);
+      margin-top: 2px;
+    }
+
+    .rec-genre-badge {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 6px;
+      background: rgba(255,255,255,0.07);
+      color: rgba(255,255,255,0.4);
+      margin-top: 4px;
+      display: inline-block;
+    }
+
+    .rec-item.blocked-item {
+      opacity: 0.4;
+      position: relative;
+    }
+
+    .rec-item.blocked-item::after {
+      content: '차단됨';
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 11px;
+      font-weight: 700;
+      color: #ff5c5c;
+      background: rgba(255,92,92,0.1);
+      border-radius: 6px;
+      padding: 2px 8px;
+    }
+
+    .rec-item.today {
+      background: rgba(198,241,53,0.06);
+      border-color: rgba(198,241,53,0.2);
+    }
+
+    .rec-today-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: #c6f135;
+      flex-shrink: 0;
+    }
+
+    .rec-group-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      color: rgba(255,255,255,0.25);
+      margin: 20px 0 10px;
+    }
+
+    .rec-group-label:first-child { margin-top: 0; }
+
+    .rec-group-label.today-label { color: #c6f135; }
+
+    /* 상세 섹션 */
+    .detail-section {
+      margin-bottom: 28px;
+    }
+
+    .detail-section-title {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      color: rgba(255,255,255,0.25);
+      margin-bottom: 14px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .detail-grid.full { grid-template-columns: 1fr; }
+
+    .detail-item {}
+
+    .detail-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.3);
+      margin-bottom: 5px;
+    }
+
+    .detail-value {
+      font-size: 14px;
+      font-weight: 500;
+      color: rgba(255,255,255,0.85);
+      line-height: 1.5;
+    }
+
+    /* 결제 내역 목록 */
+    .adm-pay-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 12px 10px;
+      border-radius: 10px;
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .adm-pay-item:hover { background: rgba(255,255,255,0.04); }
+    .adm-pay-item.selected { background: rgba(255,92,92,0.08); border-color: rgba(255,92,92,0.35); }
+    .adm-pay-radio {
+      width: 16px; height: 16px;
+      border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.2);
+      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      transition: border-color 0.15s;
+    }
+    .adm-pay-item.selected .adm-pay-radio { border-color: #ff5c5c; }
+    .adm-pay-radio-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #ff5c5c;
+      display: none;
+    }
+    .adm-pay-item.selected .adm-pay-radio-dot { display: block; }
+    .adm-pay-date { flex-shrink: 0; min-width: 90px; }
+    .adm-pay-date-main { font-size: 13px; font-weight: 700; color: rgba(255,255,255,0.85); }
+    .adm-pay-date-time { font-size: 11px; color: rgba(255,255,255,0.35); margin-top: 2px; }
+    .adm-pay-info { flex: 1; min-width: 0; }
+    .adm-pay-plan { font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.85); }
+    .adm-pay-desc { font-size: 11px; color: rgba(255,255,255,0.35); margin-top: 2px; }
+    .adm-pay-amount { flex-shrink: 0; font-size: 14px; font-weight: 700; color: rgba(255,255,255,0.85); }
+    .adm-pay-empty { font-size: 13px; color: rgba(255,255,255,0.3); text-align: center; padding: 16px 0; }
+    .adm-pay-item.refunded { opacity: 0.55; pointer-events: none; cursor: default; }
+    .adm-pay-item.refunded .adm-pay-amount { text-decoration: line-through; color: rgba(255,255,255,0.3); }
+    .refund-badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      background: rgba(255,92,92,0.15); color: #ff7a7a;
+      border: 1px solid rgba(255,92,92,0.3);
+      border-radius: 6px; padding: 2px 7px; font-size: 11px; font-weight: 700;
+      margin-top: 3px;
+    }
+
+    /* 환불 입력 패널 */
+    .refund-panel {
+      overflow: hidden;
+      max-height: 0;
+      transition: max-height 0.25s ease, opacity 0.2s ease;
+      opacity: 0;
+    }
+    .refund-panel.open { max-height: 120px; opacity: 1; }
+    .refund-panel-inner {
+      margin-top: 12px;
+      background: rgba(255,92,92,0.06);
+      border: 1px solid rgba(255,92,92,0.2);
+      border-radius: 12px;
+      padding: 14px;
+    }
+    .refund-panel-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: #ff5c5c;
+      margin-bottom: 10px;
+    }
+
+    .detail-photo {
+      width: 100%;
+      height: 240px;
+      object-fit: cover;
+      border-radius: 20px;
+      display: block;
+    }
+
+    .detail-photo-default {
+      width: 100%;
+      height: 240px;
+      border-radius: 20px;
+      background: #1a1a2e;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .detail-photo-default img {
+      width: 80px;
+      height: 80px;
+      opacity: 0.85;
+    }
+
+    .detail-photo-default span {
+      font-size: 13px;
+      font-weight: 700;
+      color: rgba(255,255,255,0.75);
+      text-align: center;
+      padding: 0 16px;
+    }
+
+    .detail-photo-gallery {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .refund-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .refund-input {
+      flex: 1;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 14px;
+      font-weight: 500;
+      color: rgba(255,255,255,0.85);
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .refund-input::placeholder { color: rgba(255,255,255,0.25); }
+    .refund-input:focus { border-color: rgba(255,92,92,0.5); }
+
+    .refund-unit {
+      font-size: 14px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.45);
+      flex-shrink: 0;
+    }
+
+    .btn-refund {
+      background: #ff5c5c;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 10px 18px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      flex-shrink: 0;
+      transition: opacity 0.15s;
+    }
+
+    .btn-refund:hover { opacity: 0.85; }
+    .btn-refund:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .drawer-footer {
+      padding: 18px 28px;
+      border-top: 1px solid rgba(255,255,255,0.07);
+      display: flex;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    .btn-drawer-approve {
+      flex: 1;
+      background: #c6f135;
+      color: #111;
+      border: none;
+      border-radius: 10px;
+      padding: 13px;
+      font-size: 14px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .btn-drawer-approve:hover { opacity: 0.85; }
+
+    /* Now playing indicator in table */
+    .now-playing-cell { display: flex; align-items: center; gap: 8px; }
+
+    .play-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: #4cda64;
+      flex-shrink: 0;
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(76,218,100,0.5); }
+      50%       { opacity: 0.6; box-shadow: 0 0 0 4px rgba(76,218,100,0); }
+    }
+
+    .now-playing-title {
+      font-size: 13px;
+      color: rgba(255,255,255,0.85);
+      max-width: 160px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .now-playing-artist {
+      font-size: 11px;
+      color: rgba(255,255,255,0.35);
+      margin-top: 1px;
+      max-width: 160px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .no-playing {
+      font-size: 13px;
+      color: rgba(255,255,255,0.2);
+    }
+
+    /* ── 플레이리스트 관리 패널 ── */
+    .pl-layout {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 20px;
+      align-items: start;
+    }
+
+    .pl-left { display: flex; flex-direction: column; gap: 0; }
+
+    .pl-right {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* 우측 헤더 */
+    .pl-right-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .pl-right-stats {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .pl-stat-item {
+      font-size: 13px;
+      color: rgba(255,255,255,0.4);
+    }
+    .pl-stat-item strong { font-weight: 700; }
+    .pl-stat-divider { color: rgba(255,255,255,0.15); font-size: 12px; }
+    .pl-stat-last { font-size: 12px; }
+
+    .btn-create-pl {
+      background: #c6f135;
+      color: #111;
+      border: none;
+      border-radius: 10px;
+      padding: 11px 20px;
+      font-size: 14px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      white-space: nowrap;
+      flex-shrink: 0;
+      transition: opacity 0.15s;
+    }
+    .btn-create-pl:hover { opacity: 0.85; }
+    .btn-create-pl:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* 일괄 적용 시각 */
+    .pl-bulk-schedule {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      background: rgba(198,241,53,0.06);
+      border: 1px solid rgba(198,241,53,0.15);
+      border-radius: 10px;
+      padding: 8px 12px;
+      margin-bottom: 10px;
+    }
+    .pl-bulk-schedule.show { display: flex; }
+    .pl-bulk-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: #c6f135;
+      white-space: nowrap;
+    }
+    .pl-bulk-apply-btn {
+      background: #c6f135;
+      color: #111;
+      border: none;
+      border-radius: 7px;
+      padding: 6px 12px;
+      font-size: 12px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: opacity 0.15s;
+    }
+    .pl-bulk-apply-btn:hover { opacity: 0.85; }
+
+    /* 업로드 카드 */
+    .pl-upload-card {
+      background: #1a1a1e;
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 16px;
+      padding: 22px;
+      margin-bottom: 16px;
+    }
+
+    .pl-upload-card-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: rgba(255,255,255,0.6);
+      margin-bottom: 14px;
+    }
+
+    .pl-dropzone {
+      border: 1.5px dashed rgba(255,255,255,0.15);
+      border-radius: 12px;
+      padding: 28px 16px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+    }
+
+    .pl-dropzone:hover, .pl-dropzone.drag-over {
+      border-color: #c6f135;
+      background: rgba(198,241,53,0.04);
+    }
+
+    .pl-dropzone svg { opacity: 0.35; margin-bottom: 10px; }
+
+    .pl-dropzone-text {
+      font-size: 13px;
+      color: rgba(255,255,255,0.35);
+      line-height: 1.6;
+    }
+
+    .pl-dropzone-text strong {
+      color: #c6f135;
+      font-weight: 700;
+    }
+
+    .pl-file-input { display: none; }
+
+    /* 업로드된 파일 정보 */
+    .pl-file-info {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      background: rgba(198,241,53,0.07);
+      border: 1px solid rgba(198,241,53,0.2);
+      border-radius: 10px;
+      padding: 10px 14px;
+      margin-top: 12px;
+    }
+
+    .pl-file-info.show { display: flex; }
+
+    .pl-file-name {
+      flex: 1;
+      font-size: 13px;
+      font-weight: 600;
+      color: #c6f135;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .pl-file-clear {
+      background: none; border: none;
+      color: rgba(198,241,53,0.5);
+      cursor: pointer; font-size: 14px;
+      display: flex; align-items: center;
+    }
+    .pl-file-clear:hover { color: #c6f135; }
+
+    /* 시트 감지 목록 */
+    .pl-sheets-wrap {
+      display: none;
+      margin-top: 14px;
+    }
+    .pl-sheets-wrap.show { display: block; }
+
+    .pl-sheets-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: rgba(255,255,255,0.3);
+      letter-spacing: 0.07em;
+      margin-bottom: 8px;
+    }
+
+    .pl-sheet-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 14px;
+    }
+
+    .pl-sheet-chip {
+      background: rgba(255,255,255,0.07);
+      border-radius: 6px;
+      padding: 4px 10px;
+      font-size: 12px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.55);
+    }
+
+    .pl-sheet-chip.matched {
+      background: rgba(198,241,53,0.1);
+      color: #c6f135;
+    }
+
+    /* 매장 리스트 (우측 상단) */
+    .pl-store-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .pl-store-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: #1a1a1e;
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 12px;
+      padding: 14px 16px;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .pl-store-item:hover { border-color: rgba(255,255,255,0.15); background: #1e1e22; }
+    .pl-store-item.active { border-color: #c6f135; background: rgba(198,241,53,0.05); }
+
+    .pl-store-thumb {
+      width: 38px; height: 38px;
+      border-radius: 8px;
+      object-fit: cover;
+      flex-shrink: 0;
+      background: #2a2a2e;
+    }
+
+    .pl-store-name {
+      flex: 1;
+      font-size: 14px;
+      font-weight: 700;
+      color: #fff;
+      min-width: 0;
+    }
+
+    .pl-store-count {
+      font-size: 12px;
+      color: rgba(255,255,255,0.3);
+      font-weight: 500;
+      margin-top: 2px;
+    }
+
+    .pl-count-badge {
+      font-size: 12px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 100px;
+      background: rgba(198,241,53,0.12);
+      color: #c6f135;
+      white-space: nowrap;
+    }
+
+    .pl-count-badge.empty {
+      background: rgba(255,255,255,0.06);
+      color: rgba(255,255,255,0.25);
+    }
+
+    /* pl-detail-empty 공통 */
+    .pl-detail-empty {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 60px 0;
+      color: rgba(255,255,255,0.2);
+      gap: 12px;
+    }
+    .pl-detail-empty svg { opacity: 0.2; }
+    .pl-detail-empty p { font-size: 14px; }
+
+    .pl-detail-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .pl-detail-store-name {
+      font-size: 16px;
+      font-weight: 800;
+      color: #fff;
+    }
+
+    .pl-detail-count {
+      font-size: 13px;
+      color: rgba(255,255,255,0.35);
+      margin-top: 2px;
+    }
+
+    .pl-track-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    .pl-track-table th {
+      padding: 11px 20px;
+      text-align: left;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.07em;
+      color: rgba(255,255,255,0.25);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      white-space: nowrap;
+    }
+
+    .pl-track-table td {
+      padding: 12px 20px;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      color: rgba(255,255,255,0.75);
+    }
+
+    .pl-track-table tbody tr:last-child td { border-bottom: none; }
+    .pl-track-table tbody tr:hover td { background: rgba(255,255,255,0.02); }
+
+    .pl-track-num { color: rgba(255,255,255,0.2); font-size: 12px; width: 36px; }
+    .pl-track-title { font-weight: 600; color: #fff; }
+
+    /* 페이지네이션 */
+    .pl-pagination {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 20px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .pl-page-info {
+      font-size: 13px;
+      color: rgba(255,255,255,0.3);
+    }
+
+    .pl-page-btns {
+      display: flex;
+      gap: 6px;
+    }
+
+    .pl-page-btn {
+      background: rgba(255,255,255,0.07);
+      border: none;
+      border-radius: 8px;
+      width: 32px; height: 32px;
+      display: flex; align-items: center; justify-content: center;
+      color: rgba(255,255,255,0.5);
+      cursor: pointer;
+      font-size: 13px;
+      font-family: inherit;
+      font-weight: 600;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .pl-page-btn:hover:not(:disabled) { background: rgba(255,255,255,0.13); color: #fff; }
+    .pl-page-btn.active { background: #c6f135; color: #111; }
+    .pl-page-btn:disabled { opacity: 0.25; cursor: not-allowed; }
+
+    /* 시트 섹션 */
+    .pl-sheet-section { margin-bottom: 12px; }
+    .pl-sheets-label.unmatched { color: rgba(255,180,0,0.6); }
+
+    /* 매칭 배지 */
+    .pl-match-badge {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 100px;
+      flex-shrink: 0;
+    }
+    .pl-match-badge.matched { background: rgba(198,241,53,0.12); color: #c6f135; }
+    .pl-match-badge.unmatched { background: rgba(255,180,0,0.1); color: #ffb400; }
+
+    /* 매장 아이템 - 재설계 */
+    .pl-store-item {
+      background: #1a1a1e;
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 12px;
+      padding: 14px 16px;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+      margin-bottom: 8px;
+    }
+    .pl-store-item:hover { border-color: rgba(255,255,255,0.15); background: #1e1e22; }
+    .pl-store-item.active { border-color: #c6f135; background: rgba(198,241,53,0.05); }
+
+    .pl-store-item-top {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .pl-store-meta {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 4px;
+      font-size: 12px;
+    }
+    .pl-meta-current { color: rgba(255,255,255,0.3); }
+    .pl-meta-arrow { color: rgba(255,255,255,0.2); }
+    .pl-meta-new { color: #c6f135; font-weight: 700; }
+    .pl-meta-none { color: rgba(255,255,255,0.2); }
+
+    .pl-store-item-schedule {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .pl-schedule-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: rgba(255,255,255,0.35);
+      white-space: nowrap;
+    }
+    .pl-schedule-inputs {
+      display: flex;
+      gap: 6px;
+      flex: 1;
+    }
+    .pl-schedule-input {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
+      padding: 7px 10px;
+      font-size: 12px;
+      font-family: inherit;
+      color: #fff;
+      outline: none;
+      color-scheme: dark;
+    }
+    .pl-schedule-input.date-input { flex: 1.4; min-width: 0; }
+    .pl-schedule-input.time-input { flex: 1; min-width: 0; cursor: pointer; }
+    .pl-schedule-input.time-input option { background: #1e1e24; color: #fff; }
+    .pl-schedule-input:focus { border-color: #c6f135; }
+
+    /* 아코디언 확장 영역 */
+    .pl-store-expand {
+      display: none;
+      margin-top: 12px;
+      border-top: 1px solid rgba(255,255,255,0.07);
+      padding-top: 12px;
+    }
+    .pl-store-item.expanded .pl-store-expand { display: block; }
+
+    .pl-store-chevron {
+      font-size: 12px;
+      color: rgba(255,255,255,0.25);
+      transition: transform 0.2s;
+      flex-shrink: 0;
+      margin-left: 4px;
+    }
+    .pl-store-item.expanded .pl-store-chevron { transform: rotate(180deg); }
+
+    /* 2단 비교 패널 */
+    #pl-detail-wrap {
+      background: #1a1a1e;
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+
+    .pl-compare-header {
+      padding: 18px 24px;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .pl-compare-wrap {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .pl-compare-col {
+      overflow: hidden;
+    }
+    .pl-compare-col:first-child {
+      border-right: 1px solid rgba(255,255,255,0.07);
+    }
+
+    .pl-compare-col-title {
+      padding: 10px 16px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.07em;
+      color: rgba(255,255,255,0.3);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .pl-compare-col-title span {
+      font-size: 12px;
+      font-weight: 700;
+      color: #c6f135;
+    }
+    .pl-compare-col-title .pl-count-current {
+      color: rgba(255,255,255,0.4);
+    }
+
+    .pl-compare-col-body {
+      overflow-y: auto;
+      max-height: 500px;
+    }
+
+    .pl-compare-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      font-size: 13px;
+    }
+    .pl-compare-row:last-child { border-bottom: none; }
+    .pl-compare-num { color: rgba(255,255,255,0.2); font-size: 11px; width: 24px; flex-shrink: 0; }
+    .pl-compare-title { flex: 1; font-weight: 600; color: #fff; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pl-compare-artist { color: rgba(255,255,255,0.4); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 80px; }
+
+    .pl-compare-empty {
+      padding: 40px 16px;
+      text-align: center;
+      color: rgba(255,255,255,0.2);
+      font-size: 13px;
+    }
+
+    /* 토스트 */
+    .pl-toast {
+      position: fixed;
+      bottom: 32px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: #1e1e22;
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 12px;
+      padding: 14px 22px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #fff;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s, transform 0.25s;
+      z-index: 9999;
+      white-space: nowrap;
+    }
+    .pl-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .pl-toast.success { border-color: rgba(198,241,53,0.4); color: #c6f135; }
+    .pl-toast.error { border-color: rgba(255,80,80,0.4); color: #ff7070; }
+
+    @media (max-width: 1000px) {
+      .pl-layout { grid-template-columns: 240px 1fr; }
+    }
+    @media (max-width: 768px) {
+      .pl-layout { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 768px) {
+      /* 플레이리스트 업로드 카드 */
+      .pl-upload-card { padding: 16px; }
+      .pl-dropzone { padding: 20px 12px; }
+
+      /* 예약 시간 */
+      .pl-schedule-row { flex-direction: column; align-items: flex-start; gap: 6px; }
+      .pl-schedule-input { width: 100%; }
+
+      /* 매장 리스트 */
+      .pl-store-item { padding: 12px; }
+      .pl-store-name { font-size: 13px; }
+
+      /* 상세 패널 */
+      #pl-detail-wrap { min-height: 300px; }
+      .pl-compare-wrap { grid-template-columns: 1fr; }
+      .pl-compare-col:first-child { border-right: none; border-bottom: 1px solid rgba(255,255,255,0.07); }
+      .pl-compare-col-body { max-height: 300px; }
+      .pl-compare-artist { display: none; }
+
+      /* 토스트 */
+      .pl-toast { bottom: 16px; font-size: 13px; padding: 12px 18px; white-space: normal; max-width: 90vw; text-align: center; }
+
+      /* 드로어 */
+      .drawer-tab-list { overflow-x: auto; }
+
+      /* 필터/카운트 바 */
+      .panel-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+      .store-count-badge { align-self: flex-start; }
+    }
+
+    @media (max-width: 480px) {
+      .topbar-date { display: none; }
+      .pl-store-thumb { width: 32px; height: 32px; }
+      .pl-count-badge { font-size: 11px; padding: 2px 8px; }
+      .btn-create-pl { font-size: 13px; padding: 11px; }
+      .pl-detail-tab { font-size: 12px; padding: 10px 8px; }
+    }
+
+    /* ── MOBILE ── */
+    .hamburger {
+      display: none;
+      background: none;
+      border: none;
+      color: rgba(255,255,255,0.7);
+      cursor: pointer;
+      padding: 4px;
+      align-items: center;
+    }
+
+    .sidebar-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      z-index: 99;
+    }
+
+    @media (max-width: 768px) {
+      .hamburger { display: flex; }
+
+      .sidebar {
+        transform: translateX(-100%);
+        transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
+        z-index: 100;
+      }
+
+      .sidebar.mobile-open { transform: translateX(0); }
+      .sidebar-overlay.open { display: block; }
+
+      .main { margin-left: 0; }
+
+      .topbar { padding: 0 16px; }
+
+      .page-content { padding: 24px 16px; }
+
+      .panel-title { font-size: 18px; }
+
+      /* 테이블 → 카드형 */
+      .store-table-wrap { background: transparent; border: none; border-radius: 0; }
+
+      .store-table thead { display: none; }
+
+      .store-table, .store-table tbody, .store-table tr, .store-table td {
+        display: block;
+        width: 100%;
+      }
+
+      .store-table tbody tr {
+        background: #1a1a1e;
+        border: 1px solid rgba(255,255,255,0.07);
+        border-radius: 14px;
+        margin-bottom: 12px;
+        padding: 16px;
+      }
+
+      .store-table tbody tr:hover { background: #1e1e22; }
+
+      .store-table td {
+        padding: 4px 0;
+        white-space: normal;
+        color: rgba(255,255,255,0.7);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      /* 매장 정보 행은 위에 크게 */
+      .store-table td:first-child {
+        margin-bottom: 10px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid rgba(255,255,255,0.06);
+      }
+
+      /* 레이블 prefix */
+      .store-table td:nth-child(2)::before { content: '신청자 · '; color: rgba(255,255,255,0.3); font-size: 12px; }
+      .store-table td:nth-child(3)::before { content: '연락처 · '; color: rgba(255,255,255,0.3); font-size: 12px; }
+      .store-table td:nth-child(4)::before { content: '요금제 · '; color: rgba(255,255,255,0.3); font-size: 12px; }
+      .store-table td:nth-child(5)::before { content: ''; }
+      .store-table td:nth-child(6)::before { content: '신청일 · '; color: rgba(255,255,255,0.3); font-size: 12px; }
+
+      /* 상태 + 버튼 행 */
+      .store-table td:nth-child(7),
+      .store-table td:nth-child(8) { display: inline-flex; }
+
+      .store-table td:nth-child(7) { margin-top: 8px; }
+
+      /* 드로어 풀스크린 */
+      .drawer { width: 100%; }
+
+      /* 필터 바 세로 */
+      .filter-bar { flex-direction: column; align-items: stretch; }
+      .filter-select { width: 100%; }
+    }
+
+    /* Empty state */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 100px 0;
+      text-align: center;
+      color: rgba(255,255,255,0.2);
+    }
+    .empty-state svg { margin-bottom: 20px; opacity: 0.3; }
+    .empty-state p { font-size: 15px; }
+  </style>
+</head>
+<body>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <img src="logo.png" alt="인디피 뮤직" />
+      <span class="sidebar-logo-badge">ADMIN</span>
+    </div>
+    <nav class="sidebar-nav">
+      <p class="nav-section-label">관리</p>
+      <a class="nav-item active" onclick="switchPanel('stores', this)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+          <polyline points="9 22 9 12 15 12 15 22"/>
+        </svg>
+        매장 관리
+      </a>
+      <a class="nav-item" onclick="switchPanel('playlists', this)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="8" y1="6" x2="21" y2="6"/>
+          <line x1="8" y1="12" x2="21" y2="12"/>
+          <line x1="8" y1="18" x2="21" y2="18"/>
+          <circle cx="3" cy="6" r="1" fill="currentColor" stroke="none"/>
+          <circle cx="3" cy="12" r="1" fill="currentColor" stroke="none"/>
+          <circle cx="3" cy="18" r="1" fill="currentColor" stroke="none"/>
+        </svg>
+        플레이리스트 관리
+      </a>
+    </nav>
+    <div class="sidebar-bottom">
+      <div class="admin-profile">
+        <div class="admin-avatar">A</div>
+        <div class="admin-info">
+          <p class="admin-name">관리자</p>
+          <p class="admin-role">Super Admin</p>
+        </div>
+        <button class="logout-btn" onclick="logout()" title="로그아웃">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+            <polyline points="16 17 21 12 16 7"/>
+            <line x1="21" y1="12" x2="9" y2="12"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="topbar">
+      <div style="display:flex;align-items:center;gap:12px">
+        <button class="hamburger" onclick="toggleSidebar()" aria-label="메뉴">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+          </svg>
+        </button>
+        <span class="topbar-title" id="topbar-title">매장 관리</span>
+      </div>
+      <span class="topbar-date" id="topbar-date"></span>
+    </div>
+
+    <div class="page-content">
+
+      <!-- 매장 관리 -->
+      <div class="section-panel active" id="panel-stores">
+        <div class="panel-header">
+          <div>
+            <h2 class="panel-title">매장 관리</h2>
+            <p class="panel-subtitle">총 <strong id="store-count" style="color:#fff">6</strong>건의 도입 문의가 접수되었습니다</p>
+          </div>
+        </div>
+
+        <div class="filter-bar">
+          <input class="filter-search" type="text" placeholder="매장명, 신청자, 연락처 검색..." oninput="filterStores(this.value)" />
+          <select class="filter-select" onchange="filterByStatus(this.value)">
+            <option value="">전체 상태</option>
+            <option value="active">이용 중</option>
+            <option value="expired">만료</option>
+            <option value="refunded">환불 완료</option>
+          </select>
+        </div>
+
+        <div id="store-pagination" style="display:none; align-items:center; justify-content:space-between; padding:8px 4px 12px; border-bottom:1px solid rgba(255,255,255,0.06); margin-bottom:8px;">
+          <span id="store-page-info" style="font-size:13px; color:rgba(255,255,255,0.35);"></span>
+          <div style="display:flex; gap:6px;" id="store-page-btns"></div>
+        </div>
+
+        <div class="store-table-wrap">
+          <table class="store-table">
+            <thead>
+              <tr>
+                <th>매장 정보</th>
+                <th>신청자</th>
+                <th>연락처</th>
+                <th>요금제</th>
+                <th>지금 재생 중</th>
+                <th>신청일</th>
+                <th>상태</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="store-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 플레이리스트 관리 -->
+      <div class="section-panel" id="panel-playlists">
+        <div class="panel-header">
+          <div>
+            <h2 class="panel-title">플레이리스트 관리</h2>
+            <p class="panel-subtitle">엑셀 파일을 업로드하여 매장별 플레이리스트를 생성합니다</p>
+          </div>
+        </div>
+
+        <div class="pl-layout">
+
+          <!-- 좌측: 업로드만 -->
+          <div class="pl-left">
+            <div class="pl-upload-card">
+              <p class="pl-upload-card-title">엑셀 파일 업로드</p>
+              <div class="pl-dropzone" id="pl-dropzone"
+                onclick="document.getElementById('pl-file-input').click()"
+                ondragover="plDragOver(event)" ondragleave="plDragLeave(event)" ondrop="plDrop(event)">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:0 auto 10px">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                  <polyline points="17 8 12 3 7 8"/>
+                  <line x1="12" y1="3" x2="12" y2="15"/>
+                </svg>
+                <p class="pl-dropzone-text">
+                  <strong>클릭</strong>하거나 파일을 여기로 끌어다 놓으세요<br/>
+                  <span style="font-size:11px;opacity:0.6">.xlsx, .xls 파일 지원 · 시트명 = 매장명</span>
+                </p>
+              </div>
+              <input type="file" id="pl-file-input" class="pl-file-input" accept=".xlsx,.xls" onchange="plFileSelected(this)" />
+
+              <div class="pl-file-info" id="pl-file-info">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#c6f135" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
+                </svg>
+                <span class="pl-file-name" id="pl-file-name"></span>
+                <button class="pl-file-clear" onclick="plClearFile()">✕</button>
+              </div>
+
+              <div class="pl-sheets-wrap" id="pl-sheets-wrap">
+                <div class="pl-sheet-section">
+                  <p class="pl-sheets-label">매칭된 시트</p>
+                  <div class="pl-sheet-chips" id="pl-sheet-chips-matched"></div>
+                </div>
+                <div class="pl-sheet-section" id="pl-sheet-section-unmatched" style="display:none">
+                  <p class="pl-sheets-label unmatched">미매칭 시트</p>
+                  <div class="pl-sheet-chips" id="pl-sheet-chips-unmatched"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 우측: 매장 목록 + 플리 비교 -->
+          <div class="pl-right">
+            <!-- 우측 헤더 -->
+            <div class="pl-right-header">
+              <div class="pl-right-stats" id="pl-right-stats">
+                <span class="pl-stat-item">전체 <strong id="pl-stat-total">0</strong>개 매장</span>
+                <span class="pl-stat-divider">·</span>
+                <span class="pl-stat-item">매칭 <strong id="pl-stat-matched" style="color:#c6f135">0</strong>개</span>
+                <span class="pl-stat-divider">·</span>
+                <span class="pl-stat-item pl-stat-last" id="pl-stat-last">마지막 생성: -</span>
+              </div>
+              <button class="btn-create-pl" id="btn-create-pl" onclick="plCreate()">플레이리스트 생성</button>
+            </div>
+            <!-- 일괄 적용 시각 -->
+            <div class="pl-bulk-schedule" id="pl-bulk-schedule">
+              <span class="pl-bulk-label">일괄 적용 시각</span>
+              <input type="date" class="pl-schedule-input date-input" id="pl-bulk-date" style="flex:1.4" />
+              <select class="pl-schedule-input time-input" id="pl-bulk-time">
+                <option value="">시간 선택</option>
+              </select>
+              <button class="pl-bulk-apply-btn" onclick="plApplyBulkSchedule()">전체 적용</button>
+            </div>
+            <!-- 매장 목록 (클릭 시 인라인 펼침) -->
+            <div class="pl-store-list" id="pl-store-list"></div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- TOAST -->
+  <div class="pl-toast" id="pl-toast"></div>
+
+  <!-- SIDEBAR OVERLAY (mobile) -->
+  <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+  <!-- DETAIL DRAWER -->
+  <div class="drawer-backdrop" id="drawer-backdrop" onclick="closeDrawer()"></div>
+  <div class="drawer" id="detail-drawer">
+    <div class="drawer-header">
+      <div>
+        <p class="drawer-title" id="drawer-store-name">-</p>
+        <p class="drawer-subtitle" id="drawer-store-addr">-</p>
+      </div>
+      <button class="drawer-close" onclick="closeDrawer()">✕</button>
+    </div>
+    <div class="drawer-tabs">
+      <div class="drawer-tab active" onclick="switchDrawerTab('info', this)">기본 정보</div>
+      <div class="drawer-tab" onclick="switchDrawerTab('playlist', this)">매장 무드</div>
+      <div class="drawer-tab" onclick="switchDrawerTab('recommend', this)">추천곡 관리</div>
+    </div>
+    <div class="drawer-body">
+      <div class="drawer-tab-panel active" id="drawer-tab-info"></div>
+      <div class="drawer-tab-panel" id="drawer-tab-playlist">
+        <div class="tab-empty">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
+            <circle cx="3" cy="6" r="1.5" fill="currentColor" stroke="none"/>
+            <circle cx="3" cy="12" r="1.5" fill="currentColor" stroke="none"/>
+            <circle cx="3" cy="18" r="1.5" fill="currentColor" stroke="none"/>
+          </svg>
+          <p>플레이리스트가 없습니다</p>
+        </div>
+      </div>
+      <div class="drawer-tab-panel" id="drawer-tab-recommend">
+        <div class="tab-empty">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="8" x2="12" y2="12"/>
+            <line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          <p>추천곡 관리 내용이 없습니다</p>
+        </div>
+      </div>
+    </div>
+    <div class="drawer-footer" id="drawer-footer"></div>
+  </div>
+
+  <script>
+    // ── 관리자 토큰 확인 ──
+    const adminToken = localStorage.getItem('adminToken');
+    if (!adminToken) { window.location.href = 'admin-login.html'; }
+
+    // ── 매장 데이터 (API에서 로드) ──
+    let stores = [];
+
+    // ── Enum 역변환 맵 (공통) ──
+    const VIBE_MAP     = { CALM:'차분한', MODERN:'모던한', ELEGANT:'우아한', DARK:'다크한', NATURAL:'내추럴한', OTHER:'기타' };
+    const PLAY_MAP     = { BLUETOOTH:'블루투스', WIRED:'유선 연결', OTHER:'기타' };
+    const TEMPO_MAP    = { SLOW:'느림', CALM:'잔잔한', NORMAL:'보통', LIVELY:'활기찬', UPBEAT:'경쾌한' };
+    const PLAYLIST_MAP = { MUSIC_RECOMMENDED:'추천 음악', TIME_BASED:'시간대별 무드', CONSISTENT_MOOD:'일관 무드' };
+    const GENRE_MAP    = { BALLAD:'발라드', POP:'팝', ROCK:'락', JAZZ:'재즈', CLASSIC:'클래식', R_AND_B:'R&B', HIP_HOP:'힙합', HIPHOP:'힙합', DANCE:'댄스', INDIE:'인디', FOLK:'포크', ELECTRONIC:'일렉트로닉', TROT:'트로트', CHILDREN:'동요', OTHER:'기타' };
+    const PLAN_MAP     = { PLAN_A:'기본', PLAN_B:'프리미엄', STANDARD:'스탠다드' };
+    const DAY_NAMES    = {1:'월', 2:'화', 3:'수', 4:'목', 5:'금', 6:'토', 7:'일'};
+
+    const WEEKS_TO_MONTHS = { 4: 1, 12: 3, 24: 6, 48: 12 };
+    const DAY_KO_ADM = ['일', '월', '화', '수', '목', '금', '토'];
+
+    // 여러 구독(ACTIVE + PENDING_ACTIVE)을 통합
+    function resolveSubscriptions(subs) {
+      if (!Array.isArray(subs) || subs.length === 0) return { sub: {}, startDate: null, endDate: null };
+      const order = { ACTIVE: 0, PENDING_ACTIVE: 1, EXPIRED: 2 };
+      const sorted = [...subs].sort((a, b) =>
+        (order[(a.status || '').toUpperCase()] ?? 9) - (order[(b.status || '').toUpperCase()] ?? 9)
+      );
+      const primary = sorted[0];
+      const startDate = subs.reduce((min, s) => (!min || s.startDate < min ? s.startDate : min), null);
+      const endDate   = subs.reduce((max, s) => (!max || s.endDate   > max ? s.endDate   : max), null);
+      return { sub: primary, startDate, endDate };
+    }
+
+    function fmtPeriod(start, end) {
+      if (!start || !end) return '';
+      const fmtDay = s => {
+        const d = new Date(s);
+        return `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')} (${DAY_KO_ADM[d.getDay()]})`;
+      };
+      const days = Math.round((new Date(end) - new Date(start)) / (1000 * 60 * 60 * 24));
+      const weeks = Math.round(days / 7);
+      const months = WEEKS_TO_MONTHS[weeks];
+      const durationStr = months ? `${months}개월 (${weeks}주)` : `${weeks}주`;
+      return `${durationStr}\n${fmtDay(start)} ~ ${fmtDay(end)}`;
+    }
+
+    // 목록 API 응답 → 테이블 행 객체
+    function mapStore(s) {
+      const subs = Array.isArray(s.subscriptions) ? s.subscriptions : (s.subscription ? [s.subscription] : []);
+      const { sub, startDate, endDate } = resolveSubscriptions(subs);
+      const statusRaw = (sub.status || s.status || s.storeStatus || '').toUpperCase();
+      const status = statusRaw === 'ACTIVE'                        ? 'active'
+                   : statusRaw === 'EXPIRED'                       ? 'expired'
+                   : statusRaw === 'PENDING_ACTIVE'                ? 'pending_active'
+                   : statusRaw === 'PENDING_PAYMENT'               ? 'pending_payment'
+                   : ['REFUNDED','CANCELLED','CANCELED'].includes(statusRaw) ? 'refunded'
+                   :                                                 'pending_payment';
+      const plan = PLAN_MAP[sub.planType] || PLAN_MAP[sub.plan] || sub.planType || sub.plan || '';
+      const appliedAt = startDate || '';
+      const period = fmtPeriod(startDate, endDate);
+      const isPlaying = !!(s.currentSong);
+      const nowPlaying = s.currentSong
+        ? { title: s.currentSong.title || '', artist: s.currentSong.artist || s.currentSong.artistName || '' }
+        : null;
+      return {
+        id: s.storeId ?? s.id,
+        photo: (() => {
+          const raw = s.mainPhotoUrl
+            || s.storeInfo?.mainPhotoUrl
+            || (Array.isArray(s.photoUrls) ? s.photoUrls[0] : null)
+            || (Array.isArray(s.storeInfo?.photoUrls) ? s.storeInfo.photoUrls[0] : null)
+            || s.imageUrl || s.photo || '';
+          const url = raw ? (raw.startsWith('/') ? BASE_URL + raw : raw) : '';
+          console.log('[매장 이미지]', s.name || s.storeName, '/ raw:', raw, '/ url:', url, '/ keys:', Object.keys(s));
+          return url;
+        })(),
+        status, isPlaying, nowPlaying,
+        storeName: s.name || s.storeName || '',
+        storeAddr: s.address || s.storeAddr || '',
+        applicant: s.applicantName || s.applicant || '',
+        contact: s.applicantPhone || s.contact || '',
+        plan, appliedAt, period,
+      };
+    }
+
+    // 상세 API 응답 → 드로어 객체
+    function mapStoreDetail(raw) {
+      const apply = raw.applyInfo       || {};
+      const store = raw.storeInfo       || {};
+      const music = raw.musicInfo       || {};
+      const rawSubs = Array.isArray(raw.subscriptions) ? raw.subscriptions
+                    : raw.subscriptionInfo ? [raw.subscriptionInfo]
+                    : raw.subscription    ? [raw.subscription]
+                    : [];
+      const { sub, startDate: subStart, endDate: subEnd } = resolveSubscriptions(rawSubs);
+
+      // 요금제 / 신청일 / 상태
+      const plan = PLAN_MAP[sub.planType] || PLAN_MAP[sub.plan] || sub.planType || sub.plan || '';
+      const appliedAt = subStart
+        ? new Date(subStart).toLocaleDateString('ko-KR', { year:'numeric', month:'2-digit', day:'2-digit' }).replace(/\. /g, '.').replace(/\.$/, '')
+        : '';
+
+      // 영업시간 / 휴무
+      let hours = '', holiday = '';
+      const bh = store.businessHours || [];
+      if (bh.length > 0) {
+        const openDays   = bh.filter(h => !h.isClosed);
+        const closedDays = bh.filter(h => h.isClosed).map(h => DAY_NAMES[h.dayOfWeek] || h.dayOfWeek);
+        holiday = closedDays.length > 0 ? `매주 ${closedDays.join('·')}요일` : '연중무휴';
+        if (openDays.length > 0) {
+          // 요일별 시간이 다를 수 있으므로 그룹핑
+          const groups = {};
+          openDays.forEach(h => {
+            const key = `${(h.openTime||'').slice(0,5)} ~ ${(h.closeTime||'').slice(0,5)}`;
+            if (!groups[key]) groups[key] = [];
+            groups[key].push(DAY_NAMES[h.dayOfWeek] || h.dayOfWeek);
+          });
+          hours = Object.entries(groups)
+            .map(([time, days]) => `${days.join('·')}요일 ${time}`)
+            .join(', ');
+        }
+      }
+
+      // 매장 분위기 (vibes 배열 → 한글)
+      const atmosphere = Array.isArray(store.vibes)
+        ? store.vibes.map(v => VIBE_MAP[v] || v).join(', ') : '';
+
+      // 조명 (API는 Kelvin 값으로 전송: 3000 → "3000K", 인덱스(1~10)인 경우 ×1000 변환)
+      const lightingNum = parseInt(store.lighting);
+      const lighting = !isNaN(lightingNum) ? (lightingNum > 100 ? `${lightingNum}K` : `${lightingNum * 1000}K`) : '';
+
+      // 재생 방식 (playMethods 배열 → 한글)
+      const playMethod = Array.isArray(music.playMethods)
+        ? music.playMethods.map(v => PLAY_MAP[v] || v).join(', ') : '';
+
+      // 재생하고 싶은 음악 (playlistType + timePreferences) — HTML 형태로 구성
+      const MOOD_MAP_ADM = { CALM:'차분한', MODERN:'모던한', ELEGANT:'우아한', DARK:'다크한', NATURAL:'내추럴한', OTHER:'기타' };
+      const playlistLabel = PLAYLIST_MAP[music.playlistType] || music.playlistType || '';
+      let wantedMusicHtml = playlistLabel || '-';
+      if (music.playlistType === 'TIME_BASED' && Array.isArray(music.timePreferences) && music.timePreferences.length > 0) {
+        const rows = music.timePreferences.map(t => {
+          const s = t.startTime ? t.startTime.slice(0,5) : (t.startTimeHour != null ? String(t.startTimeHour).padStart(2,'0') + ':00' : '');
+          const e = t.endTime   ? t.endTime.slice(0,5)   : (t.endTimeHour   != null ? String(t.endTimeHour).padStart(2,'0')   + ':00' : '');
+          const mood = MOOD_MAP_ADM[t.mood] || t.mood || '';
+          return `<div style="display:flex;gap:8px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.05)">
+            <span style="min-width:90px;color:rgba(255,255,255,0.4);font-size:12px">${s} ~ ${e}</span>
+            <span style="font-size:13px;font-weight:600;color:rgba(255,255,255,0.85)">${mood}</span>
+          </div>`;
+        }).join('');
+        wantedMusicHtml = `<span style="font-size:12px;color:rgba(255,255,255,0.5);display:block;margin-bottom:6px">${playlistLabel}</span>${rows}`;
+      } else if (music.playlistType === 'CONSISTENT_MOOD') {
+        const mood = MOOD_MAP_ADM[music.musicMood || music.mood] || music.musicMood || music.mood || '';
+        wantedMusicHtml = `${playlistLabel}${mood ? `<span style="margin-left:8px;font-size:12px;color:rgba(255,255,255,0.5)">${mood} 무드</span>` : ''}`;
+      }
+      const wantedMusic = wantedMusicHtml;
+
+      // 템포
+      const tempo = TEMPO_MAP[music.musicTempo] || music.musicTempo || '';
+
+      // 추천 거부 장르 (rejectedGenres 배열 → 한글)
+      const excludedGenre = Array.isArray(music.rejectedGenres)
+        ? music.rejectedGenres.map(g => GENRE_MAP[g] || g).join(', ') : '';
+
+      // 선호 장르 (preferredGenres 배열 → 한글)
+      const preferredGenre = Array.isArray(music.preferredGenres)
+        ? music.preferredGenres.map(g => GENRE_MAP[g] || g).join(', ') : '';
+
+      // 결제 일시
+      const paidAt = (() => {
+        const raw = sub.paidAt || sub.createdAt;
+        if (!raw) return '';
+        const d = new Date(raw);
+        const pad = n => String(n).padStart(2, '0');
+        return `${d.getFullYear()}.${pad(d.getMonth()+1)}.${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+      })();
+
+      return {
+        storeName:    store.name     || '',
+        storeAddr:    store.address  || '',
+        bizType:      store.industry || '',
+        hours, holiday,
+        photos: (() => {
+          const raw = Array.isArray(store.photoUrls) ? store.photoUrls
+            : store.mainPhotoUrl ? [store.mainPhotoUrl] : [];
+          return raw.filter(Boolean).map(u => u.startsWith('/') ? BASE_URL + u : u);
+        })(),
+        ageGroup:     store.customerAgeGroup || '',
+        atmosphere, lighting,
+        applicant:    apply.applicantName  || '',
+        contact:      apply.applicantPhone || '',
+        plan, planRaw: sub.planType || sub.plan || '', appliedAt,
+        period: fmtPeriod(subStart, subEnd),
+        _sub: { ...sub, startDate: subStart, endDate: subEnd },
+        prevPlatform: music.MusicPlatform || music.musicPlatform || '',
+        prevGenre:    music.playedMusic   || '',
+        playMethod, wantedMusic, tempo,
+        preferredGenre, excludedGenre,
+        excludedSong: music.rejectedSongNote || '',
+        playlistType: music.playlistType || '',
+        timePreferences: music.timePreferences || [],
+        musicMood: music.musicMood || music.mood || '',
+      };
+    }
+
+    // ── 페이지네이션 상태 ──
+    const PAGE_SIZE = 20;
+    let storePage = 0;
+    let serverTotalPages = 1;
+    let serverTotalElements = 0;
+    let filteredList = [];
+
+    async function loadStores(page = 0) {
+      storePage = page;
+      try {
+        const data = await apiFetch('GET', `/api/admin/stores?page=${page}&size=${PAGE_SIZE}`, undefined, adminToken);
+        console.log('[admin/stores 응답 전체]', JSON.stringify(data));
+        const list = data.stores || data.storeList || data.content || data.data || data.result || data.list || (Array.isArray(data) ? data : []);
+        serverTotalPages    = data.totalPages    ?? Math.ceil((data.totalElements ?? list.length) / PAGE_SIZE);
+        serverTotalElements = data.totalElements ?? list.length;
+        stores = list.map(mapStore);
+        applyRefundedStoreStatus();
+      } catch(e) {
+        console.error('[admin/stores 로드 실패]', e.message);
+        stores = [];
+        serverTotalPages = 1;
+        serverTotalElements = 0;
+      }
+      renderTable(stores);
+      document.getElementById('store-count').textContent = serverTotalElements || stores.length;
+      plUpdateHeader();
+    }
+
+    function renderTable(list) {
+      filteredList = list;
+      renderPagedTable();
+    }
+
+    function renderPagedTable() {
+      const tbody = document.getElementById('store-tbody');
+      tbody.innerHTML = filteredList.map(s => `
+        <tr data-status="${s.status}" data-id="${s.id}">
+          <td>
+            <div class="store-name-cell">
+              <div>
+                <p class="store-name-text">${s.storeName}</p>
+                <p class="store-addr-text">${s.storeAddr}</p>
+              </div>
+            </div>
+          </td>
+          <td>${s.applicant}</td>
+          <td>${s.contact}</td>
+          <td><span class="plan-badge">${s.plan}</span></td>
+          <td>${nowPlayingCell(s)}</td>
+          <td>${s.appliedAt}</td>
+          <td><span class="status-badge ${statusCls(s.status)}">${statusLabel(s.status)}</span></td>
+          <td>
+            <div class="btn-row">
+              <button class="btn-action" onclick="openDrawer(${s.id})">상세</button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+
+      // 검색/필터 중엔 클라이언트 카운트, 아니면 서버 전체 카운트
+      const isFiltered = currentQuery || currentStatus;
+      const totalElements = isFiltered ? filteredList.length : serverTotalElements;
+      const totalPages    = isFiltered ? Math.max(1, Math.ceil(filteredList.length / PAGE_SIZE)) : serverTotalPages;
+      document.getElementById('store-count').textContent = totalElements;
+
+      const pag  = document.getElementById('store-pagination');
+      const info = document.getElementById('store-page-info');
+      const btns = document.getElementById('store-page-btns');
+      if (totalPages <= 1) { pag.style.display = 'none'; return; }
+
+      pag.style.display = 'flex';
+      const start = storePage * PAGE_SIZE + 1;
+      const end   = Math.min((storePage + 1) * PAGE_SIZE, totalElements);
+      info.textContent = `${start}–${end} / 전체 ${totalElements}개`;
+
+      const range = [0];
+      for (let i = Math.max(1, storePage - 2); i <= Math.min(totalPages - 2, storePage + 2); i++) range.push(i);
+      if (totalPages > 1) range.push(totalPages - 1);
+      const uniq = [...new Set(range)];
+
+      let html = `<button class="pl-page-btn" onclick="goStorePage(${storePage - 1})" ${storePage === 0 ? 'disabled' : ''}>‹</button>`;
+      let prev = -1;
+      uniq.forEach(p => {
+        if (prev !== -1 && p - prev > 1) html += `<span style="color:rgba(255,255,255,0.2);padding:0 2px">…</span>`;
+        html += `<button class="pl-page-btn${p === storePage ? ' active' : ''}" onclick="goStorePage(${p})">${p + 1}</button>`;
+        prev = p;
+      });
+      html += `<button class="pl-page-btn" onclick="goStorePage(${storePage + 1})" ${storePage >= totalPages - 1 ? 'disabled' : ''}>›</button>`;
+      btns.innerHTML = html;
+    }
+
+    function goStorePage(p) {
+      const isFiltered = currentQuery || currentStatus;
+      const totalPages = isFiltered
+        ? Math.ceil(filteredList.length / PAGE_SIZE)
+        : serverTotalPages;
+      if (p < 0 || p >= totalPages) return;
+      if (isFiltered) {
+        // 필터 중: 클라이언트 슬라이스
+        storePage = p;
+        renderPagedTable();
+      } else {
+        // 일반: 서버에서 해당 페이지 로드
+        loadStores(p);
+      }
+      document.getElementById('panel-stores').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function nowPlayingCell(s) {
+      if (s.isPlaying && s.nowPlaying) {
+        return `<div class="now-playing-cell">
+          <div class="play-dot"></div>
+          <div>
+            <p class="now-playing-title">${s.nowPlaying.title}</p>
+            <p class="now-playing-artist">${s.nowPlaying.artist}</p>
+          </div>
+        </div>`;
+      }
+      return `<span class="no-playing">재생 없음</span>`;
+    }
+
+    function statusCls(s)   { return { active:'status-active', expired:'status-expired', pending_active:'status-pending-active', pending_payment:'status-pending-payment', refunded:'status-expired' }[s] || 'status-pending-payment'; }
+    function statusLabel(s) { return { active:'이용 중', expired:'만료', pending_active:'준비 중', pending_payment:'결제 대기', refunded:'환불 완료' }[s] || '결제 대기'; }
+
+    // ── 검색 / 필터 ──
+    let currentStatus = '';
+    let currentQuery  = '';
+
+    function applyFilters() {
+      storePage = 0;
+      let list = stores;
+      if (currentStatus) list = list.filter(s => s.status === currentStatus);
+      if (currentQuery)  list = list.filter(s =>
+        [s.storeName, s.applicant, s.contact].some(v => v.includes(currentQuery))
+      );
+      renderTable(list);
+    }
+
+    function filterStores(q)  { currentQuery  = q.trim(); applyFilters(); }
+    function filterByStatus(s){ currentStatus = s;        applyFilters(); }
+
+    // ── 상태 변경 ──
+    function changeStatus(id, status) {
+      const s = stores.find(s => s.id === id);
+      if (s) { s.status = status; applyFilters(); }
+      if (document.getElementById('detail-drawer').classList.contains('open')) openDrawer(id);
+    }
+
+    // ── Drawer ──
+    function renderDrawerInfo(d, status) {
+      document.getElementById('drawer-store-name').textContent = d.storeName;
+      document.getElementById('drawer-store-addr').textContent = d.storeAddr;
+      document.getElementById('drawer-tab-info').innerHTML = `
+        <div class="detail-section">
+          <p class="detail-section-title">신청 정보</p>
+          <div class="detail-grid">
+            <div class="detail-item"><p class="detail-label">신청자</p><p class="detail-value">${d.applicant || '-'}</p></div>
+            <div class="detail-item"><p class="detail-label">연락처</p><p class="detail-value">${d.contact || '-'}</p></div>
+            <div class="detail-item"><p class="detail-label">요금제</p><p class="detail-value">${d.plan || '-'}</p></div>
+            <div class="detail-item"><p class="detail-label">이용 기간</p><p class="detail-value" style="white-space:pre-line;line-height:1.7">${d.period || '-'}</p></div>
+            <div class="detail-item"><p class="detail-label">구독 시작일</p><p class="detail-value">${d.appliedAt || '-'}</p></div>
+          </div>
+          <p class="detail-section-title" style="margin-top:18px">결제 내역</p>
+          <div id="adm-payment-history"><p class="adm-pay-empty">불러오는 중...</p></div>
+          <div class="refund-panel" id="adm-refund-panel">
+            <div class="refund-panel-inner">
+              <p class="refund-panel-label">환불 처리</p>
+              <div class="refund-row">
+                <input type="number" class="refund-input" id="refund-amount" placeholder="환불 금액 입력" min="0" />
+                <span class="refund-unit">원</span>
+                <button class="btn-refund" onclick="handleRefund(currentDrawerStoreId)">환불</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="detail-section">
+          <p class="detail-section-title">매장 정보</p>
+          ${d.photos && d.photos.length > 0
+            ? `<div class="detail-photo-gallery" style="margin-bottom:14px">${d.photos.map(url => `<img src="${url}" class="detail-photo" alt="매장 사진" />`).join('')}</div>`
+            : `<div class="detail-photo-default" style="margin-bottom:14px"><img src="lp.png" alt="" /><span>${d.storeName || '매장 사진 없음'}</span></div>`
+          }
+          <div class="detail-grid">
+            <div class="detail-item"><p class="detail-label">매장 이름</p><p class="detail-value">${d.storeName || '-'}</p></div>
+            <div class="detail-item"><p class="detail-label">업종</p><p class="detail-value">${d.bizType || '-'}</p></div>
+            <div class="detail-item"><p class="detail-label">영업 시간</p><p class="detail-value">${d.hours || '-'}</p></div>
+            <div class="detail-item"><p class="detail-label">휴무</p><p class="detail-value">${d.holiday || '-'}</p></div>
+          </div>
+          <div class="detail-grid full" style="margin-top:14px">
+            <div class="detail-item"><p class="detail-label">매장 주소</p><p class="detail-value">${d.storeAddr || '-'}</p></div>
+          </div>
+        </div>
+        <div class="detail-section">
+          <p class="detail-section-title">음악 정보</p>
+          <div class="detail-grid">
+            <div class="detail-item"><p class="detail-label">기존 음악 플랫폼</p><p class="detail-value">${d.prevPlatform || '-'}</p></div>
+            <div class="detail-item"><p class="detail-label">기존 재생 장르/음악</p><p class="detail-value">${d.prevGenre || '-'}</p></div>
+            <div class="detail-item"><p class="detail-label">방문 손님 연령대</p><p class="detail-value">${d.ageGroup || '-'}</p></div>
+            <div class="detail-item"><p class="detail-label">음악 재생 방식</p><p class="detail-value">${d.playMethod || '-'}</p></div>
+            <div class="detail-item"><p class="detail-label">매장 분위기</p><p class="detail-value">${d.atmosphere || '-'}</p></div>
+            <div class="detail-item"><p class="detail-label">매장 조명</p><p class="detail-value">${d.lighting || '-'}</p></div>
+            <div class="detail-item"><p class="detail-label">전반적인 템포</p><p class="detail-value">${d.tempo || '-'}</p></div>
+            <div class="detail-item"><p class="detail-label">추천 거부 장르</p><p class="detail-value">${d.excludedGenre || '-'}</p></div>
+          </div>
+          <div class="detail-grid full" style="margin-top:14px">
+            <div class="detail-item">
+              <p class="detail-label">재생하고 싶은 음악</p>
+              <div class="detail-value" style="margin-top:4px">${d.wantedMusic || '-'}</div>
+            </div>
+          </div>
+          <div class="detail-grid full" style="margin-top:14px">
+            <div class="detail-item"><p class="detail-label">이런 곡은 받고 싶지 않아요</p><p class="detail-value">${d.excludedSong || '-'}</p></div>
+          </div>
+        </div>
+      `;
+      document.getElementById('drawer-footer').innerHTML =
+        `<p style="font-size:13px;color:rgba(255,255,255,0.3);margin:auto">현재 상태: <strong style="color:#fff">${statusLabel(status || d.status || 'active')}</strong></p>`;
+    }
+
+    let currentDrawerStoreId = null;
+
+    async function openDrawer(id) {
+      currentDrawerStoreId = id;
+      const s = stores.find(s => s.id === id);
+      if (!s) return;
+
+      // 탭 초기화 & 드로어 열기 (로딩 상태)
+      document.querySelectorAll('.drawer-tab').forEach((t,i) => t.classList.toggle('active', i===0));
+      document.querySelectorAll('.drawer-tab-panel').forEach((p,i) => p.classList.toggle('active', i===0));
+      document.getElementById('drawer-store-name').textContent = s.storeName;
+      document.getElementById('drawer-store-addr').textContent = '로딩 중...';
+      document.getElementById('drawer-tab-info').innerHTML = '<div style="padding:40px;text-align:center;color:rgba(255,255,255,0.3)">불러오는 중...</div>';
+      document.getElementById('drawer-backdrop').classList.add('open');
+      document.getElementById('detail-drawer').classList.add('open');
+
+      // 상세 API 호출
+      try {
+        const raw = await apiFetch('GET', `/api/admin/stores/${id}`, undefined, adminToken);
+        console.log(`[admin/stores/${id} 응답]`, JSON.stringify(raw));
+        const d = mapStoreDetail(raw);
+        if (!d.period) d.period = s.period;
+        renderDrawerInfo(d, s.status);
+        renderPaymentHistory(id, d._sub);
+        renderPlaylistTab({ id, hours: d.hours, playlistType: d.playlistType, timePreferences: d.timePreferences, musicMood: d.musicMood });
+        renderRecommendTab({ id, excludedGenre: d.excludedGenre });
+      } catch(e) {
+        console.warn('매장 상세 로드 실패:', e);
+        document.getElementById('drawer-tab-info').innerHTML =
+          '<div style="padding:40px;text-align:center;color:#ff5c5c">정보를 불러오지 못했습니다.</div>';
+      }
+    }
+
+    async function renderPaymentHistory(storeId, sub) {
+      const wrap = document.getElementById('adm-payment-history');
+      if (!wrap) return;
+
+      const PLAN_NAMES = { PLAN_A:'Plan A 기본 요금제', PLAN_B:'Plan B 프리미엄 요금제', A:'Plan A 기본 요금제', B:'Plan B 프리미엄 요금제', STANDARD:'스탠다드 요금제' };
+
+      function fmtPayItem(p) {
+        const raw = p.paidAt || p.createdAt || p.paymentDate;
+        if (!raw) return null;
+        const dt = new Date(raw);
+        const pad = n => String(n).padStart(2, '0');
+        const dateStr = `${dt.getFullYear()}년 ${pad(dt.getMonth()+1)}월 ${pad(dt.getDate())}일`;
+        const timeStr = `${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
+        const planRaw = p.subscription?.plan || p.planType || p.plan || '';
+        const plan = PLAN_NAMES[planRaw] || planRaw;
+        const amt = p.totalAmount ?? p.amount;
+        const amount = amt != null ? amt.toLocaleString() + '원' : '-';
+        const refundedIds = getRefundedIds();
+        const lastRefund = Array.isArray(p.refunds) && p.refunds.length > 0 ? p.refunds[p.refunds.length - 1] : null;
+        const isRefunded = p.status === 'REFUNDED' || p.status === 'CANCELLED' || p.status === 'CANCELED'
+          || p.paymentStatus === 'PARTIAL_CANCELED' || p.paymentStatus === 'CANCELED'
+          || p.refundStatus === 'COMPLETED'
+          || lastRefund != null;
+        const refundAmt = lastRefund?.cancelAmount ?? p.refundAmount ?? p.cancelAmount ?? null;
+        const refundRaw = lastRefund?.refundedAt || p.refundedAt || p.cancelledAt || p.canceledAt;
+        let refundDateStr = '', refundTimeStr = '';
+        if (refundRaw) {
+          const rd = new Date(refundRaw);
+          const pad = n => String(n).padStart(2, '0');
+          refundDateStr = `${rd.getFullYear()}년 ${pad(rd.getMonth()+1)}월 ${pad(rd.getDate())}일`;
+          refundTimeStr = `${pad(rd.getHours())}:${pad(rd.getMinutes())}`;
+        }
+        return { paymentId: p.paymentId, dateStr, timeStr, plan, amount, isRefunded, refundAmt, refundDateStr, refundTimeStr };
+      }
+
+      function renderItems(items) {
+        if (!items || !items.length) {
+          wrap.innerHTML = '<p class="adm-pay-empty">결제 내역이 없습니다.</p>';
+          return;
+        }
+        wrap.innerHTML = items.map((item, i) => {
+          const payRow = `
+          <div class="adm-pay-item${item.isRefunded ? ' refunded' : ''}" data-idx="${i}" data-payment-id="${item.paymentId ?? ''}" onclick="${item.isRefunded ? '' : 'selectPayItem(this)'}">
+            <div class="adm-pay-radio"><div class="adm-pay-radio-dot"></div></div>
+            <div class="adm-pay-date">
+              <div class="adm-pay-date-main">${item.dateStr}</div>
+              ${item.timeStr ? `<div class="adm-pay-date-time">${item.timeStr}</div>` : ''}
+            </div>
+            <div class="adm-pay-info">
+              <div class="adm-pay-plan">${item.plan || '-'}</div>
+            </div>
+            <div class="adm-pay-amount">${item.amount}</div>
+          </div>`;
+          const refundRow = item.isRefunded ? `
+          <div class="adm-pay-item" style="pointer-events:none">
+            <div class="adm-pay-radio"></div>
+            <div class="adm-pay-date">
+              <div class="adm-pay-date-main">${item.refundDateStr || '-'}</div>
+              ${item.refundTimeStr ? `<div class="adm-pay-date-time">${item.refundTimeStr}</div>` : ''}
+            </div>
+            <div class="adm-pay-info">
+              <div class="adm-pay-plan">환불</div>
+            </div>
+            <div class="adm-pay-amount" style="color:#ff7a7a">-${item.refundAmt != null ? Number(item.refundAmt).toLocaleString() + '원' : item.amount}</div>
+          </div>` : '';
+          return payRow + refundRow;
+        }).join('');
+      }
+
+      try {
+        const res = await apiFetch('GET', `/api/admin/payments/stores/${storeId}?page=0&size=20`, undefined, adminToken);
+        console.log('[어드민 결제 목록 원본]', JSON.stringify(res));
+        const list = Array.isArray(res) ? res : (res?.payments || []);
+        if (list.length > 0) {
+          console.log('[결제 항목 첫 번째 키]', Object.keys(list[0]));
+          renderItems(list.map(fmtPayItem).filter(Boolean));
+          return;
+        }
+      } catch(e) {}
+
+      // fallback: 단건 구독 데이터 (subscription에서 paidAt 제거됨)
+      if (sub) {
+        const item = fmtPayItem({ createdAt: sub.createdAt, planType: sub.planType || sub.plan, totalAmount: sub.totalAmount, amount: sub.amount });
+        renderItems(item ? [item] : []);
+      } else {
+        wrap.innerHTML = '<p class="adm-pay-empty">결제 내역이 없습니다.</p>';
+      }
+    }
+
+    let currentRefundPaymentId = null;
+
+    // 환불 완료된 paymentId / storeId를 sessionStorage에 저장 (탭 닫으면 초기화)
+    const REFUND_LS_KEY = 'admRefundedPaymentIds';
+    const REFUND_STORE_LS_KEY = 'admRefundedStoreIds';
+    function getRefundedIds() {
+      try { return new Set(JSON.parse(sessionStorage.getItem(REFUND_LS_KEY) || '[]')); } catch { return new Set(); }
+    }
+    function addRefundedId(paymentId, storeId) {
+      if (paymentId) {
+        const set = getRefundedIds();
+        set.add(String(paymentId));
+        sessionStorage.setItem(REFUND_LS_KEY, JSON.stringify([...set]));
+      }
+      if (storeId) {
+        try {
+          const arr = JSON.parse(sessionStorage.getItem(REFUND_STORE_LS_KEY) || '[]');
+          if (!arr.includes(String(storeId))) { arr.push(String(storeId)); sessionStorage.setItem(REFUND_STORE_LS_KEY, JSON.stringify(arr)); }
+        } catch {}
+      }
+    }
+    function applyRefundedStoreStatus() {
+      try {
+        const ids = JSON.parse(sessionStorage.getItem(REFUND_STORE_LS_KEY) || '[]');
+        ids.forEach(id => {
+          const s = stores.find(s => String(s.id) === String(id));
+          if (s && s.status !== 'pending_payment') s.status = 'refunded';
+        });
+      } catch {}
+    }
+
+    function selectPayItem(el) {
+      document.querySelectorAll('.adm-pay-item').forEach(item => item.classList.remove('selected'));
+      el.classList.add('selected');
+      currentRefundPaymentId = el.dataset.paymentId || null;
+      const panel = document.getElementById('adm-refund-panel');
+      if (panel) panel.classList.add('open');
+      const amountText = el.querySelector('.adm-pay-amount')?.textContent?.replace(/[^0-9]/g, '');
+      const input = document.getElementById('refund-amount');
+      if (input && amountText) input.value = amountText;
+    }
+
+    async function handleRefund(storeId) {
+      const input = document.getElementById('refund-amount');
+      const amount = parseInt(input.value, 10);
+      if (!amount || amount <= 0) { alert('환불 금액을 입력해 주세요.'); return; }
+      if (!currentRefundPaymentId) { alert('환불할 결제 내역을 선택해 주세요.'); return; }
+      if (!confirm(`${amount.toLocaleString()}원을 환불 처리하시겠습니까?`)) return;
+      const btn = document.querySelector('.btn-refund');
+      btn.disabled = true;
+      try {
+        await apiFetch('POST', `/api/admin/payments/${currentRefundPaymentId}/refund`, { cancelAmount: amount, cancelReason: '고객 요청' }, adminToken);
+        alert('환불 처리가 완료되었습니다.');
+
+        // localStorage에 환불된 paymentId·storeId 영속 저장
+        addRefundedId(currentRefundPaymentId, currentDrawerStoreId);
+
+        // 해당 항목을 즉시 환불 완료 표시로 업데이트
+        const selectedEl = document.querySelector('.adm-pay-item.selected');
+        if (selectedEl) {
+          selectedEl.classList.remove('selected');
+          selectedEl.classList.add('refunded');
+          selectedEl.removeAttribute('onclick');
+          const infoEl = selectedEl.querySelector('.adm-pay-info');
+          if (infoEl && !infoEl.querySelector('.refund-badge')) {
+            const now = new Date();
+            const pad = n => String(n).padStart(2, '0');
+            const nowStr = `${now.getFullYear()}년 ${pad(now.getMonth()+1)}월 ${pad(now.getDate())}일 ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+            const badge = document.createElement('div');
+            badge.className = 'refund-badge';
+            badge.textContent = `환불 완료 · ${amount.toLocaleString()}원 · ${nowStr}`;
+            infoEl.appendChild(badge);
+          }
+          const amtEl = selectedEl.querySelector('.adm-pay-amount');
+          if (amtEl) amtEl.style.textDecoration = 'line-through';
+        }
+
+        // 매장 상태를 'refunded'로 변경하고 테이블·드로어 footer 갱신
+        const s = stores.find(s => s.id === currentDrawerStoreId);
+        if (s) s.status = 'refunded';
+        applyFilters();
+        const footerEl = document.getElementById('drawer-footer');
+        if (footerEl) footerEl.innerHTML = `<p style="font-size:13px;color:rgba(255,255,255,0.3);margin:auto">현재 상태: <strong style="color:#ff7a7a">환불 완료</strong></p>`;
+
+        input.value = '';
+        currentRefundPaymentId = null;
+        document.getElementById('adm-refund-panel')?.classList.remove('open');
+      } catch(e) {
+        alert('환불 처리에 실패했습니다.');
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    function closeDrawer() {
+      document.getElementById('drawer-backdrop').classList.remove('open');
+      document.getElementById('detail-drawer').classList.remove('open');
+    }
+
+    // ── 플레이리스트 탭 ──
+    const MOODS = [
+      '선택 안 함', '차분한', '모던한', '우아한', '다크한', '내추럴한',
+      '활기찬', '신나는', '로맨틱한', '재즈/소울', '클래식', '어쿠스틱'
+    ];
+
+    // "HH:MM" → 분 단위 정수
+    function toMin(t) {
+      const [h, m] = t.split(':').map(Number);
+      return h * 60 + (m || 0);
+    }
+
+    // 분 → "HH:MM"
+    function toTime(m) {
+      const h = Math.floor(m / 60) % 24;
+      const min = m % 60;
+      return `${String(h).padStart(2,'0')}:${String(min).padStart(2,'0')}`;
+    }
+
+    // 운영 시간 문자열에서 첫 번째 시작/종료 시간 파싱
+    function parseHours(hoursStr) {
+      const match = hoursStr.match(/(\d{2}:\d{2})\s*[–\-~]\s*(\d{2}:\d{2})/);
+      if (!match) return { start: '09:00', end: '22:00' };
+      return { start: match[1], end: match[2] };
+    }
+
+    // 시간 구간 생성 (1시간 단위)
+    function makeDefaultSlots(hoursStr) {
+      const { start, end } = parseHours(hoursStr);
+      let s = toMin(start);
+      const e = toMin(end) <= toMin(start) ? toMin(end) + 24 * 60 : toMin(end);
+      const slots = [];
+      while (s < e) {
+        slots.push({ from: toTime(s), to: toTime(s + 60), mood: '' });
+        s += 60;
+      }
+      return slots;
+    }
+
+    // 슬롯 저장소 (storeId → slots 배열)
+    const slotStore = {};
+
+    // API enum 무드 → 슬롯 무드 레이블 변환 (enum으로 내려오는 경우 대비)
+    const MOOD_TO_SLOT = { CALM:'차분한', MODERN:'모던한', ELEGANT:'우아한', DARK:'다크한', NATURAL:'내추럴한', OTHER:'선택 안 함' };
+    function toSlotMood(raw) {
+      if (!raw) return '선택 안 함';
+      if (MOODS.includes(raw)) return raw;
+      return MOOD_TO_SLOT[raw] || '선택 안 함';
+    }
+
+    function renderPlaylistTab(store) {
+      const panel = document.getElementById('drawer-tab-playlist');
+      const pt = store.playlistType;
+
+      // 추천 받고 싶다고 한 경우: 안내 배너 + 기본 슬롯 편집기
+      if (pt === 'MUSIC_RECOMMENDED') {
+        if (!slotStore[store.id]) slotStore[store.id] = makeDefaultSlots(store.hours || '');
+        panel.innerHTML = `
+          <div style="background:rgba(198,241,53,0.08);border:1px solid rgba(198,241,53,0.25);border-radius:10px;padding:12px 14px;margin-bottom:16px;font-size:13px;line-height:1.6;color:rgba(255,255,255,0.7)">
+            <strong style="color:#c6f135;display:block;margin-bottom:4px">음악 추천 요청 매장</strong>
+            이 매장은 음악에 대한 판단을 인디피에 맡기겠다고 했습니다.<br>아래에서 무드를 직접 설정해 주세요.
+          </div>
+          <div id="slot-editor-${store.id}"></div>`;
+        refreshSlotList(store.id);
+        return;
+      }
+
+      // 시간대별 무드를 직접 선택한 경우: timePreferences로 슬롯 항상 채움
+      if (pt === 'TIME_BASED' && store.timePreferences && store.timePreferences.length > 0) {
+        slotStore[store.id] = store.timePreferences.map(p => {
+          const s = p.startTime ? p.startTime.slice(0,5) : (p.startTimeHour != null ? String(p.startTimeHour).padStart(2,'0') + ':00' : '09:00');
+          const e = p.endTime   ? p.endTime.slice(0,5)   : (p.endTimeHour   != null ? String(p.endTimeHour).padStart(2,'0')   + ':00' : '22:00');
+          return { from: s, to: e, mood: toSlotMood(p.mood) };
+        });
+        panel.innerHTML = `
+          <div style="background:rgba(35,62,255,0.1);border:1px solid rgba(35,62,255,0.3);border-radius:10px;padding:12px 14px;margin-bottom:16px;font-size:13px;line-height:1.6;color:rgba(255,255,255,0.7)">
+            <strong style="color:#7b9fff;display:block;margin-bottom:4px">시간대별 무드 선택 매장</strong>
+            매장이 직접 지정한 시간대별 무드가 아래에 반영되어 있습니다. 필요 시 수정 후 저장해 주세요.
+          </div>
+          <div id="slot-editor-${store.id}"></div>`;
+        refreshSlotList(store.id);
+        return;
+      }
+
+      // 일관 무드
+      if (pt === 'CONSISTENT_MOOD') {
+        const moodLabel = toSlotMood(store.musicMood);
+        slotStore[store.id] = makeDefaultSlots(store.hours || '').map(slot => ({ ...slot, mood: moodLabel }));
+        panel.innerHTML = `
+          <div style="background:rgba(168,85,247,0.08);border:1px solid rgba(168,85,247,0.25);border-radius:10px;padding:12px 14px;margin-bottom:16px;font-size:13px;line-height:1.6;color:rgba(255,255,255,0.7)">
+            <strong style="color:#c084fc;display:block;margin-bottom:4px">일관 무드 선택 매장</strong>
+            이 매장은 하루 종일 <strong style="color:#e9d5ff">${moodLabel}</strong> 무드로 음악을 재생하길 원합니다.<br>아래에서 슬롯별 무드를 직접 설정해 주세요.
+          </div>
+          <div id="slot-editor-${store.id}"></div>`;
+        refreshSlotList(store.id);
+        return;
+      }
+
+      // 기본
+      if (!slotStore[store.id]) slotStore[store.id] = makeDefaultSlots(store.hours || '');
+      refreshSlotList(store.id);
+    }
+
+    function refreshSlotList(storeId) {
+      const slots = slotStore[storeId];
+      // 배너가 있는 경우 슬롯 편집기 영역만 교체, 없으면 패널 전체 교체
+      const editorEl = document.getElementById(`slot-editor-${storeId}`);
+      const panel = editorEl || document.getElementById('drawer-tab-playlist');
+      panel.innerHTML = `
+        <div class="playlist-tab-header">
+          <p class="playlist-tab-label">운영 시간대별 무드 설정</p>
+          <button class="btn-add-slot" onclick="addSlot(${storeId})">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            구간 추가
+          </button>
+        </div>
+        <div class="slot-list">
+          ${slots.map((slot, i) => `
+            <div class="slot-item" id="slot-${storeId}-${i}">
+              <span class="slot-time">${slot.from} – ${slot.to}</span>
+              <select class="slot-mood-select" onchange="updateMood(${storeId},${i},this.value)">
+                ${MOODS.map(m => `<option value="${m}" ${slot.mood === m ? 'selected' : ''}>${m}</option>`).join('')}
+              </select>
+              <button class="btn-del-slot" onclick="removeSlot(${storeId},${i})" title="삭제">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/>
+                </svg>
+              </button>
+            </div>
+          `).join('')}
+        </div>
+        <div class="slot-save-row">
+          <button class="btn-save-slots" onclick="saveSlots(${storeId})">저장</button>
+        </div>
+      `;
+    }
+
+    function addSlot(storeId) {
+      const slots = slotStore[storeId];
+      const last = slots[slots.length - 1];
+      const newFrom = last ? last.to : '09:00';
+      const newTo = toTime((toMin(newFrom) + 60) % (24 * 60));
+      slots.push({ from: newFrom, to: newTo, mood: '' });
+      refreshSlotList(storeId);
+    }
+
+    function removeSlot(storeId, idx) {
+      slotStore[storeId].splice(idx, 1);
+      refreshSlotList(storeId);
+    }
+
+    function updateMood(storeId, idx, value) {
+      slotStore[storeId][idx].mood = value;
+    }
+
+    async function saveSlots(storeId) {
+      const btn = event.target;
+      btn.disabled = true;
+      btn.textContent = '저장 중...';
+      try {
+        await apiFetch('POST', '/api/admin/playlists/schedule', {
+          schedulePlaylists: [{
+            storeId,
+            scheduledAt: new Date().toISOString(),
+            slots: slotStore[storeId].map(sl => ({ from: sl.from, to: sl.to, mood: sl.mood }))
+          }]
+        }, adminToken);
+        btn.textContent = '저장됨 ✓';
+        btn.style.background = 'rgba(198,241,53,0.2)';
+        btn.style.color = '#c6f135';
+        btn.style.border = '1px solid rgba(198,241,53,0.3)';
+        setTimeout(() => { btn.textContent = '저장'; btn.style = ''; btn.disabled = false; }, 2000);
+      } catch(e) {
+        btn.textContent = '저장 실패';
+        btn.style.color = '#ff5c5c';
+        setTimeout(() => { btn.textContent = '저장'; btn.style = ''; btn.disabled = false; }, 2000);
+      }
+    }
+
+    // ── 추천곡 관리 탭 ──
+    const ALL_GENRES = ['발라드', '힙합', '인디', '락', '댄스', '클래식', '동요'];
+
+    // 매장별 차단 장르 저장소
+    const blockedStore = {};
+
+    // 매장별 추천곡 캐시
+    const recCache = {};
+
+    async function renderRecommendTab(store) {
+      if (!blockedStore[store.id]) {
+        blockedStore[store.id] = new Set(
+          (store.excludedGenre || '').split(/,\s*/).filter(g => ALL_GENRES.includes(g))
+        );
+      }
+      if (!recCache[store.id]) {
+        try {
+          const data = await apiFetch('GET', `/api/admin/stores/${store.id}/songs/recommendations`, undefined, adminToken);
+          recCache[store.id] = (data.recommendations || data.songs || data || []).map(r => ({
+            title:  r.title || r.songTitle || '',
+            artist: r.artist || r.artistName || '',
+            genre:  r.genre || '',
+            who:    r.refereeName || r.who || '',
+            time:   r.createdAt || r.recommendedAt || r.time || '',
+          }));
+        } catch(e) {
+          recCache[store.id] = [];
+        }
+      }
+      refreshRecommendTab(store);
+    }
+
+    const TODAY = new Date().toISOString().slice(0, 10).replace(/-/g, '.');
+
+    function recItemHTML(r, i, blocked) {
+      const isToday = r.time.startsWith(TODAY);
+      const isBlocked = blocked.has(r.genre);
+      return `
+        <div class="rec-item ${isToday ? 'today' : ''} ${isBlocked ? 'blocked-item' : ''}">
+          ${isToday ? '<div class="rec-today-dot"></div>' : '<span class="rec-index">' + (i + 1) + '</span>'}
+          <div class="rec-info">
+            <p class="rec-title">${r.title}</p>
+            <p class="rec-artist">${r.artist}</p>
+            <span class="rec-genre-badge">${r.genre}</span>
+          </div>
+          <div class="rec-meta">
+            <p class="rec-who">${r.who}</p>
+            <p class="rec-time">${r.time}</p>
+          </div>
+        </div>`;
+    }
+
+    function refreshRecommendTab(store) {
+      const blocked = blockedStore[store.id];
+      const recs = recCache[store.id] || [];
+      const panel = document.getElementById('drawer-tab-recommend');
+
+      const todayRecs = recs.filter(r => r.time.startsWith(TODAY));
+      const prevRecs  = recs.filter(r => !r.time.startsWith(TODAY));
+
+      panel.innerHTML = `
+        <div style="margin-bottom:28px">
+          <p class="rec-section-title">차단 장르 관리</p>
+          <div class="genre-block-wrap" id="genre-chips-${store.id}">
+            ${ALL_GENRES.map(g => `
+              <button class="genre-chip ${blocked.has(g) ? 'blocked' : ''}"
+                onclick="toggleGenreBlock(this)">
+                ${g}
+              </button>
+            `).join('')}
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px">
+            <p style="font-size:12px;color:rgba(255,255,255,0.25);margin:0">
+              선택한 장르는 추천에서 제외됩니다 · 현재 <strong style="color:#ff5c5c">${blocked.size}개</strong> 차단 중
+            </p>
+            <button class="btn-save-slots" style="padding:6px 16px;font-size:13px" onclick="saveGenreBlock(${store.id}, this)">저장</button>
+          </div>
+        </div>
+
+        <div>
+          <p class="rec-section-title">추천곡 목록 <span style="color:rgba(255,255,255,0.4);font-size:11px;font-weight:500;margin-left:6px">${recs.length}곡</span></p>
+          ${recs.length === 0 ? `
+            <div class="tab-empty" style="padding:40px 0">
+              <p>아직 추천된 곡이 없습니다</p>
+            </div>
+          ` : `
+            <div class="rec-list">
+              ${todayRecs.length > 0 ? `
+                <p class="rec-group-label today-label">오늘 추천 · ${todayRecs.length}곡</p>
+                ${todayRecs.map((r, i) => recItemHTML(r, i, blocked)).join('')}
+              ` : ''}
+              ${prevRecs.length > 0 ? `
+                <p class="rec-group-label">이전 추천 · ${prevRecs.length}곡</p>
+                ${prevRecs.map((r, i) => recItemHTML(r, i, blocked)).join('')}
+              ` : ''}
+            </div>
+          `}
+        </div>
+      `;
+    }
+
+    function toggleGenreBlock(el) {
+      el.classList.toggle('blocked');
+    }
+
+    async function saveGenreBlock(storeId, btn) {
+      const chips = document.querySelectorAll(`#genre-chips-${storeId} .genre-chip`);
+      const newBlocked = new Set([...chips].filter(c => c.classList.contains('blocked')).map(c => c.textContent.trim()));
+      blockedStore[storeId] = newBlocked;
+
+      btn.disabled = true;
+      btn.textContent = '저장 중...';
+      try {
+        await apiFetch('POST', `/api/admin/stores/${storeId}/blocked-genres`, {
+          genres: [...newBlocked]
+        }, adminToken);
+        btn.textContent = '저장됨 ✓';
+        btn.style.background = 'rgba(198,241,53,0.2)';
+        btn.style.color = '#c6f135';
+        btn.style.border = '1px solid rgba(198,241,53,0.3)';
+        // 차단 수 업데이트
+        const countEl = btn.closest('div').querySelector('strong');
+        if (countEl) countEl.textContent = newBlocked.size + '개';
+        setTimeout(() => { btn.textContent = '저장'; btn.style = ''; btn.disabled = false; }, 2000);
+      } catch(e) {
+        btn.textContent = '저장 실패';
+        btn.style.color = '#ff5c5c';
+        setTimeout(() => { btn.textContent = '저장'; btn.style = ''; btn.disabled = false; }, 2000);
+      }
+    }
+
+    // ── 드로어 탭 전환 ──
+    function switchDrawerTab(tabId, el) {
+      document.querySelectorAll('.drawer-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.drawer-tab-panel').forEach(p => p.classList.remove('active'));
+      el.classList.add('active');
+      document.getElementById('drawer-tab-' + tabId).classList.add('active');
+    }
+
+    // ── 패널 전환 ──
+    const panelTitles = { stores: '매장 관리', playlists: '플레이리스트 관리' };
+
+    function switchPanel(panelId, el) {
+      document.querySelectorAll('.section-panel').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      document.getElementById('panel-' + panelId).classList.add('active');
+      el.classList.add('active');
+      document.getElementById('topbar-title').textContent = panelTitles[panelId];
+      if (panelId === 'playlists') plRenderStoreList();
+      // 모바일: 메뉴 선택 시 사이드바 닫기
+      document.querySelector('.sidebar').classList.remove('mobile-open');
+      document.getElementById('sidebar-overlay').classList.remove('open');
+    }
+
+    // ── 모바일 사이드바 ──
+    function toggleSidebar() {
+      document.querySelector('.sidebar').classList.toggle('mobile-open');
+      document.getElementById('sidebar-overlay').classList.toggle('open');
+    }
+
+    function logout() {
+      if (confirm('로그아웃 하시겠습니까?')) {
+        localStorage.removeItem('adminToken');
+        window.location.href = 'admin-login.html';
+      }
+    }
+
+    // ── 플레이리스트 관리 ──
+    let plWorkbook = null;
+    const playlists   = {};   // { storeName: [ {title,artist,playTime,vid} ] }
+    const plScheduledAt = {}; // { storeName: 'datetime-local string' }
+    const plCurrentSongs = {}; // { storeName: [ {title,artist,playTime} ] } — API 캐시
+    let plSelectedStore = null;
+
+    // 재생시간 문자열 → 초 (정수, "MM:SS", "H:MM:SS" 모두 지원)
+    function parsePlayTimeSec(val) {
+      if (!val && val !== 0) return 0;
+      const n = Number(val);
+      if (!isNaN(n)) return Math.round(n);
+      const str = String(val).trim();
+      const parts = str.split(':').map(Number);
+      if (parts.length === 2) return (parts[0] || 0) * 60 + (parts[1] || 0);
+      if (parts.length === 3) return (parts[0] || 0) * 3600 + (parts[1] || 0) * 60 + (parts[2] || 0);
+      return 0;
+    }
+
+    // 초 → "H시간 MM분" 또는 "MM분 SS초"
+    function fmtDuration(totalSec) {
+      totalSec = Math.round(Number(totalSec) || 0);
+      const h = Math.floor(totalSec / 3600);
+      const m = Math.floor((totalSec % 3600) / 60);
+      const s = totalSec % 60;
+      if (h > 0) return `${h}시간 ${m}분`;
+      if (m > 0) return `${m}분 ${s}초`;
+      return `${s}초`;
+    }
+
+    // 우측 헤더 통계 갱신
+    function plUpdateHeader() {
+      const total   = stores.length;
+      const matched = stores.filter(s => playlists[s.storeName]?.length > 0).length;
+      document.getElementById('pl-stat-total').textContent = total;
+      document.getElementById('pl-stat-matched').textContent = matched;
+    }
+
+    // 마지막 생성 시각 저장
+    let plLastCreated = localStorage.getItem('plLastCreated') || null;
+    function plSetLastCreated() {
+      plLastCreated = new Date().toLocaleString('ko-KR', { month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit' });
+      localStorage.setItem('plLastCreated', plLastCreated);
+      document.getElementById('pl-stat-last').textContent = '마지막 생성: ' + plLastCreated;
+    }
+    if (plLastCreated) document.addEventListener('DOMContentLoaded', () => {
+      const el = document.getElementById('pl-stat-last');
+      if (el) el.textContent = '마지막 생성: ' + plLastCreated;
+    });
+
+    // 토스트
+    let plToastTimer = null;
+    function plToast(msg, type = 'success') {
+      const el = document.getElementById('pl-toast');
+      el.textContent = msg;
+      el.className = `pl-toast ${type} show`;
+      clearTimeout(plToastTimer);
+      plToastTimer = setTimeout(() => el.classList.remove('show'), 3000);
+    }
+
+    function plSetSchedule(storeName, field, val) {
+      if (!plScheduledAt[storeName]) plScheduledAt[storeName] = { date: '', time: '' };
+      plScheduledAt[storeName][field] = val;
+    }
+
+    // 매장 목록 렌더 (엑셀 있으면 매칭 배지 + 곡수 변화 + 적용시각 입력)
+    function plRenderStoreList() {
+      const wrap = document.getElementById('pl-store-list');
+      const hasExcel = Object.keys(playlists).length > 0;
+      wrap.innerHTML = stores.map(s => {
+        const newTracks   = playlists[s.storeName];
+        const curSongs    = plCurrentSongs[s.storeName];
+        const newCount    = newTracks ? newTracks.length : 0;
+        const curCount    = curSongs  ? curSongs.length  : null;
+        const isMatched   = hasExcel && newCount > 0;
+        const isUnmatched = hasExcel && newCount === 0;
+        const schedObj    = plScheduledAt[s.storeName] || {};
+        const todayStr    = new Date().toISOString().slice(0, 10);
+        const schedDate   = schedObj.date || todayStr;
+        const schedTime   = schedObj.time || '';
+
+        const newDurSec = newTracks ? newTracks.reduce((sum, t) => sum + parsePlayTimeSec(t.playTime), 0) : 0;
+        const newDurStr = newDurSec > 0 ? ' · ' + fmtDuration(newDurSec) : '';
+
+        const badgeHtml = hasExcel
+          ? `<span class="pl-match-badge ${isMatched ? 'matched' : 'unmatched'}">${isMatched ? '매칭' : '미매칭'}</span>`
+          : '';
+
+        const metaHtml = isMatched
+          ? `<div class="pl-store-meta">
+               <span class="pl-meta-current">${curCount !== null ? curCount + '곡' : '-'}</span>
+               <span class="pl-meta-arrow">→</span>
+               <span class="pl-meta-new">${newCount}곡${newDurStr}</span>
+             </div>`
+          : `<div class="pl-store-meta"><span class="pl-meta-none">${curCount !== null ? '현재 ' + curCount + '곡' : '플레이리스트 없음'}</span></div>`;
+
+        const schedHtml = isMatched
+          ? `<div class="pl-store-item-schedule" onclick="event.stopPropagation()">
+               <span class="pl-schedule-label">적용 시각</span>
+               <div class="pl-schedule-inputs">
+                 <input type="date" class="pl-schedule-input date-input"
+                   value="${schedDate}"
+                   onchange="plSetSchedule('${s.storeName}', 'date', this.value)" />
+                 <select class="pl-schedule-input time-input"
+                   onchange="plSetSchedule('${s.storeName}', 'time', this.value)">
+                   ${Array.from({length: 48}, (_, i) => {
+                     const h = String(Math.floor(i/2)).padStart(2,'0');
+                     const m = i%2 === 0 ? '00' : '30';
+                     const val = `${h}:${m}`;
+                     const selected = val === schedTime ? 'selected' : '';
+                     return `<option value="${val}" ${selected}>${val}</option>`;
+                   }).join('')}
+                 </select>
+               </div>
+             </div>`
+          : '';
+
+        const isExpanded = plSelectedStore === s.storeName;
+        const safeId = s.storeName.replace(/[^a-zA-Z0-9가-힣]/g, '_');
+        return `
+          <div class="pl-store-item ${isExpanded ? 'active expanded' : ''}"
+            id="pl-item-${safeId}"
+            onclick="plSelectStore('${s.storeName}')">
+            <div class="pl-store-item-top">
+              <div style="flex:1;min-width:0">
+                <p class="pl-store-name">${s.storeName}</p>
+                ${metaHtml}
+              </div>
+              ${badgeHtml}
+              <span class="pl-store-chevron">▼</span>
+            </div>
+            ${schedHtml}
+            <div class="pl-store-expand" id="pl-expand-${safeId}"></div>
+          </div>`;
+      }).join('');
+    }
+
+    // 매장 선택 → 토글 펼침/접기
+    async function plSelectStore(storeName) {
+      // 같은 매장 클릭 시 접기
+      if (plSelectedStore === storeName) {
+        plSelectedStore = null;
+        plRenderStoreList();
+        return;
+      }
+
+      plSelectedStore = storeName;
+      plRenderStoreList();
+
+      const safeId = storeName.replace(/[^a-zA-Z0-9가-힣]/g, '_');
+      const expandEl = document.getElementById('pl-expand-' + safeId);
+      if (expandEl) expandEl.innerHTML = '<div style="padding:16px 0;text-align:center;color:rgba(255,255,255,0.3);font-size:13px">불러오는 중...</div>';
+
+      // 현재 플리 API 조회 (캐시 없으면)
+      if (!plCurrentSongs[storeName]) {
+        const store = stores.find(s => s.storeName === storeName);
+        if (store) {
+          try {
+            const data = await apiFetch('GET', `/api/stores/${store.id}/playlist`, undefined, adminToken);
+            plCurrentSongs[storeName] = data.playlist?.songs || [];
+          } catch(e) {
+            plCurrentSongs[storeName] = [];
+          }
+        } else {
+          plCurrentSongs[storeName] = [];
+        }
+        plRenderStoreList(); // 곡수 업데이트 후 재렌더
+      }
+      plRenderCompare(storeName, plCurrentSongs[storeName]);
+    }
+
+    // 아코디언 인라인 비교 렌더
+    function plRenderCompare(storeName, currentSongs) {
+      const safeId = storeName.replace(/[^a-zA-Z0-9가-힣]/g, '_');
+      const expandEl = document.getElementById('pl-expand-' + safeId);
+      if (!expandEl) return;
+
+      const newTracks = playlists[storeName] || [];
+      const loading   = currentSongs === null;
+
+      const renderRows = (list) => list.length > 0
+        ? list.map((s, i) => `
+            <div class="pl-compare-row">
+              <span class="pl-compare-num">${i + 1}</span>
+              <span class="pl-compare-title">${s.title || '-'}</span>
+              <span class="pl-compare-artist">${s.artist || '-'}</span>
+            </div>`).join('')
+        : `<div class="pl-compare-empty">${loading ? '불러오는 중...' : '없음'}</div>`;
+
+      const curList   = loading ? [] : (currentSongs || []);
+      const curDurSec = curList.reduce((sum, t) => sum + parsePlayTimeSec(t.playTime), 0);
+      const newDurSec = newTracks.reduce((sum, t) => sum + parsePlayTimeSec(t.playTime), 0);
+      const curCount  = loading ? '...' : curList.length + '곡' + (curDurSec > 0 ? ' · ' + fmtDuration(curDurSec) : '');
+      const newCount  = newTracks.length > 0 ? newTracks.length + '곡' + (newDurSec > 0 ? ' · ' + fmtDuration(newDurSec) : '') : '';
+
+      expandEl.innerHTML = `
+        <div style="background:#141416;border-radius:10px;overflow:hidden;">
+          <div class="pl-compare-wrap">
+            <div class="pl-compare-col">
+              <div class="pl-compare-col-title">
+                현재 적용 중
+                <span class="pl-count-current">${curCount}</span>
+              </div>
+              <div class="pl-compare-col-body">${renderRows(curList)}</div>
+            </div>
+            <div class="pl-compare-col">
+              <div class="pl-compare-col-title">
+                신규 등록
+                <span>${newCount}</span>
+              </div>
+              <div class="pl-compare-col-body">${renderRows(newTracks)}</div>
+            </div>
+          </div>
+        </div>`;
+    }
+
+    // 파일 선택
+    function plFileSelected(input) {
+      if (!input.files[0]) return;
+      plLoadFile(input.files[0]);
+    }
+
+    function plLoadFile(file) {
+      document.getElementById('pl-file-name').textContent = file.name;
+      document.getElementById('pl-file-info').classList.add('show');
+
+      const reader = new FileReader();
+      reader.onload = e => {
+        plWorkbook = XLSX.read(e.target.result, { type: 'array' });
+        plShowSheets();
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    // YouTube ID 형식 랜덤 생성 (11자리)
+    function genVid() {
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
+      return Array.from({ length: 11 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+    }
+
+    // 엑셀 row → 정규화된 트랙 객체
+    function parseRow(row, index) {
+      const title    = row['제목'] || row['title'] || row['Title'] || row['곡명'] || '';
+      const artist   = row['가수'] || row['artist'] || row['Artist'] || row['아티스트'] || '';
+      const playTime = String(row['재생시간'] || row['playTime'] || row['play_time'] || row['duration'] || row['길이'] || 0);
+      const vid      = String(row['vlink'] || row['vid'] || row['youtube_id'] || row['youtubeId'] || row['YouTube ID'] || '').trim() || genVid();
+      return { title: String(title).trim(), artist: String(artist).trim(), playTime: playTime.trim(), vid, playOrder: (index + 1) * 1.0 };
+    }
+
+    function plShowSheets() {
+      const sheets     = plWorkbook.SheetNames;
+      const storeNames = stores.map(s => s.storeName);
+      const matchedChips   = [];
+      const unmatchedChips = [];
+
+      sheets.forEach(sheetName => {
+        const matchedStore = storeNames.find(sn => sn.includes(sheetName) || sheetName.includes(sn));
+        if (matchedStore) {
+          const rows = XLSX.utils.sheet_to_json(plWorkbook.Sheets[sheetName]);
+          if (rows.length > 0) playlists[matchedStore] = rows.map(parseRow);
+          matchedChips.push(`<span class="pl-sheet-chip matched">${sheetName}</span>`);
+        } else {
+          unmatchedChips.push(`<span class="pl-sheet-chip">${sheetName}</span>`);
+        }
+      });
+
+      document.getElementById('pl-sheet-chips-matched').innerHTML = matchedChips.join('') || '<span style="font-size:12px;color:rgba(255,255,255,0.25)">없음</span>';
+      document.getElementById('pl-sheet-chips-unmatched').innerHTML = unmatchedChips.join('');
+      document.getElementById('pl-sheet-section-unmatched').style.display = unmatchedChips.length ? '' : 'none';
+      document.getElementById('pl-sheets-wrap').classList.add('show');
+
+      plSelectedStore = null;
+      plUpdateHeader();
+      plRenderStoreList();
+      plInitBulkSchedule();
+    }
+
+    function plInitBulkSchedule() {
+      const bulkEl = document.getElementById('pl-bulk-schedule');
+      bulkEl.classList.add('show');
+      // 날짜 기본값: 오늘
+      const todayStr = new Date().toISOString().slice(0, 10);
+      document.getElementById('pl-bulk-date').value = todayStr;
+      // 시간 옵션 채우기 (비어있으면)
+      const sel = document.getElementById('pl-bulk-time');
+      if (sel.options.length <= 1) {
+        Array.from({length: 48}, (_, i) => {
+          const h = String(Math.floor(i/2)).padStart(2,'0');
+          const m = i%2 === 0 ? '00' : '30';
+          const opt = document.createElement('option');
+          opt.value = `${h}:${m}`;
+          opt.textContent = `${h}:${m}`;
+          sel.appendChild(opt);
+        });
+      }
+    }
+
+    function plApplyBulkSchedule() {
+      const date = document.getElementById('pl-bulk-date').value;
+      const time = document.getElementById('pl-bulk-time').value;
+      if (!date || !time) return;
+      stores.forEach(s => {
+        if (playlists[s.storeName]?.length > 0) {
+          if (!plScheduledAt[s.storeName]) plScheduledAt[s.storeName] = {};
+          plScheduledAt[s.storeName].date = date;
+          plScheduledAt[s.storeName].time = time;
+        }
+      });
+      plRenderStoreList();
+    }
+
+    function plClearFile() {
+      plWorkbook = null;
+      Object.keys(playlists).forEach(k => delete playlists[k]);
+      Object.keys(plScheduledAt).forEach(k => delete plScheduledAt[k]);
+      plSelectedStore = null;
+      document.getElementById('pl-file-input').value = '';
+      document.getElementById('pl-file-info').classList.remove('show');
+      document.getElementById('pl-sheets-wrap').classList.remove('show');
+      document.getElementById('pl-bulk-schedule').classList.remove('show');
+      plUpdateHeader();
+      plRenderStoreList();
+    }
+
+    // 플레이리스트 생성
+    async function plCreate() {
+      const hasData = stores.some(s => playlists[s.storeName] && playlists[s.storeName].length > 0);
+      if (!hasData) return;
+      const btn = document.getElementById('btn-create-pl');
+      btn.disabled = true;
+      btn.textContent = '생성 중...';
+
+      try {
+        const schedulePlaylists = stores
+          .filter(s => playlists[s.storeName] && playlists[s.storeName].length > 0)
+          .map(s => {
+            const sched = plScheduledAt[s.storeName] || {};
+            const scheduledAt = sched.date
+              ? new Date(`${sched.date}T${sched.time || '00:00'}:00`).toISOString()
+              : new Date().toISOString();
+            return {
+            storeName: s.storeName,
+            scheduledAt,
+            songs: playlists[s.storeName].map(t => ({
+              title: t.title,
+              artist: t.artist,
+              vid: t.vid,
+              playTime: parsePlayTimeSec(t.playTime)
+            }))
+          };
+          });
+        if (schedulePlaylists.length > 0) {
+          await apiFetch('POST', '/api/admin/playlists/schedule', { schedulePlaylists }, adminToken);
+          plToast(`✓ ${schedulePlaylists.length}개 매장 플레이리스트 등록 완료`, 'success');
+          plSetLastCreated();
+        }
+      } catch(e) {
+        console.warn('스케줄 등록 실패:', e);
+        plToast('플레이리스트 등록 실패. 다시 시도해 주세요.', 'error');
+      }
+
+      btn.disabled = false;
+      btn.textContent = '플레이리스트 생성';
+      plRenderStoreList();
+      if (plSelectedStore) plRenderCompare(plSelectedStore, plCurrentSongs[plSelectedStore] || []);
+    }
+
+    // 드래그앤드롭
+    function plDragOver(e)  { e.preventDefault(); document.getElementById('pl-dropzone').classList.add('drag-over'); }
+    function plDragLeave()  { document.getElementById('pl-dropzone').classList.remove('drag-over'); }
+    function plDrop(e)      {
+      e.preventDefault();
+      plDragLeave();
+      const file = e.dataTransfer.files[0];
+      if (file) plLoadFile(file);
+    }
+
+    // ── 초기화 ──
+    document.getElementById('topbar-date').textContent =
+      new Date().toLocaleDateString('ko-KR', { year:'numeric', month:'long', day:'numeric', weekday:'short' });
+
+    // 기존 localStorage에 쌓인 오래된 환불 데이터 정리
+    localStorage.removeItem('admRefundedPaymentIds');
+    localStorage.removeItem('admRefundedStoreIds');
+
+    loadStores();
+  </script>
+
+</body>
+</html>
