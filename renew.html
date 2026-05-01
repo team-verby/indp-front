@@ -682,7 +682,7 @@
       try {
         if (btn) { btn.disabled = true; btn.textContent = '처리 중...'; }
 
-        const res = await apiFetch('POST', `/api/owner/subscriptions/stores/${storeId}`,
+        const res = await apiFetch('POST', `/api/owner/stores/${storeId}/subscriptions`,
           { planId, usagePeriod: selectedMonths }, token);
 
         openTossModal();

@@ -590,7 +590,7 @@
         const hasPaymentRefund = !!refundedAt;
         let hasSubRefund = false;
         try {
-          const subRes = await apiFetch('GET', `/api/owner/subscriptions/stores/${storeId}`, undefined, token);
+          const subRes = await apiFetch('GET', `/api/owner/stores/${storeId}/subscriptions`, undefined, token);
           console.log('[refund] subRes:', JSON.stringify(subRes));
           const subList = Array.isArray(subRes?.subscriptions) ? subRes.subscriptions
                         : Array.isArray(subRes) ? subRes : (subRes ? [subRes] : []);
