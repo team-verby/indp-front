@@ -28,7 +28,7 @@ jobs:
 
       - name: Deploy to dev S3
         if: github.ref == 'refs/heads/dev'
-        run: aws s3 sync . s3://indp-front/ --delete --exclude ".git/*" --exclude ".github/*"
+        run: aws s3 sync . s3://indp-front-dev/ --delete --exclude ".git/*" --exclude ".github/*"
 
       - name: Deploy to prod S3
         if: github.ref == 'refs/heads/main'
