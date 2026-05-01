@@ -1,4 +1,4 @@
-const BASE_URL = 'http://16.184.46.185';
+const BASE_URL = 'https://dev-api.indpmusic.co.kr';
 
 async function apiFetch(method, path, body, token) {
   const headers = { 'Content-Type': 'application/json' };

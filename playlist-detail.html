@@ -1952,22 +1952,22 @@
 
         if (token) {
           try {
-            playlist = await apiFetch('GET', `/api/owner/stores/${storeId}/playlist`, undefined, token);
+            playlist = await apiFetch('GET', `/api/owner/stores/${storeId}/playlists`, undefined, token);
             isMyStore = true;
             console.log('[playlist] owner 엔드포인트 성공 → isMyStore=true');
             // owner 응답에 songs가 없으면 public으로 data 보완
             const ownerData0 = playlist.playlist || playlist;
             if (!(ownerData0.songs && ownerData0.songs.length > 0)) {
               console.log('[playlist] owner 응답 비어있음, public fallback');
-              playlist = await apiFetch('GET', `/api/stores/${storeId}/playlist`, undefined, undefined);
+              playlist = await apiFetch('GET', `/api/stores/${storeId}/playlists`, undefined, undefined);
             }
           } catch(ownerErr) {
             console.warn('[playlist] owner 엔드포인트 실패 → isMyStore=false', ownerErr.message);
             isMyStore = false;
-            playlist = await apiFetch('GET', `/api/stores/${storeId}/playlist`, undefined, undefined);
+            playlist = await apiFetch('GET', `/api/stores/${storeId}/playlists`, undefined, undefined);
           }
         } else {
-          playlist = await apiFetch('GET', `/api/stores/${storeId}/playlist`, undefined, undefined);
+          playlist = await apiFetch('GET', `/api/stores/${storeId}/playlists`, undefined, undefined);
         }
 
         if (isMyStore) {
@@ -2089,7 +2089,7 @@
           const token = getOwnerToken();
           const ownerStoreId = getOwnerStoreId();
           const myStore = !!(token && ownerStoreId && String(ownerStoreId) === String(storeId));
-          const playlistUrl = myStore ? `/api/owner/stores/${storeId}/playlist` : `/api/stores/${storeId}/playlist`;
+          const playlistUrl = myStore ? `/api/owner/stores/${storeId}/playlists` : `/api/stores/${storeId}/playlists`;
           const fresh = await apiFetch('GET', playlistUrl, undefined, myStore ? token : undefined);
           const freshData = fresh.playlist || fresh;
           const freshSongs = freshData.songs;

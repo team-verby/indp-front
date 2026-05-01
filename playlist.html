@@ -517,7 +517,7 @@
 
     async function checkPlaying(storeId) {
       try {
-        const res = await fetch(`${BASE_URL}/api/stores/${storeId}/playlist`);
+        const res = await fetch(`${BASE_URL}/api/stores/${storeId}/playlists`);
         if (!res.ok) return false;
         const data = await res.json();
         return !!(data.currentSong || (data.playlist && data.playlist.currentSong));

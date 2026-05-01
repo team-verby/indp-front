@@ -669,7 +669,7 @@
         };
 
         console.log('[apply 요청 body]', JSON.stringify(body, null, 2));
-        const result = await apiFetch('POST', '/api/stores/apply', body);
+        const result = await apiFetch('POST', '/api/stores/applications', body);
         console.log('[apply 응답]', JSON.stringify(result));
         const { orderId, amount, orderName } = result;
 

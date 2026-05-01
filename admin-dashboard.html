@@ -2690,7 +2690,7 @@
       btn.disabled = true;
       btn.textContent = '저장 중...';
       try {
-        await apiFetch('POST', '/api/admin/playlists/schedule', {
+        await apiFetch('POST', '/api/admin/scheduled-playlists', {
           schedulePlaylists: [{
             storeId,
             scheduledAt: new Date().toISOString(),
@@ -3034,7 +3034,7 @@
         const store = stores.find(s => s.storeName === storeName);
         if (store) {
           try {
-            const data = await apiFetch('GET', `/api/stores/${store.id}/playlist`, undefined, adminToken);
+            const data = await apiFetch('GET', `/api/stores/${store.id}/playlists`, undefined, adminToken);
             plCurrentSongs[storeName] = data.playlist?.songs || [];
           } catch(e) {
             plCurrentSongs[storeName] = [];
@@ -3228,7 +3228,7 @@
           };
           });
         if (schedulePlaylists.length > 0) {
-          await apiFetch('POST', '/api/admin/playlists/schedule', { schedulePlaylists }, adminToken);
+          await apiFetch('POST', '/api/admin/scheduled-playlists', { schedulePlaylists }, adminToken);
           plToast(`✓ ${schedulePlaylists.length}개 매장 플레이리스트 등록 완료`, 'success');
           plSetLastCreated();
         }

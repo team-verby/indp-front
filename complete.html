@@ -323,7 +323,7 @@
               }
             }
             if (storeId) {
-              const res = await apiFetch('GET', `/api/owner/stores/${storeId}/subscription`, undefined, token);
+              const res = await apiFetch('GET', `/api/owner/stores/${storeId}/subscriptions`, undefined, token);
               console.log('[구독 정보 응답]', JSON.stringify(res));
               const subList = Array.isArray(res?.subscriptions) ? res.subscriptions
                             : Array.isArray(res) ? res : (res ? [res] : []);
@@ -372,7 +372,7 @@
           if (stores.length > 0) { storeId = stores[0].storeId; setOwnerStoreId(storeId); }
         }
         if (!storeId) return;
-        const res = await apiFetch('GET', `/api/owner/stores/${storeId}/subscription`, undefined, token);
+        const res = await apiFetch('GET', `/api/owner/stores/${storeId}/subscriptions`, undefined, token);
         const subList = Array.isArray(res?.subscriptions) ? res.subscriptions
                       : Array.isArray(res) ? res : (res ? [res] : []);
         if (subList.length > 0) {

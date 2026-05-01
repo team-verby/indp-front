@@ -1489,7 +1489,7 @@
       };
 
       try {
-        const res = await apiFetch('GET', `/api/owner/stores/${storeId}/subscription`, undefined, token);
+        const res = await apiFetch('GET', `/api/owner/stores/${storeId}/subscriptions`, undefined, token);
         console.log('[구독 API 응답]', JSON.stringify(res));
 
         // 배열 또는 단일 객체 모두 처리
@@ -1621,7 +1621,7 @@
       const listEl = document.getElementById('mp-song-list');
       const dateEl = document.getElementById('playlist-date-label');
       try {
-        const data = await apiFetch('GET', `/api/owner/stores/${storeId}/playlist`, undefined, token);
+        const data = await apiFetch('GET', `/api/owner/stores/${storeId}/playlists`, undefined, token);
         const playlist = data.playlist || data;
         const songs = playlist.songs || playlist || [];
         listEl.dataset.loaded = '1';
