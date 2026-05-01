@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>정보 입력 - 인디피 뮤직</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=SUIT:wght@100..900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="shared.css" />
+  <script src="api.js"></script>
+  <style>
+    body { background: var(--light-bg); }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <div class="nav-inner">
+      <a href="index.html" class="nav-logo"><img src="logo.png" alt="인디피 뮤직" /></a>
+      <ul class="nav-links">
+        <li><a href="index.html">인디피 뮤직</a></li>
+        <li><a href="playlist.html">플레이리스트</a></li>
+      </ul>
+      <div class="nav-actions">
+        <a href="login.html" class="nav-login">로그인</a>
+        <a href="plan.html" class="nav-cta-blue">도입 문의</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- PAGE -->
+  <div class="page-wrap">
+
+    <h1 class="page-title">매장/플레이리스트 정보 입력</h1>
+    <p class="page-subtitle">매장과 재생할 플레이리스트 정보를 입력해 주세요</p>
+
+    <!-- Stepper -->
+    <div class="stepper">
+      <div class="step-item">
+        <div class="step-content">
+          <div class="step-circle done">✓</div>
+          <div class="step-label done">요금제 선택</div>
+        </div>
+      </div>
+      <div class="step-line done"></div>
+      <div class="step-item">
+        <div class="step-content">
+          <div class="step-circle active">2</div>
+          <div class="step-label active">정보 입력</div>
+        </div>
+      </div>
+      <div class="step-line"></div>
+      <div class="step-item">
+        <div class="step-content">
+          <div class="step-circle">3</div>
+          <div class="step-label">결제 진행</div>
+        </div>
+      </div>
+      <div class="step-line"></div>
+      <div class="step-item">
+        <div class="step-content">
+          <div class="step-circle">4</div>
+          <div class="step-label">신청 완료</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sub-stepper -->
+    <div class="sub-stepper">
+      <div class="sub-step active">
+        <div class="sub-step-num">1</div>
+        <div class="sub-step-label">신청 정보</div>
+      </div>
+      <div class="sub-step-line"></div>
+      <div class="sub-step">
+        <div class="sub-step-num">2</div>
+        <div class="sub-step-label">매장 정보</div>
+      </div>
+      <div class="sub-step-line"></div>
+      <div class="sub-step">
+        <div class="sub-step-num">3</div>
+        <div class="sub-step-label">음악 무드</div>
+      </div>
+    </div>
+
+    <!-- Form Card: 신청 정보 -->
+    <div class="form-card">
+      <h2 class="form-card-title">신청 정보</h2>
+
+      <div class="form-group">
+        <label class="form-label" for="applicant-name">신청자 성함 <span class="required">*</span></label>
+        <input type="text" id="applicant-name" class="form-input" placeholder="성함을 입력해 주세요" />
+        <p class="field-error" id="err-name">성함을 입력해 주세요.</p>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="applicant-phone">신청자 연락처 <span class="required">*</span></label>
+        <input type="tel" id="applicant-phone" class="form-input" placeholder="회신을 위해 연락 가능한 휴대폰번호를 작성해 주세요" />
+        <p class="field-error" id="err-phone">연락처를 입력해 주세요.</p>
+      </div>
+
+
+    </div>
+
+    <!-- Actions -->
+    <p class="form-submit-error" id="submit-error">필수 항목을 모두 입력해 주세요.</p>
+    <div class="form-actions">
+      <a href="plan.html" class="btn-secondary">이전</a>
+      <button class="btn-primary" onclick="goNext()">다음</button>
+    </div>
+
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div class="footer-info">
+        <p>대표: 박완</p>
+        <p>사업자 등록번호: 666-20-01980</p>
+        <p>주소 03628 서울특별시 서대문구 통일로 484 서대문구창업지원센터 321호 버비컴퍼니</p>
+        <p class="contact">고객 문의: verbykorea@gmail.com</p>
+        <div class="footer-policy-links">
+          <a href="terms.html">서비스 이용약관</a>
+          <span>|</span>
+          <a href="privacy.html">개인정보 처리방침</a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-title-big">INDP MUSIC</div>
+  </footer>
+  <div class="copyright">Copyright 2026. VERBY Co. all rights reserved.</div>
+
+  <script>
+    // 페이지 진입 시 URL 파라미터 → 즉시 localStorage 저장
+    (function() {
+      const p = new URLSearchParams(location.search).get('plan');
+      if (p) localStorage.setItem('selectedPlan', p);
+    })();
+
+    function setError(inputId, errId, show) {
+      document.getElementById(inputId).classList.toggle('error', show);
+      document.getElementById(errId).classList.toggle('show', show);
+    }
+
+    function goNext() {
+      const name = document.getElementById('applicant-name').value.trim();
+      const phone = document.getElementById('applicant-phone').value.trim();
+      let valid = true;
+
+      setError('applicant-name', 'err-name', !name);
+      setError('applicant-phone', 'err-phone', !phone);
+      if (!name || !phone) valid = false;
+
+      document.getElementById('submit-error').classList.toggle('show', !valid);
+      if (valid) {
+        localStorage.setItem('applicantName', name);
+        localStorage.setItem('applicantPhone', phone);
+        const plan = new URLSearchParams(location.search).get('plan') || localStorage.getItem('selectedPlan') || 'B';
+        window.location.href = 'apply-store.html?plan=' + plan;
+      }
+    }
+  </script>
+
+</body>
+</html>

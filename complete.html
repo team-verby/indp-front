@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>신청 완료 - 인디피 뮤직</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=SUIT:wght@100..900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="shared.css" />
+  <style>
+    body { background: var(--light-bg); }
+
+    .complete-card {
+      text-align: center;
+    }
+
+    .complete-icon {
+      width: 72px;
+      height: 72px;
+      background: #eef0ff;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 20px;
+    }
+
+    .complete-title {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--dark);
+      margin-bottom: 20px;
+    }
+
+    .complete-info-box {
+      background: #f8f9fb;
+      border-radius: 14px;
+      padding: 20px 24px;
+      font-size: 15px;
+      color: var(--text-sub);
+      line-height: 2;
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .complete-info-title {
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--dark);
+      margin-bottom: 10px;
+    }
+
+    .complete-action {
+      display: flex;
+      justify-content: center;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <div class="nav-inner">
+      <a href="index.html" class="nav-logo"><img src="logo.png" alt="인디피 뮤직" /></a>
+      <ul class="nav-links">
+        <li><a href="index.html">인디피 뮤직</a></li>
+        <li><a href="playlist.html">플레이리스트</a></li>
+      </ul>
+      <div class="nav-actions">
+        <a href="login.html" class="nav-login">로그인</a>
+        <a href="plan.html" class="nav-cta-blue">도입 문의</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- PAGE -->
+  <div class="page-wrap">
+
+    <h1 class="page-title">신청 완료</h1>
+    <p class="page-subtitle">인디피 뮤직 서비스 신청이 완료되었습니다.</p>
+
+    <!-- Stepper -->
+    <div class="stepper">
+      <div class="step-item">
+        <div class="step-content">
+          <div class="step-circle done">✓</div>
+          <div class="step-label done">요금제 선택</div>
+        </div>
+      </div>
+      <div class="step-line done"></div>
+      <div class="step-item">
+        <div class="step-content">
+          <div class="step-circle done">✓</div>
+          <div class="step-label done">정보 입력</div>
+        </div>
+      </div>
+      <div class="step-line done"></div>
+      <div class="step-item">
+        <div class="step-content">
+          <div class="step-circle done">✓</div>
+          <div class="step-label done">결제 진행</div>
+        </div>
+      </div>
+      <div class="step-line done"></div>
+      <div class="step-item">
+        <div class="step-content">
+          <div class="step-circle active">4</div>
+          <div class="step-label active">신청 완료</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Complete Card -->
+    <div class="form-card complete-card">
+
+      <div class="complete-icon">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#233eff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="20 6 9 17 4 12"/>
+        </svg>
+      </div>
+
+      <h2 class="complete-title">신청이 완료되었습니다!</h2>
+
+      <!-- 이용 정보 -->
+      <div class="complete-info-box" id="subscription-box" style="display:none">
+        <p class="complete-info-title">이용 정보</p>
+        <div style="display:flex;flex-direction:column;gap:6px;text-align:left">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start">
+            <span style="color:var(--text-gray);font-size:14px;padding-top:2px">서비스 이용 기간</span>
+            <div id="subscription-period-label" style="font-size:15px;font-weight:700;color:var(--dark);text-align:right"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span style="color:var(--text-gray);font-size:14px">결제 금액</span>
+            <span id="subscription-amount" style="font-size:15px;font-weight:700;color:var(--dark)"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 꼭 확인해 주세요 -->
+      <div class="complete-info-box">
+        <p class="complete-info-title">꼭 확인해 주세요!</p>
+        <ol style="padding:0;margin:0;text-align:left;display:inline-block;list-style:none;width:100%">
+          <li style="display:flex;gap:8px;align-items:flex-start;">
+            <span style="flex-shrink:0;font-weight:700;color:var(--blue);">1.</span>
+            <div style="flex:1">
+              <div style="font-size:14px;color:var(--text-sub);margin-bottom:6px">서비스 이용 기간</div>
+              <div id="notice-period" style="font-size:15px;font-weight:700;color:var(--dark);line-height:1.6"></div>
+              <div style="font-size:13px;color:var(--text-gray);margin-top:4px">서비스 이용 기간은 화요일~월요일 기준으로 운영됩니다.</div>
+            </div>
+          </li>
+          <li style="display:flex;gap:8px;align-items:flex-start;margin-top:16px;border-top:1px solid #e5e7eb;padding-top:16px">
+            <span style="flex-shrink:0;font-weight:700;color:var(--blue);">2.</span>
+            <div style="flex:1">
+              <div style="font-size:14px;color:var(--text-sub);margin-bottom:4px">아이디 · 비밀번호 보관</div>
+              <div style="font-size:13px;color:var(--text-gray);line-height:1.7">아래 로그인 정보를 반드시 기억해 주세요.<br>분실 시 고객센터를 통해서만 재발급이 가능합니다.</div>
+            </div>
+          </li>
+          <li style="display:flex;gap:8px;align-items:flex-start;margin-top:16px;border-top:1px solid #e5e7eb;padding-top:16px">
+            <span style="flex-shrink:0;font-weight:700;color:var(--blue);">3.</span>
+            <div style="flex:1">
+              <div style="font-size:14px;color:var(--text-sub);margin-bottom:4px">신청 정보 확인</div>
+              <div style="font-size:13px;color:var(--text-gray);line-height:1.7">신청하신 매장 정보 및 음악 취향은 로그인 후 마이페이지에서 확인하고 수정하실 수 있습니다.</div>
+            </div>
+          </li>
+        </ol>
+      </div>
+
+      <!-- 로그인 정보 (신규 계정 발급 시) -->
+      <div id="credentials-box" style="display:none;background:#f0f3ff;border:1.5px solid var(--blue);border-radius:14px;padding:20px 24px;margin-bottom:16px;text-align:left">
+        <p class="complete-info-title" style="color:var(--blue);margin-bottom:12px">로그인 정보</p>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span style="color:var(--text-gray);font-size:14px">아이디</span>
+            <span id="cred-id" style="font-size:15px;font-weight:800;color:var(--dark);letter-spacing:0.02em"></span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span style="color:var(--text-gray);font-size:14px">비밀번호</span>
+            <span id="cred-pw" style="font-size:15px;font-weight:800;color:var(--dark);letter-spacing:0.02em"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="complete-action">
+        <a href="login.html" class="btn-primary">지금 로그인하러 가기</a>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div class="footer-info">
+        <p>대표: 박완</p>
+        <p>사업자 등록번호: 666-20-01980</p>
+        <p>주소 03628 서울특별시 서대문구 통일로 484 서대문구창업지원센터 321호 버비컴퍼니</p>
+        <p class="contact">고객 문의: verbykorea@gmail.com</p>
+        <div class="footer-policy-links">
+          <a href="terms.html">서비스 이용약관</a>
+          <span>|</span>
+          <a href="privacy.html">개인정보 처리방침</a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-title-big">INDP MUSIC</div>
+  </footer>
+  <div class="copyright">Copyright 2026. VERBY Co. all rights reserved.</div>
+
+  <script src="api.js"></script>
+  <script>
+    const DAY_KO_CP = ['일','월','화','수','목','금','토'];
+    const WEEKS_TO_MONTHS_CP = {4:1, 12:3, 24:6, 48:12};
+    const MONTHS_TO_WEEKS_CP = {1:4, 3:12, 6:24, 12:48};
+
+    function fmtDay(d) {
+      return `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')} (${DAY_KO_CP[d.getDay()]})`;
+    }
+
+    function showSubscriptionInfo(sub, paidAmount) {
+      if (!sub || !sub.startDate) return;
+      const sd = new Date(sub.startDate);
+      if (sub.endDate) {
+        const usagePeriod = sub.usagePeriod;
+        let weeks, months;
+        if (usagePeriod) {
+          months = usagePeriod;
+          weeks = MONTHS_TO_WEEKS_CP[months] || months * 4;
+        } else {
+          const days = Math.round((new Date(sub.endDate) - sd) / (1000*60*60*24));
+          const rawW = Math.round(days / 7);
+          const known = [4,12,24,48];
+          weeks = known.reduce((a, b) => Math.abs(b - rawW) < Math.abs(a - rawW) ? b : a);
+          months = WEEKS_TO_MONTHS_CP[weeks] || null;
+        }
+        const ed = new Date(sub.endDate);
+        const periodStr = months ? `${months}개월 (${weeks}주)` : `${weeks}주`;
+        const rangeStr = `${fmtDay(sd)} ~ ${fmtDay(ed)}`;
+        document.getElementById('subscription-period-label').innerHTML =
+          `<span style="font-weight:800;color:var(--dark)">${periodStr}</span><br><span style="font-size:13px;color:var(--text-sub);font-weight:500">${rangeStr}</span>`;
+        document.getElementById('notice-period').innerHTML =
+          `<span style="color:var(--blue)">${periodStr}</span><br><span style="font-size:13px;font-weight:500;color:var(--text-sub)">${rangeStr}</span>`;
+      }
+      const amt = paidAmount || sub.amount || sub.totalAmount;
+      if (amt) document.getElementById('subscription-amount').textContent = Number(amt).toLocaleString() + '원';
+      document.getElementById('subscription-box').style.display = 'block';
+    }
+
+    function showCredentials(credId, credPw) {
+      if (!credId || !credPw) return false;
+      document.getElementById('cred-id').textContent = credId;
+      document.getElementById('cred-pw').textContent = credPw;
+      document.getElementById('credentials-box').style.display = 'block';
+      return true;
+    }
+
+    function getStoredCredentials() {
+      return {
+        id: localStorage.getItem('pendingLoginId'),
+        pw: localStorage.getItem('pendingPassword')
+      };
+    }
+
+    function clearStoredCredentials() {
+      localStorage.removeItem('pendingLoginId');
+      localStorage.removeItem('pendingPassword');
+      localStorage.removeItem('pendingApplyResult');
+    }
+
+    (async function handlePaymentConfirm() {
+      const params = new URLSearchParams(location.search);
+      const paymentKey = params.get('paymentKey');
+      const orderId = params.get('orderId') || localStorage.getItem('pendingOrderId');
+      const amount = parseInt(params.get('amount') || localStorage.getItem('pendingAmount') || '0');
+      console.log('[complete] paymentKey:', paymentKey, '| pendingLoginId:', localStorage.getItem('pendingLoginId'), '| pendingPassword:', localStorage.getItem('pendingPassword') ? '있음' : '없음');
+      if (!paymentKey || !orderId) return;
+
+      try {
+        const confirmRes = await apiFetch('POST', '/api/payments/confirm', {
+          paymentType: 'SUBSCRIPTION',
+          paymentKey,
+          orderId,
+          amount
+        });
+        console.log('[결제 확인 응답]', JSON.stringify(confirmRes));
+
+        let token = getOwnerToken();
+
+        // 신규 계정: confirm 응답 또는 apply 단계에서 저장해 둔 값
+        const stored = getStoredCredentials();
+        const confirmAccount = confirmRes?.ownerAccount || confirmRes;
+        const credId = confirmAccount?.loginId || stored.id;
+        const credPw = confirmAccount?.password || stored.pw;
+        console.log('[credentials]', credId, credPw ? '****' : null);
+
+        if (showCredentials(credId, credPw)) {
+          try {
+            const loginRes = await apiFetch('POST', '/api/owner/login', { loginId: credId, password: credPw });
+            token = loginRes.accessToken;
+            setOwnerToken(token);
+          } catch(e) { console.warn('자동 로그인 실패:', e); }
+        }
+        clearStoredCredentials();
+
+        // confirm 응답에 구독 정보가 포함된 경우 바로 사용
+        const confirmSub = confirmRes?.subscription || confirmRes?.subscriptionInfo;
+        if (confirmSub?.startDate) {
+          showSubscriptionInfo(confirmSub, confirmRes?.amount ?? amount);
+        }
+
+        // 구독 정보 로드 (로그인 성공 여부와 독립적으로 시도)
+        if (token) {
+          try {
+            let storeId = getOwnerStoreId() || confirmRes?.storeId;
+            if (!storeId) {
+              const storeData = await apiFetch('GET', '/api/owner/stores', undefined, token);
+              const stores = storeData?.stores || storeData || [];
+              if (stores.length > 0) {
+                storeId = stores[0].storeId;
+                setOwnerStoreId(storeId);
+              }
+            }
+            if (storeId) {
+              const res = await apiFetch('GET', `/api/owner/stores/${storeId}/subscription`, undefined, token);
+              console.log('[구독 정보 응답]', JSON.stringify(res));
+              const subList = Array.isArray(res?.subscriptions) ? res.subscriptions
+                            : Array.isArray(res) ? res : (res ? [res] : []);
+              if (subList.length > 0) {
+                const STATUS_ORDER = { ACTIVE: 0, PENDING_ACTIVE: 1, EXPIRED: 2 };
+                const sorted = [...subList].sort((a, b) =>
+                  (STATUS_ORDER[(a.status || '').toUpperCase()] ?? 9) - (STATUS_ORDER[(b.status || '').toUpperCase()] ?? 9)
+                );
+                const primary = sorted[0];
+                const combinedStart = subList.reduce((min, s) => (!min || s.startDate < min ? s.startDate : min), null);
+                const combinedEnd   = subList.reduce((max, s) => (!max || s.endDate   > max ? s.endDate   : max), null);
+                showSubscriptionInfo({ ...primary, startDate: combinedStart, endDate: combinedEnd }, confirmRes?.amount ?? amount);
+              }
+            }
+          } catch(e) {
+            console.warn('구독 정보 로드 실패:', e);
+          }
+        }
+
+        localStorage.removeItem('pendingOrderId');
+        localStorage.removeItem('pendingAmount');
+      } catch(e) {
+        // confirm 실패해도 저장된 credentials 표시
+        const stored = getStoredCredentials();
+        showCredentials(stored.id, stored.pw);
+        clearStoredCredentials();
+
+        // 이미 처리된 결제인 경우 → 기존 토큰으로 구독 정보 로드
+        const msg = e?.message || e?.data?.message || '';
+        if (msg.includes('이미 처리된') || msg.includes('DONE') || msg.includes('already')) {
+          await loadSubscriptionOnly();
+        } else {
+          console.error('결제 확인 실패:', e);
+        }
+      }
+    })();
+
+    async function loadSubscriptionOnly() {
+      try {
+        const token = getOwnerToken();
+        if (!token) return;
+        let storeId = getOwnerStoreId();
+        if (!storeId) {
+          const storeData = await apiFetch('GET', '/api/owner/stores', undefined, token);
+          const stores = storeData?.stores || storeData || [];
+          if (stores.length > 0) { storeId = stores[0].storeId; setOwnerStoreId(storeId); }
+        }
+        if (!storeId) return;
+        const res = await apiFetch('GET', `/api/owner/stores/${storeId}/subscription`, undefined, token);
+        const subList = Array.isArray(res?.subscriptions) ? res.subscriptions
+                      : Array.isArray(res) ? res : (res ? [res] : []);
+        if (subList.length > 0) {
+          const STATUS_ORDER = { ACTIVE: 0, PENDING_ACTIVE: 1, EXPIRED: 2 };
+          const sorted = [...subList].sort((a, b) =>
+            (STATUS_ORDER[(a.status || '').toUpperCase()] ?? 9) - (STATUS_ORDER[(b.status || '').toUpperCase()] ?? 9)
+          );
+          const combinedStart = subList.reduce((min, s) => (!min || s.startDate < min ? s.startDate : min), null);
+          const combinedEnd   = subList.reduce((max, s) => (!max || s.endDate   > max ? s.endDate   : max), null);
+          showSubscriptionInfo({ ...sorted[0], startDate: combinedStart, endDate: combinedEnd }, null);
+        }
+      } catch(e) { console.warn('구독 정보 재로드 실패:', e); }
+    }
+  </script>
+
+</body>
+</html>

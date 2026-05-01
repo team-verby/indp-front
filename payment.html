@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>결제 진행 - 인디피 뮤직</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=SUIT:wght@100..900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="shared.css" />
+  <script src="https://js.tosspayments.com/v2/standard"></script>
+  <style>
+    body { background: var(--light-bg); }
+
+    .duration-options {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+
+    .duration-box {
+      position: relative;
+      border: 1.5px solid #e5e7eb;
+      border-radius: 14px;
+      padding: 20px 16px;
+      text-align: center;
+      cursor: pointer;
+      background: #f8f9fb;
+      transition: all 0.15s;
+    }
+
+    .duration-box:hover { border-color: var(--blue); }
+
+    .duration-box.selected {
+      background: #eef0ff;
+      border-color: var(--blue);
+    }
+
+    .duration-badge {
+      position: absolute;
+      top: -10px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--blue);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 10px;
+      border-radius: 100px;
+      white-space: nowrap;
+    }
+
+    .duration-months {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--dark);
+      margin-bottom: 2px;
+    }
+
+    .duration-weeks {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-gray);
+      margin-bottom: 6px;
+    }
+
+    .duration-price {
+      font-size: 13px;
+      color: var(--text-gray);
+    }
+
+    .duration-box.selected .duration-months,
+    .duration-box.selected .duration-weeks,
+    .duration-box.selected .duration-price {
+      color: var(--blue);
+    }
+
+    .service-period-preview {
+      margin-top: 14px;
+      background: #f8f9fb;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 14px 16px;
+      font-size: 13px;
+      line-height: 1.6;
+      color: var(--text-gray);
+    }
+
+    .service-period-preview .period-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .service-period-preview .period-row + .period-row {
+      margin-top: 4px;
+      padding-top: 4px;
+      border-top: 1px solid #dde2f5;
+    }
+
+    .service-period-preview strong {
+      color: var(--blue);
+      font-weight: 700;
+    }
+
+    .payment-summary {
+      background: #f8f9fb;
+      border-radius: 14px;
+      padding: 24px;
+      margin-top: 8px;
+    }
+
+    .payment-summary-label {
+      font-size: 14px;
+      color: var(--text-gray);
+      margin-bottom: 8px;
+    }
+
+    .payment-summary-amount {
+      font-size: 36px;
+      font-weight: 900;
+      color: var(--blue);
+      line-height: 1.1;
+    }
+
+    .payment-vat-note {
+      font-size: 13px;
+      color: var(--text-gray);
+      margin-top: 6px;
+    }
+
+    /* Terms accordion */
+    .terms-item {
+      border-bottom: 1px solid #f3f4f6;
+    }
+
+    .terms-item:first-child {
+      border-top: 1px solid #f3f4f6;
+    }
+
+    .terms-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 0;
+    }
+
+    .terms-check-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .terms-check-wrap input[type="checkbox"] {
+      accent-color: var(--blue);
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .terms-label {
+      font-size: 15px;
+      color: var(--text-sub);
+    }
+
+    .terms-toggle {
+      background: none;
+      border: none;
+      font-size: 13px;
+      color: var(--blue);
+      cursor: pointer;
+      font-family: inherit;
+      white-space: nowrap;
+      padding: 0;
+      flex-shrink: 0;
+    }
+
+    .terms-content {
+      display: none;
+      background: #f8f9fb;
+      border-radius: 10px;
+      padding: 18px 20px;
+      margin-bottom: 14px;
+      font-size: 13px;
+      color: var(--text-gray);
+      line-height: 1.8;
+      max-height: 260px;
+      overflow-y: auto;
+    }
+
+    .terms-content.open { display: block; }
+
+    .terms-content h4 {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--dark);
+      margin: 14px 0 4px;
+    }
+
+    .terms-content h4:first-child { margin-top: 0; }
+
+    .section-label {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--dark);
+      margin-bottom: 14px;
+    }
+
+    @media (max-width: 768px) {
+      .duration-options {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .payment-summary-amount {
+        font-size: 28px;
+      }
+
+      .terms-label {
+        font-size: 14px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .duration-options {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+      }
+
+      .duration-box {
+        padding: 14px 10px;
+      }
+
+      .duration-months {
+        font-size: 16px;
+      }
+
+      .payment-summary {
+        padding: 16px;
+      }
+
+      .payment-summary-amount {
+        font-size: 24px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <div class="nav-inner">
+      <a href="index.html" class="nav-logo"><img src="logo.png" alt="인디피 뮤직" /></a>
+      <ul class="nav-links">
+        <li><a href="index.html">인디피 뮤직</a></li>
+        <li><a href="playlist.html">플레이리스트</a></li>
+      </ul>
+      <div class="nav-actions">
+        <a href="login.html" class="nav-login">로그인</a>
+        <a href="plan.html" class="nav-cta-blue">도입 문의</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- PAGE -->
+  <div class="page-wrap">
+
+    <h1 class="page-title">결제 진행</h1>
+    <p class="page-subtitle">이용 기간을 선택하고 결제를 진행해 주세요</p>
+
+    <!-- Stepper -->
+    <div class="stepper">
+      <div class="step-item">
+        <div class="step-content">
+          <div class="step-circle done">✓</div>
+          <div class="step-label done">요금제 선택</div>
+        </div>
+      </div>
+      <div class="step-line done"></div>
+      <div class="step-item">
+        <div class="step-content">
+          <div class="step-circle done">✓</div>
+          <div class="step-label done">정보 입력</div>
+        </div>
+      </div>
+      <div class="step-line done"></div>
+      <div class="step-item">
+        <div class="step-content">
+          <div class="step-circle active">3</div>
+          <div class="step-label active">결제 진행</div>
+        </div>
+      </div>
+      <div class="step-line"></div>
+      <div class="step-item">
+        <div class="step-content">
+          <div class="step-circle">4</div>
+          <div class="step-label">신청 완료</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Form Card -->
+    <div class="form-card">
+
+      <!-- Duration -->
+      <div class="form-group">
+        <p class="section-label">이용 기간 <span class="required" style="color:var(--blue)">*</span></p>
+        <div class="duration-options" id="durationOptions"></div>
+        <div id="periodPreview"></div>
+      </div>
+
+      <!-- Final Amount -->
+      <div class="form-group">
+        <p class="section-label">최종 결제 금액</p>
+        <div class="payment-summary">
+          <p class="payment-summary-label" id="summaryLabel"></p>
+          <p class="payment-summary-amount" id="summaryAmount"></p>
+          <p class="payment-vat-note">VAT 10% 포함된 금액입니다</p>
+          <p class="payment-vat-note" id="qr-delivery-note" style="display:none">QR 스티커 배송 비용 포함입니다.</p>
+        </div>
+      </div>
+
+      <!-- Terms -->
+      <div class="form-group">
+        <p class="section-label">이용 약관</p>
+
+        <div class="terms-item">
+          <div class="terms-row">
+            <div class="terms-check-wrap">
+              <input type="checkbox" id="terms1" />
+              <label class="terms-label" for="terms1">(필수) 서비스 이용 약관</label>
+            </div>
+            <button class="terms-toggle" onclick="toggleTerms('terms-service')">보기 ▾</button>
+          </div>
+          <div class="terms-content" id="terms-service">
+            <h4>제1조 (목적)</h4>
+            본 약관은 버비컴퍼니(이하 "회사")가 제공하는 인디피 뮤직 플레이리스트 구독 서비스(이하 "서비스")의 이용과 관련하여, 결제 및 이용 조건을 규정함을 목적으로 합니다.
+
+            <h4>제2조 (용어의 정의)</h4>
+            "플레이리스트 주차"란 매주 화요일 00시부터 다음 주 월요일 24시까지의 기간을 의미하며, 해당 기간을 1주차로 정의합니다.<br>
+            "구독 상품"이란 일정 기간 동안 플레이리스트를 이용할 수 있는 유료 이용권을 의미합니다.<br>
+            "구독 시작일"이란 유료 구독 이용이 시작되는 시점을 의미하며, 매주 화요일 00시를 기준으로 합니다.
+
+            <h4>제3조 (구독 상품 및 이용 기간)</h4>
+            서비스는 도입 문의 페이지에서 확인 가능한 구독 상품을 제공합니다.<br>
+            구독 시작일은 결제일이 속한 주(일요일~토요일)와 관계없이 다음 주 화요일 00시로 설정됩니다.<br>
+            구독 기간은 구독 시작일 기준으로 주차 단위로 계산되며, 각 주차는 화요일부터 다음 주 월요일까지를 기준으로 산정됩니다.
+
+            <h4>제4조 (플레이리스트 제공 기준)</h4>
+            서비스는 매주 화요일 새로운 플레이리스트를 제공합니다.<br>
+            사용자는 구독 기간 동안 각 주차에 해당하는 플레이리스트를 이용할 수 있습니다.<br>
+            플레이리스트는 주차 단위로 운영되며, 화요일을 기준으로 갱신됩니다.
+
+            <h4>제5조 (이용 범위)</h4>
+            사용자는 구독 기간 동안 제공되는 플레이리스트를 자유롭게 이용할 수 있습니다.<br>
+            구독 종료 후에는 서비스 이용이 제한될 수 있습니다.<br>
+            회사는 운영 정책에 따라 일부 이전 주차 플레이리스트에 대한 접근을 제한할 수 있습니다.
+
+            <h4>제6조 (중도 해지 및 환불)</h4>
+            사용자는 결제일로부터 7일 이내이며, 구독 시작일 이전인 경우 전액 환불을 요청할 수 있습니다.<br>
+            구독 시작 이후에는 이용한 주차를 기준으로 환불 금액이 산정됩니다.<br>
+            환불 금액은 다음 기준에 따라 계산됩니다: 결제 금액 ÷ 총 주차 수 × 이용 주차
+
+            <h4>제7조 (구독 상품 변경)</h4>
+            사용자는 구독 기간 중 상위 상품으로 변경할 수 있습니다.<br>
+            변경 시 기존 잔여 기간은 비율에 따라 반영됩니다.<br>
+            변경된 상품은 다음 주차(화요일)부터 적용될 수 있습니다.
+
+            <h4>제8조 (서비스 변경 및 중단)</h4>
+            회사는 서비스 운영을 위해 플레이리스트 구성 및 제공 방식을 변경할 수 있습니다.<br>
+            시스템 점검 또는 기타 사유로 서비스 제공이 일시 중단될 수 있습니다.<br>
+            이 경우 회사는 사전 또는 사후 공지를 통해 안내합니다.
+
+            <h4>제9조 (기타)</h4>
+            본 약관에서 정하지 않은 사항은 관련 법령 및 회사 정책에 따릅니다.
+          </div>
+        </div>
+
+        <div class="terms-item">
+          <div class="terms-row">
+            <div class="terms-check-wrap">
+              <input type="checkbox" id="terms2" />
+              <label class="terms-label" for="terms2">(필수) 개인정보 처리방안</label>
+            </div>
+            <button class="terms-toggle" onclick="toggleTerms('terms-privacy')">보기 ▾</button>
+          </div>
+          <div class="terms-content" id="terms-privacy">
+            <h4>1. 개인정보 수집 항목 및 목적</h4>
+            회사는 서비스 제공을 위해 아래와 같은 개인정보를 수집합니다.<br>
+            · 필수 항목: 신청자 성명, 연락처(휴대폰 번호), 매장명, 매장 주소, 업종<br>
+            · 수집 목적: 서비스 신청 접수 및 확인, 플레이리스트 큐레이션 제공, 서비스 관련 안내 및 고객 응대
+
+            <h4>2. 개인정보 보유 및 이용 기간</h4>
+            수집된 개인정보는 서비스 이용 계약 기간 동안 보유하며, 계약 종료 후 3개월 이내에 파기합니다. 단, 관련 법령에 따라 보존이 필요한 경우 해당 기간 동안 보관합니다.
+
+            <h4>3. 개인정보의 제3자 제공</h4>
+            회사는 이용자의 개인정보를 원칙적으로 외부에 제공하지 않습니다. 단, 이용자가 사전에 동의한 경우 또는 법령의 규정에 의거한 경우에는 예외로 합니다.
+
+            <h4>4. 개인정보 처리 위탁</h4>
+            회사는 서비스 제공을 위해 필요한 범위 내에서 개인정보 처리 업무를 외부 업체에 위탁할 수 있으며, 위탁 시 관련 법령에 따라 안전하게 관리합니다.
+
+            <h4>5. 이용자의 권리</h4>
+            이용자는 언제든지 자신의 개인정보에 대한 열람, 수정, 삭제, 처리 정지를 요청할 수 있습니다. 요청은 고객 문의(verbykorea@gmail.com)를 통해 접수 가능합니다.
+
+            <h4>6. 개인정보 보호 책임자</h4>
+            · 성명: 박완<br>
+            · 이메일: verbykorea@gmail.com<br>
+            · 연락처: 인디피 뮤직 고객센터
+
+            <h4>7. 개인정보 파기 절차 및 방법</h4>
+            보유 기간이 경과한 개인정보는 즉시 파기하며, 전자적 파일 형태의 정보는 복구 불가능한 방법으로 영구 삭제합니다.
+
+            <h4>8. 쿠키 및 자동 수집 정보</h4>
+            회사는 서비스 품질 향상을 위해 접속 로그, 브라우저 정보 등을 자동으로 수집할 수 있습니다. 이용자는 브라우저 설정을 통해 쿠키 저장을 거부할 수 있습니다.
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Toss Payment Modal -->
+    <div id="toss-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;padding:20px;">
+      <div style="background:white;border-radius:24px;padding:32px;width:100%;max-width:540px;max-height:90vh;overflow-y:auto;">
+        <h3 style="font-size:18px;font-weight:800;margin-bottom:20px;">결제하기</h3>
+        <div id="toss-payment-widget"></div>
+        <button onclick="confirmTossPayment()" class="btn-primary" style="width:100%;margin-top:20px;">결제 진행</button>
+        <button onclick="closeTossModal()" class="btn-secondary" style="width:100%;margin-top:10px;">취소</button>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="form-actions">
+      <a href="apply-music.html" class="btn-secondary">이전</a>
+      <button class="btn-primary" onclick="doSubmitApply()">결제하기</button>
+    </div>
+
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div class="footer-info">
+        <p>대표: 박완</p>
+        <p>사업자 등록번호: 666-20-01980</p>
+        <p>주소 03628 서울특별시 서대문구 통일로 484 서대문구창업지원센터 321호 버비컴퍼니</p>
+        <p class="contact">고객 문의: verbykorea@gmail.com</p>
+        <div class="footer-policy-links">
+          <a href="terms.html">서비스 이용약관</a>
+          <span>|</span>
+          <a href="privacy.html">개인정보 처리방침</a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-title-big">INDP MUSIC</div>
+  </footer>
+  <div class="copyright">Copyright 2026. VERBY Co. all rights reserved.</div>
+
+  <script src="api.js"></script>
+  <script>
+    const plan = localStorage.getItem('selectedPlan') || 'B';
+    const monthlyRate = parseInt(localStorage.getItem('selectedPlanMonthlyRate') || '0') || (plan === 'A' ? 8800 : 13200);
+    if (plan === 'B') {
+      const qrNote = document.getElementById('qr-delivery-note');
+      if (qrNote) qrNote.style.display = '';
+    }
+    const PLAN_NAMES = { A: 'Plan A (기본)', B: 'Plan B (프리미엄)' };
+
+    const DURATIONS = [1, 3, 6, 12];
+    const WEEKS_MAP = { 1: 4, 3: 12, 6: 24, 12: 48 };
+    const DAY_KO = ['일', '월', '화', '수', '목', '금', '토'];
+    let selectedMonths = 1;
+
+    function nextTuesdayOnOrAfter(date) {
+      const d = new Date(date);
+      d.setHours(0, 0, 0, 0);
+      // 일요일(0)~토요일(6) 어느 요일이든 다음 주 화요일로 고정
+      const daysToNextSunday = 7 - d.getDay();
+      d.setDate(d.getDate() + daysToNextSunday + 2);
+      return d;
+    }
+
+    const fmtWithDay = d =>
+      `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')} (${DAY_KO[d.getDay()]})`;
+
+    function buildDurations() {
+      const container = document.getElementById('durationOptions');
+      container.innerHTML = '';
+      DURATIONS.forEach(m => {
+        const total = monthlyRate * m;
+        const weeks = WEEKS_MAP[m];
+        const box = document.createElement('div');
+        box.className = 'duration-box' + (m === 1 ? ' selected' : '');
+        const badge = m === 6 ? '<span class="duration-badge">추천</span>' : '';
+        box.innerHTML = `${badge}<div class="duration-months">${m}개월</div><div class="duration-weeks">(${weeks}주)</div><div class="duration-price">${total.toLocaleString()}원</div>`;
+        box.onclick = () => selectDuration(box, m, total);
+        container.appendChild(box);
+      });
+      updateSummary(1, monthlyRate * 1);
+    }
+
+    function selectDuration(el, months, total) {
+      document.querySelectorAll('.duration-box').forEach(b => b.classList.remove('selected'));
+      el.classList.add('selected');
+      selectedMonths = months;
+      updateSummary(months, total);
+    }
+
+    function updateSummary(months, total) {
+      const weeks = WEEKS_MAP[months] || months * 4;
+      document.getElementById('summaryLabel').textContent =
+        `${PLAN_NAMES[plan] || ('Plan ' + plan)} · 월 ${monthlyRate.toLocaleString()}원 × ${months}개월`;
+      document.getElementById('summaryAmount').textContent =
+        total.toLocaleString() + '원';
+
+      const ref = new Date();
+      ref.setHours(0, 0, 0, 0);
+      const serviceStart = nextTuesdayOnOrAfter(ref);
+      const serviceEnd = new Date(serviceStart.getTime() + weeks * 7 * 24 * 60 * 60 * 1000 - 24 * 60 * 60 * 1000);
+
+      document.getElementById('periodPreview').innerHTML = `
+        <div class="service-period-preview">
+          <div class="period-row">
+            <span>서비스 시작</span>
+            <div style="text-align:right">
+              <strong>${fmtWithDay(serviceStart)}</strong>
+              <div style="font-size:11px;color:var(--text-light-gray);margin-top:2px">인디피 뮤직은 매주 화요일 새로운 플레이리스트가 시작됩니다.</div>
+            </div>
+          </div>
+          <div class="period-row"><span>서비스 종료</span><strong>${fmtWithDay(serviceEnd)}</strong></div>
+          <div class="period-row"><span>이용 기간</span><strong>${months}개월 (${weeks}주)</strong></div>
+        </div>`;
+    }
+
+    function toggleTerms(id) {
+      const el = document.getElementById(id);
+      const btn = el.previousElementSibling.querySelector('.terms-toggle');
+      const isOpen = el.classList.toggle('open');
+      btn.textContent = isOpen ? '닫기 ▴' : '보기 ▾';
+    }
+
+    function checkTerms() {
+      if (!document.getElementById('terms1').checked || !document.getElementById('terms2').checked) {
+        alert('필수 이용 약관에 동의해 주세요.');
+        return false;
+      }
+      return true;
+    }
+
+    // ── Enum mappers ──
+    function mapPlayMethods(arr) {
+      const map = {'블루투스': 'BLUETOOTH', '유선 연결': 'WIRED', '기타': 'OTHER'};
+      return arr.map(v => map[v] || v).filter(Boolean);
+    }
+    function mapVibes(arr) {
+      const map = {'차분한': 'CALM', '모던한': 'MODERN', '우아한': 'ELEGANT', '다크한': 'DARK', '내추럴한': 'NATURAL', '기타': 'OTHER'};
+      return arr.map(v => map[v] || v).filter(Boolean);
+    }
+    function mapPlaylistType(v) {
+      if (v === 'TIME_BASED') return 'TIME_BASED';
+      if (v === 'CONSISTENT_MOOD') return 'CONSISTENT_MOOD';
+      if (v === '시간대별로 노래 취향을 다르게 하고 싶어요') return 'TIME_BASED';
+      if (v === '하나의 노래로 일관되게 운영 시간 내내 재생하고 싶어요') return 'CONSISTENT_MOOD';
+      return 'MUSIC_RECOMMENDED';
+    }
+    function mapTempo(v) {
+      const map = {
+        '느림':'SLOW', '느리게':'SLOW',
+        '잔잔한':'CALM', '차분하게':'CALM',
+        '보통':'NORMAL',
+        '활기찬':'LIVELY', '활기차게':'LIVELY',
+        '경쾌한':'UPBEAT', '신나게':'UPBEAT'
+      };
+      return map[v] || 'NORMAL';
+    }
+    function buildBusinessHours() {
+      const DAY_MAP = {'월': 1, '화': 2, '수': 3, '목': 4, '금': 5, '토': 6, '일': 7};
+      const hours = JSON.parse(localStorage.getItem('storeHours') || '{}');
+      const closed = JSON.parse(localStorage.getItem('closedDays') || '[]');
+      return Object.entries(DAY_MAP).map(([dayName, num]) => {
+        const isClosed = closed.includes(dayName);
+        const h = hours[dayName] || {};
+        return {
+          dayOfWeek: num,
+          openTime: isClosed ? null : (h.open ? h.open + ':00' : '09:00:00'),
+          closeTime: isClosed ? null : (h.close ? h.close + ':00' : '22:00:00'),
+          isClosed
+        };
+      });
+    }
+    function buildPreferenceGenres() {
+      const prefer = JSON.parse(localStorage.getItem('preferGenres') || '[]');
+      const reject = JSON.parse(localStorage.getItem('rejectGenres') || '[]');
+      return [
+        ...prefer.map(g => ({ genre: g, preferenceType: 'LIKE' })),
+        ...reject.map(g => ({ genre: g, preferenceType: 'DISLIKE' }))
+      ];
+    }
+
+    async function initTossWidget(orderId, amount, orderName) {
+      const tossPayments = TossPayments('test_gck_docs_Ovk5rk1EwkEbP0W43n07xlzm');
+      const widgets = tossPayments.widgets({ customerKey: TossPayments.ANONYMOUS });
+      await widgets.setAmount({ currency: 'KRW', value: amount });
+      await widgets.renderPaymentMethods({
+        selector: '#toss-payment-widget',
+        variantKey: 'DEFAULT'
+      });
+      window._tossWidgets = widgets;
+      window._tossOrder = { orderId, orderName, amount };
+    }
+
+    async function confirmTossPayment() {
+      localStorage.setItem('pendingOrderId', window._tossOrder.orderId);
+      localStorage.setItem('pendingAmount', String(window._tossOrder.amount));
+      await window._tossWidgets.requestPayment({
+        orderId: window._tossOrder.orderId,
+        orderName: window._tossOrder.orderName,
+        successUrl: `${window.location.origin}/complete.html`,
+        failUrl: `${window.location.origin}/payment.html?error=1`,
+      });
+    }
+
+    function openTossModal() {
+      const modal = document.getElementById('toss-modal');
+      modal.style.display = 'flex';
+    }
+
+    function closeTossModal() {
+      document.getElementById('toss-modal').style.display = 'none';
+    }
+
+    async function doSubmitApply() {
+      if (!checkTerms()) return;
+
+      const btn = document.querySelector('.form-actions .btn-primary');
+      const origText = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = '처리 중...';
+
+      try {
+        const body = {
+          applicantName: localStorage.getItem('applicantName') || '',
+          applicantPhone: localStorage.getItem('applicantPhone') || '',
+          inquiryContent: '',
+          planId: parseInt(localStorage.getItem('selectedPlanId') || '1'),
+          usagePeriod: selectedMonths,
+          name: localStorage.getItem('storeName') || '',
+          industry: localStorage.getItem('storeType') || '',
+          address: localStorage.getItem('storeAddress') || '',
+          businessHours: buildBusinessHours(),
+          photoUrls: [],
+          platform: localStorage.getItem('platform') || '',
+          playedMusic: localStorage.getItem('genres') || '',
+          customerAgeGroup: localStorage.getItem('ageRange') || '',
+          playMethods: mapPlayMethods(JSON.parse(localStorage.getItem('playmode') || '[]')),
+          vibes: mapVibes(JSON.parse(localStorage.getItem('vibe') || '[]')),
+          lighting: parseInt(localStorage.getItem('lighting_level') || '3'),
+          playlistType: mapPlaylistType(localStorage.getItem('playlistType') || ''),
+          timePreferences: JSON.parse(localStorage.getItem('timePreferences') || '[]')
+            .map(p => ({
+              startTime: p.startTime ?? (p.startTimeHour != null ? String(p.startTimeHour).padStart(2,'0') + ':00' : null),
+              endTime:   p.endTime   ?? (p.endTimeHour   != null ? String(p.endTimeHour).padStart(2,'0')   + ':00' : null),
+              mood: p.mood
+            })),
+          mood: localStorage.getItem('singleMood') || '',
+          musicTempo: mapTempo((() => { try { const t = JSON.parse(localStorage.getItem('tempo') || '[]'); return Array.isArray(t) ? t[0] : t; } catch { return localStorage.getItem('tempo') || ''; } })()),
+          preferenceGenres: buildPreferenceGenres(),
+          rejectedSongNote: localStorage.getItem('rejectedSongNote') || ''
+        };
+
+        console.log('[apply 요청 body]', JSON.stringify(body, null, 2));
+        const result = await apiFetch('POST', '/api/stores/apply', body);
+        console.log('[apply 응답]', JSON.stringify(result));
+        const { orderId, amount, orderName } = result;
+
+        // 결제 전에 발급된 아이디/비밀번호 저장 (complete.html에서 표시)
+        const account = result.ownerAccount || result;
+        if (account.loginId) localStorage.setItem('pendingLoginId', account.loginId);
+        if (account.password) localStorage.setItem('pendingPassword', account.password);
+
+        openTossModal();
+        await initTossWidget(orderId, amount, orderName);
+      } catch(e) {
+        alert('신청 처리 중 오류가 발생했습니다: ' + e.message);
+        btn.disabled = false;
+        btn.textContent = origText;
+      }
+    }
+
+    // Check error param on load
+    (function checkError() {
+      const params = new URLSearchParams(location.search);
+      if (params.get('error')) {
+        alert('결제가 취소되었거나 오류가 발생했습니다. 다시 시도해 주세요.');
+      }
+    })();
+
+    buildDurations();
+  </script>
+
+</body>
+</html>
