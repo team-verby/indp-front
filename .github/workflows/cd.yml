@@ -20,11 +20,11 @@ jobs:
 
       - name: Set BASE_URL for dev
         if: github.ref == 'refs/heads/dev'
-        run: sed -i "s|const BASE_URL = '.*'|const BASE_URL = 'http://16.184.46.185:8090'|" api.js
+        run: sed -i "s|const BASE_URL = '.*'|const BASE_URL = 'https://dev-api.indpmusic.co.kr'|" api.js
 
       - name: Set BASE_URL for prod
         if: github.ref == 'refs/heads/main'
-        run: sed -i "s|const BASE_URL = '.*'|const BASE_URL = 'http://16.184.46.185'|" api.js
+        run: sed -i "s|const BASE_URL = '.*'|const BASE_URL = 'https://api.indpmusic.co.kr'|" api.js
 
       - name: Deploy to dev S3
         if: github.ref == 'refs/heads/dev'
