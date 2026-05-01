@@ -2690,12 +2690,8 @@
       btn.disabled = true;
       btn.textContent = '저장 중...';
       try {
-        await apiFetch('POST', '/api/admin/scheduled-playlists', {
-          schedulePlaylists: [{
-            storeId,
-            scheduledAt: new Date().toISOString(),
-            slots: slotStore[storeId].map(sl => ({ from: sl.from, to: sl.to, mood: sl.mood }))
-          }]
+        await apiFetch('PATCH', `/api/admin/stores/${storeId}/time-preferences`, {
+          timePreferences: slotStore[storeId].map(sl => ({ startTime: sl.from, endTime: sl.to, mood: sl.mood }))
         }, adminToken);
         btn.textContent = '저장됨 ✓';
         btn.style.background = 'rgba(198,241,53,0.2)';
@@ -2822,8 +2818,8 @@
       btn.disabled = true;
       btn.textContent = '저장 중...';
       try {
-        await apiFetch('POST', `/api/admin/stores/${storeId}/blocked-genres`, {
-          genres: [...newBlocked]
+        await apiFetch('PATCH', `/api/admin/stores/${storeId}/genres`, {
+          genres: ALL_GENRES.map(g => ({ genre: g, preferenceType: newBlocked.has(g) ? 'DISLIKE' : 'LIKE' }))
         }, adminToken);
         btn.textContent = '저장됨 ✓';
         btn.style.background = 'rgba(198,241,53,0.2)';
