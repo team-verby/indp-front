@@ -1890,7 +1890,7 @@
   <script>
     // ── 관리자 토큰 확인 ──
     const adminToken = localStorage.getItem('adminToken');
-    if (!adminToken) { window.location.href = '../admin/'; }
+    if (!adminToken) { window.location.href = 'admin-login.html'; }
 
     // ── 매장 데이터 (API에서 로드) ──
     let stores = [];
@@ -2872,7 +2872,7 @@
     function logout() {
       if (confirm('로그아웃 하시겠습니까?')) {
         localStorage.removeItem('adminToken');
-        window.location.href = '../admin/';
+        window.location.href = 'admin-login.html';
       }
     }
 
