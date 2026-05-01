@@ -1,0 +1,167 @@
+@import "./reset.scss";
+@import "./font.scss";
+@import "./layout.scss";
+@import "./_mixin.scss";
+
+$content-font: "NanumSquareNeo";
+
+.v-application {
+  p {
+    margin-bottom: 0 !important;
+  }
+}
+
+html {
+  overflow-x: scroll !important;
+  width: 1920px;
+}
+
+body {
+  background-color: #000;
+  font-family: "Montserrat", sans-serif;
+  width: 100%;
+}
+//tab
+.v-tabs-bar {
+  background-color: transparent !important;
+  .v-slide-group__wrapper {
+    contain: unset;
+    overflow: visible;
+    .v-slide-group__content {
+      justify-content: center;
+      .v-tabs-slider-wrapper {
+        height: 4px !important;
+        bottom: -15px !important;
+      }
+    }
+  }
+  .v-tab {
+    font-family: $content-font;
+    font-size: 40px !important;
+    font-weight: 700 !important;
+    line-height: 52px !important;
+    color: rgba(255, 255, 255, 0.2) !important;
+    padding: 0 !important;
+    max-width: unset !important;
+    min-width: unset !important;
+    + .v-tab {
+      margin-left: 54px;
+    }
+    &.v-tab--active {
+      color: #fff !important;
+    }
+  }
+}
+.v-tabs-items {
+  background-color: transparent !important;
+}
+//remove ripple
+.v-tab:before {
+  opacity: 0 !important;
+}
+.v-ripple__container {
+  opacity: 0 !important;
+}
+
+//input
+.v-text-field--outlined > .v-input__control > .v-input__slot {
+  border: 1px solid #2e3d4a !important;
+}
+.theme--light.v-label,
+.theme--dark.v-label {
+  font-family: $content-font;
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 32px;
+  color: #fff !important;
+  margin-left: 10px;
+}
+.v-input--checkbox {
+  &.v-input--is-label-active {
+    .v-label {
+      font-weight: 800;
+    }
+  }
+}
+.v-input--selection-controls__input {
+  width: 30px !important;
+  height: 30px !important;
+}
+.mdi-checkbox-blank-outline:before {
+  content: "";
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid #2e3d4a;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 18px 12px;
+  background-color: rgba(255, 255, 255, 0.15);
+  background-image: url(/icons/icon_check.png);
+}
+.mdi-checkbox-marked:before {
+  content: "";
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid #2e3d4a;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 18px 12px;
+  background-color: #2586d9;
+  background-image: url(/icons/icon_check.png);
+}
+
+//text
+.hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: polygon(0 0, 0 0, 0 0);
+}
+.text__blue {
+  color: #2686d9;
+}
+.error__text {
+  font-family: $content-font;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 32px;
+  color: #ff1800;
+}
+
+@include desktopToLaptop {
+  html {
+    overflow-x: hidden !important;
+  }
+  body {
+    width: 100vw;
+  }
+  .wrap {
+    position: relative;
+    width: 100vw;
+  }
+  #header {
+    padding: 0 80px;
+  }
+  #container {
+    .visual {
+      padding-left: 180px;
+      padding-right: 180px;
+    }
+    .content {
+      padding-left: 180px;
+      padding-right: 180px;
+    }
+  }
+  footer {
+    padding: 60px 180px;
+    .footer__content {
+      ul {
+        gap: 30px;
+      }
+    }
+  }
+}
