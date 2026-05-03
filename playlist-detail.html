@@ -810,7 +810,7 @@
 
     .song-title-row {
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       gap: 7px;
       flex-wrap: wrap;
     }
@@ -819,9 +819,8 @@
       font-size: 14px;
       font-weight: 600;
       color: var(--dark);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      word-break: break-word;
+      overflow-wrap: break-word;
     }
 
     .song-item.playing .song-title { color: var(--blue); }
@@ -840,6 +839,8 @@
       font-size: 12px;
       color: var(--text-gray);
       margin-top: 2px;
+      word-break: break-word;
+      overflow-wrap: break-word;
     }
 
     .song-duration {
@@ -1018,6 +1019,14 @@
       .recommend-card { padding: 18px 16px; }
       .modal { border-radius: 20px; }
       .modal-body { padding: 16px 20px 20px; }
+      /* 모바일: 볼륨 슬라이더 숨기고 뮤트 버튼 + 안내만 표시 */
+      .volume-slider { display: none; }
+      .volume-val { display: none; }
+      .volume-hint {
+        font-size: 12px;
+        color: var(--text-light-gray);
+        flex: 1;
+      }
     }
 
     @media (max-width: 480px) {
@@ -1030,8 +1039,13 @@
       .volume-row { gap: 8px; }
       .audio-progress { gap: 8px; }
       .audio-time { font-size: 11px; }
+      .song-item { gap: 8px; padding: 8px 8px; }
+      .song-art { width: 32px; height: 32px; font-size: 13px; }
+      .song-num { width: 16px; font-size: 11px; }
       .song-title { font-size: 13px; }
       .song-artist { font-size: 11px; }
+      .song-duration { font-size: 11px; }
+      .song-tag { font-size: 10px; padding: 1px 6px; }
     }
   </style>
 </head>
@@ -1085,6 +1099,7 @@
         <input type="range" class="volume-slider" id="vol-slider" min="0" max="100" value="10"
                oninput="setVolume(this.value)" style="--vol-pct: 10%" />
         <span class="volume-val" id="vol-val">10</span>
+        <span class="volume-hint">볼륨은 기기 버튼으로 조절하세요</span>
       </div>
       </div><!-- /#now-playing-section -->
 
@@ -1654,6 +1669,7 @@
     let ytReady = false;
     let seekOnPlay = 0;
     let pendingUnmute = false; // PLAYING 이벤트 때 unmute 처리 플래그
+    let userHasUnmuted = false; // 한 번 소리 켜면 다시 tooltip 안 뜸
 
     // YouTube IFrame API 동적 로드 (콜백 정의 후 로드해야 타이밍 보장)
     (function() {
@@ -1718,6 +1734,7 @@
     }
 
     function showUnmuteTooltip() {
+      if (userHasUnmuted) return;
       document.getElementById('unmute-tooltip').classList.add('visible');
     }
 
@@ -1787,6 +1804,7 @@
             ytPlayer.playVideo();
           }
         }
+        userHasUnmuted = true;
         hideUnmuteTooltip();
       } else {
         isMuted = true;
@@ -1799,7 +1817,7 @@
     // ── WebSocket STOMP 연결 ──
     function connectSocket(sid) {
       const token = getOwnerToken();
-      const wsUrl = `http://127.0.0.1:8081/ws${token ? '?token=' + token : ''}`;
+      const wsUrl = `${BASE_URL}/ws${token ? '?token=' + token : ''}`;
       const client = new StompJs.Client({
         webSocketFactory: () => new SockJS(wsUrl),
         reconnectDelay: 5000,
@@ -1817,8 +1835,51 @@
       return client;
     }
 
-    function handleSocketMessage(data, sid, client) {
-      if (data.type === 'SONG_RECOMMENDED') {
+    async function handleSongRecommended(data) {
+      const currentSongId = allSongs.length > 0 ? allSongs[headIdx % allSongs.length].playlistSongId : null;
+      try {
+        const token = getOwnerToken();
+        const playlistUrl = isMyStore ? `/api/owner/stores/${storeId}/playlist` : `/api/stores/${storeId}/playlist`;
+        const fresh = await apiFetch('GET', playlistUrl, undefined, isMyStore ? token : undefined);
+        const freshData = fresh.playlist || fresh;
+        const freshSongs = freshData.songs;
+        if (freshSongs && freshSongs.length > 0) {
+          allSongs = freshSongs.map(s => ({
+            title: s.title || s.songTitle || '',
+            artist: s.artist || s.artistName || '',
+            dur: toMMSS(s.playTime || s.durationSeconds || 210),
+            sec: s.playTime || s.durationSeconds || 210,
+            rec: s.refereeName || null,
+            playlistSongId: s.playlistSongId || null,
+            videoId: s.videoId || s.vid || s.youtubeId || s.youtubeVideoId || null
+          }));
+
+          if (isMyStore) {
+            // 오너 기기: 직접 재생 중이므로 로컬 headIdx 기준으로 위치 유지
+            if (currentSongId != null) {
+              const newIdx = allSongs.findIndex(s => String(s.playlistSongId) === String(currentSongId));
+              if (newIdx >= 0) headIdx = newIdx;
+            }
+          } else {
+            // 손님 기기: 서버의 currentSong 기준으로 위치 동기화
+            const currentSong = fresh.currentSong || freshData.currentSong;
+            if (currentSong) {
+              const idx = allSongs.findIndex(s => String(s.playlistSongId) === String(currentSong.playlistSongId));
+              if (idx >= 0) {
+                headIdx = idx;
+                elapsed = currentSong.elapsedSeconds || 0;
+              }
+            } else if (currentSongId != null) {
+              const newIdx = allSongs.findIndex(s => String(s.playlistSongId) === String(currentSongId));
+              if (newIdx >= 0) headIdx = newIdx;
+            }
+          }
+
+          renderQueue();
+          updateStats();
+        }
+      } catch(e) {
+        console.warn('[SONG_RECOMMENDED] 플레이리스트 갱신 실패, 수동 삽입:', e);
         const newSong = {
           title: data.title,
           artist: data.artist,
@@ -1831,6 +1892,12 @@
         allSongs.splice(insertIdx, 0, newSong);
         renderQueue();
         updateStats();
+      }
+    }
+
+    function handleSocketMessage(data, sid, client) {
+      if (data.type === 'SONG_RECOMMENDED') {
+        handleSongRecommended(data);
       } else if (data.type === 'REQUEST_CURRENT_SONG') {
         if (getOwnerToken() && allSongs.length > 0) {
           const cur = allSongs[headIdx % allSongs.length];
@@ -2028,16 +2095,11 @@
         const rec = document.getElementById('recommend-card');
         if (rec) rec.style.display = 'none';
       } else if (!shouldPlay) {
+        // 곡 목록은 있지만 currentSong 없음 — 목록은 노출, NOW PLAYING 섹션만 숨김
         document.getElementById('now-playing-section').style.display = 'none';
         document.querySelector('.vinyl-img').style.display = 'none';
-        document.getElementById('playlist-section').innerHTML = `
-          <div class="closed-notice">
-            <div class="closed-notice-badge">대기 중</div>
-            <p class="closed-notice-title">현재 재생 중인 음악이 없어요</p>
-            <p class="closed-notice-desc">영업 시간에 다시 방문해 주세요.</p>
-          </div>`;
-        const rec = document.getElementById('recommend-card');
-        if (rec) rec.style.display = 'none';
+        renderQueue();
+        updateStats();
       } else {
         document.querySelector('.vinyl-img').style.display = '';
         renderQueue();

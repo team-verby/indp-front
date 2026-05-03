@@ -2572,12 +2572,23 @@
     // 슬롯 저장소 (storeId → slots 배열)
     const slotStore = {};
 
-    // API enum 무드 → 슬롯 무드 레이블 변환 (enum으로 내려오는 경우 대비)
-    const MOOD_TO_SLOT = { CALM:'차분한', MODERN:'모던한', ELEGANT:'우아한', DARK:'다크한', NATURAL:'내추럴한', OTHER:'선택 안 함' };
+    // API enum 무드 → 슬롯 무드 레이블 변환
+    const MOOD_TO_SLOT = {
+      CALM:'차분한', MODERN:'모던한', ELEGANT:'우아한', DARK:'다크한', NATURAL:'내추럴한',
+      LIVELY:'활기찬', EXCITING:'신나는', ENERGETIC:'활기찬',
+      ROMANTIC:'로맨틱한',
+      JAZZ_SOUL:'재즈/소울', JAZZSOUL:'재즈/소울', JAZZ:'재즈/소울',
+      CLASSIC:'클래식', CLASSICAL:'클래식',
+      ACOUSTIC:'어쿠스틱',
+      OTHER:'선택 안 함'
+    };
     function toSlotMood(raw) {
       if (!raw) return '선택 안 함';
       if (MOODS.includes(raw)) return raw;
-      return MOOD_TO_SLOT[raw] || '선택 안 함';
+      const mapped = MOOD_TO_SLOT[raw];
+      if (mapped) return mapped;
+      console.warn('[toSlotMood] 알 수 없는 무드 값:', raw);
+      return '선택 안 함';
     }
 
     function renderPlaylistTab(store) {
@@ -2599,10 +2610,13 @@
 
       // 시간대별 무드를 직접 선택한 경우: timePreferences로 슬롯 항상 채움
       if (pt === 'TIME_BASED' && store.timePreferences && store.timePreferences.length > 0) {
+        console.log('[renderPlaylistTab] TIME_BASED timePreferences:', JSON.stringify(store.timePreferences));
         slotStore[store.id] = store.timePreferences.map(p => {
           const s = p.startTime ? p.startTime.slice(0,5) : (p.startTimeHour != null ? String(p.startTimeHour).padStart(2,'0') + ':00' : '09:00');
           const e = p.endTime   ? p.endTime.slice(0,5)   : (p.endTimeHour   != null ? String(p.endTimeHour).padStart(2,'0')   + ':00' : '22:00');
-          return { from: s, to: e, mood: toSlotMood(p.mood) };
+          // API 필드명이 mood / moodType / musicMood 등 다를 수 있어 fallback 처리
+          const rawMood = p.mood ?? p.moodType ?? p.musicMood ?? p.moodLabel ?? '';
+          return { from: s, to: e, mood: toSlotMood(rawMood) };
         });
         panel.innerHTML = `
           <div style="background:rgba(35,62,255,0.1);border:1px solid rgba(35,62,255,0.3);border-radius:10px;padding:12px 14px;margin-bottom:16px;font-size:13px;line-height:1.6;color:rgba(255,255,255,0.7)">
