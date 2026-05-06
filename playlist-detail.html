@@ -8,17 +8,11 @@
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="인디피 뮤직" />
   <meta property="og:locale" content="ko_KR" />
-    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png" />
-  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png" />
-  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
-  <link rel="icon" type="image/png" sizes="192x192" href="favicon-192.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=SUIT:wght@100..900&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="shared.css" />
   <script src="api.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@6/bundles/stomp.umd.min.js"></script>
   <script src="https://js.tosspayments.com/v2/standard"></script>
   <style>
     body { background: var(--light-bg); }
@@ -814,7 +808,7 @@
 
     .song-title-row {
       display: flex;
-      align-items: flex-start;
+      align-items: center;
       gap: 7px;
       flex-wrap: wrap;
     }
@@ -823,8 +817,9 @@
       font-size: 14px;
       font-weight: 600;
       color: var(--dark);
-      word-break: break-word;
-      overflow-wrap: break-word;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .song-item.playing .song-title { color: var(--blue); }
@@ -843,8 +838,6 @@
       font-size: 12px;
       color: var(--text-gray);
       margin-top: 2px;
-      word-break: break-word;
-      overflow-wrap: break-word;
     }
 
     .song-duration {
@@ -1023,14 +1016,6 @@
       .recommend-card { padding: 18px 16px; }
       .modal { border-radius: 20px; }
       .modal-body { padding: 16px 20px 20px; }
-      /* 모바일: 볼륨 슬라이더 숨기고 뮤트 버튼 + 안내만 표시 */
-      .volume-slider { display: none; }
-      .volume-val { display: none; }
-      .volume-hint {
-        font-size: 12px;
-        color: var(--text-light-gray);
-        flex: 1;
-      }
     }
 
     @media (max-width: 480px) {
@@ -1043,13 +1028,8 @@
       .volume-row { gap: 8px; }
       .audio-progress { gap: 8px; }
       .audio-time { font-size: 11px; }
-      .song-item { gap: 8px; padding: 8px 8px; }
-      .song-art { width: 32px; height: 32px; font-size: 13px; }
-      .song-num { width: 16px; font-size: 11px; }
       .song-title { font-size: 13px; }
       .song-artist { font-size: 11px; }
-      .song-duration { font-size: 11px; }
-      .song-tag { font-size: 10px; padding: 1px 6px; }
     }
   </style>
 </head>
@@ -1103,7 +1083,6 @@
         <input type="range" class="volume-slider" id="vol-slider" min="0" max="100" value="10"
                oninput="setVolume(this.value)" style="--vol-pct: 10%" />
         <span class="volume-val" id="vol-val">10</span>
-        <span class="volume-hint">볼륨은 기기 버튼으로 조절하세요</span>
       </div>
       </div><!-- /#now-playing-section -->
 
@@ -1199,7 +1178,7 @@
   <script>
     // BASE_URL은 api.js에서 선언됨
     const storeId = new URLSearchParams(location.search).get('storeId') || 1;
-    let stompClient = null;
+    let sseSource = null;
     let isMyStore = false; // loadStoreData에서 설정
 
     // ── 플레이리스트 준비 중 상태 처리 ──
@@ -1651,18 +1630,9 @@
       if (allSongs.length === 0) return;
       const cur = allSongs[headIdx % allSongs.length];
       elapsed++;
-      // videoId 있는 곡: YouTube ENDED 이벤트가 곡 전환 담당 → tick()은 UI만 업데이트
-      // videoId 없는 곡: YouTube 미사용이므로 tick()이 직접 전환 (폴백)
-      if (!cur.videoId && elapsed >= cur.sec) {
+      if (elapsed >= cur.sec) {
         headIdx = (headIdx + 1) % allSongs.length;
         elapsed = 0;
-        if (getOwnerToken() && stompClient && stompClient.connected) {
-          const next = allSongs[headIdx % allSongs.length];
-          stompClient.publish({
-            destination: `/app/stores/${storeId}/current-song`,
-            body: JSON.stringify({ playlistSongId: next.playlistSongId || 0, elapsedSeconds: 0 })
-          });
-        }
         renderQueue();
       } else {
         updateProgress();
@@ -1674,9 +1644,6 @@
     let ytReady = false;
     let seekOnPlay = 0;
     let pendingUnmute = false; // PLAYING 이벤트 때 unmute 처리 플래그
-    let userHasUnmuted = false; // 한 번 소리 켜면 다시 tooltip 안 뜸
-    let ytLoadToken = 0;    // loadVideoById 호출마다 증가
-    let ytPlayingToken = -1; // PLAYING 이벤트 시 캡처 → ENDED 시 비교용
 
     // YouTube IFrame API 동적 로드 (콜백 정의 후 로드해야 타이밍 보장)
     (function() {
@@ -1698,8 +1665,6 @@
           },
           onStateChange: (e) => {
             if (e.data === YT.PlayerState.PLAYING) {
-              // 이 PLAYING이 어느 load에 대한 것인지 캡처
-              ytPlayingToken = ytLoadToken;
               if (seekOnPlay > 0) {
                 ytPlayer.seekTo(seekOnPlay, true);
                 seekOnPlay = 0;
@@ -1713,17 +1678,8 @@
                 showUnmuteTooltip();
               }
             } else if (e.data === YT.PlayerState.ENDED) {
-              // ytPlayingToken이 현재 ytLoadToken과 다르면 이미 다음 곡 로드됨 → 무시
-              if (ytPlayingToken !== ytLoadToken) return;
               headIdx = (headIdx + 1) % allSongs.length;
               elapsed = 0;
-              if (getOwnerToken() && stompClient && stompClient.connected) {
-                const next = allSongs[headIdx % allSongs.length];
-                stompClient.publish({
-                  destination: `/app/stores/${storeId}/current-song`,
-                  body: JSON.stringify({ playlistSongId: next.playlistSongId || 0, elapsedSeconds: 0 })
-                });
-              }
               renderQueue();
               playCurrentYT();
             }
@@ -1745,15 +1701,13 @@
       if (!ytReady || allSongs.length === 0) return;
       const cur = allSongs[headIdx % allSongs.length];
       if (!cur.videoId) return;
-      ytLoadToken++; // 새 로드 시작 → 이전 ENDED 이벤트 무효화
       seekOnPlay = elapsed > 0 ? elapsed : 0;
-      console.log('[playCurrentYT] videoId:', cur.videoId, '/ elapsed:', elapsed, '/ token:', ytLoadToken);
+      console.log('[playCurrentYT] videoId:', cur.videoId, '/ elapsed:', elapsed);
       ytPlayer.loadVideoById({ videoId: cur.videoId, startSeconds: elapsed });
       showUnmuteTooltip();
     }
 
     function showUnmuteTooltip() {
-      if (userHasUnmuted) return;
       document.getElementById('unmute-tooltip').classList.add('visible');
     }
 
@@ -1823,7 +1777,6 @@
             ytPlayer.playVideo();
           }
         }
-        userHasUnmuted = true;
         hideUnmuteTooltip();
       } else {
         isMuted = true;
@@ -1833,102 +1786,31 @@
       applyVolume(volumeLevel);
     }
 
-    // ── WebSocket STOMP 연결 ──
-    function connectSocket(sid) {
-      const token = getOwnerToken();
-      const wsUrl = `${BASE_URL}/ws${token ? '?token=' + token : ''}`;
-      const client = new StompJs.Client({
-        webSocketFactory: () => new SockJS(wsUrl),
-        reconnectDelay: 5000,
-        onConnect: () => {
-          client.subscribe(`/topic/stores/${sid}`, (msg) => {
-            const data = JSON.parse(msg.body);
-            handleSocketMessage(data, sid, client);
-          });
-        },
-        onStompError: (frame) => {
-          console.warn('STOMP error:', frame);
-        }
-      });
-      client.activate();
-      return client;
-    }
-
-    async function handleSongRecommended(data) {
-      const currentSongId = allSongs.length > 0 ? allSongs[headIdx % allSongs.length].playlistSongId : null;
-      try {
-        const token = getOwnerToken();
-        const playlistUrl = isMyStore ? `/api/owner/stores/${storeId}/playlist` : `/api/stores/${storeId}/playlist`;
-        const fresh = await apiFetch('GET', playlistUrl, undefined, isMyStore ? token : undefined);
-        const freshData = fresh.playlist || fresh;
-        const freshSongs = freshData.songs;
-        if (freshSongs && freshSongs.length > 0) {
-          allSongs = freshSongs.map(s => ({
-            title: s.title || s.songTitle || '',
-            artist: s.artist || s.artistName || '',
-            dur: toMMSS(s.playTime || s.durationSeconds || 210),
-            sec: s.playTime || s.durationSeconds || 210,
-            rec: s.refereeName || null,
-            playlistSongId: s.playlistSongId || null,
-            videoId: s.videoId || s.vid || s.youtubeId || s.youtubeVideoId || null
-          }));
-
-          if (isMyStore) {
-            // 오너 기기: 직접 재생 중이므로 로컬 headIdx 기준으로 위치 유지
-            if (currentSongId != null) {
-              const newIdx = allSongs.findIndex(s => String(s.playlistSongId) === String(currentSongId));
-              if (newIdx >= 0) headIdx = newIdx;
-            }
-          } else {
-            // 손님 기기: 서버의 currentSong 기준으로 위치 동기화
-            const currentSong = fresh.currentSong || freshData.currentSong;
-            if (currentSong) {
-              const idx = allSongs.findIndex(s => String(s.playlistSongId) === String(currentSong.playlistSongId));
-              if (idx >= 0) {
-                headIdx = idx;
-                elapsed = currentSong.elapsedSeconds || 0;
-              }
-            } else if (currentSongId != null) {
-              const newIdx = allSongs.findIndex(s => String(s.playlistSongId) === String(currentSongId));
-              if (newIdx >= 0) headIdx = newIdx;
-            }
-          }
-
-          renderQueue();
-          updateStats();
-        }
-      } catch(e) {
-        console.warn('[SONG_RECOMMENDED] 플레이리스트 갱신 실패, 수동 삽입:', e);
+    // ── SSE 연결 ──
+    function connectSSE(sid) {
+      const source = new EventSource(`${BASE_URL}/api/stores/${sid}/sse`);
+      source.addEventListener('SONG_RECOMMENDED', (e) => {
+        const data = JSON.parse(e.data);
         const newSong = {
           title: data.title,
           artist: data.artist,
           dur: '--:--',
           sec: 210,
           rec: data.refereeName,
-          playlistSongId: null
+          playlistSongId: null,
+          playOrder: data.playOrder
         };
-        const insertIdx = Math.max(0, Math.round(data.playOrder) - 1);
+        let insertIdx = allSongs.findIndex(s => s.playOrder > data.playOrder);
+        if (insertIdx === -1) insertIdx = allSongs.length;
         allSongs.splice(insertIdx, 0, newSong);
+        if (insertIdx <= headIdx) headIdx++;
         renderQueue();
         updateStats();
-      }
-    }
-
-    function handleSocketMessage(data, sid, client) {
-      if (data.type === 'SONG_RECOMMENDED') {
-        handleSongRecommended(data);
-      } else if (data.type === 'REQUEST_CURRENT_SONG') {
-        if (getOwnerToken() && allSongs.length > 0) {
-          const cur = allSongs[headIdx % allSongs.length];
-          client.publish({
-            destination: `/app/stores/${sid}/current-song`,
-            body: JSON.stringify({
-              playlistSongId: cur.playlistSongId || 0,
-              elapsedSeconds: elapsed
-            })
-          });
-        }
-      }
+      });
+      source.onerror = (e) => {
+        console.warn('SSE 연결 오류:', e);
+      };
+      return source;
     }
 
     // ── 매장 정보 및 플레이리스트 API 로드 ──
@@ -2078,7 +1960,8 @@
             sec: s.playTime || s.durationSeconds || 210,
             rec: s.refereeName || null,
             playlistSongId: s.playlistSongId || null,
-            videoId: s.videoId || s.vid || s.youtubeId || s.youtubeVideoId || null
+            videoId: s.videoId || s.vid || s.youtubeId || s.youtubeVideoId || null,
+            playOrder: s.playOrder || 0
           }));
 
           const currentSong = playlist.currentSong || playlistData.currentSong;
@@ -2114,11 +1997,16 @@
         const rec = document.getElementById('recommend-card');
         if (rec) rec.style.display = 'none';
       } else if (!shouldPlay) {
-        // 곡 목록은 있지만 currentSong 없음 — 목록은 노출, NOW PLAYING 섹션만 숨김
         document.getElementById('now-playing-section').style.display = 'none';
         document.querySelector('.vinyl-img').style.display = 'none';
-        renderQueue();
-        updateStats();
+        document.getElementById('playlist-section').innerHTML = `
+          <div class="closed-notice">
+            <div class="closed-notice-badge">대기 중</div>
+            <p class="closed-notice-title">현재 재생 중인 음악이 없어요</p>
+            <p class="closed-notice-desc">영업 시간에 다시 방문해 주세요.</p>
+          </div>`;
+        const rec = document.getElementById('recommend-card');
+        if (rec) rec.style.display = 'none';
       } else {
         document.querySelector('.vinyl-img').style.display = '';
         renderQueue();
@@ -2182,7 +2070,8 @@
               sec: s.playTime || s.durationSeconds || 210,
               rec: s.refereeName || null,
               playlistSongId: s.playlistSongId || null,
-              videoId: s.videoId || s.vid || null
+              videoId: s.videoId || s.vid || null,
+              playOrder: s.playOrder || 0
             }));
             renderQueue();
             updateStats();
@@ -2221,11 +2110,13 @@
       const params = new URLSearchParams(location.search);
       if (!params.get('pending')) {
         await loadStoreData();
-        // STOMP 연결
-        try {
-          stompClient = connectSocket(storeId);
-        } catch(e) {
-          console.warn('WebSocket 연결 실패:', e);
+        // SSE 연결 (영업 중일 때만)
+        if (shouldPlay) {
+          try {
+            sseSource = connectSSE(storeId);
+          } catch(e) {
+            console.warn('SSE 연결 실패:', e);
+          }
         }
       } else {
         // pending 모드: 기본 플레이리스트로 렌더
