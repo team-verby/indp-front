@@ -1647,10 +1647,11 @@
       if (allSongs.length === 0) return;
       const cur = allSongs[headIdx % allSongs.length];
       elapsed++;
-      if (elapsed >= cur.sec) {
+      // videoId 있는 곡: YouTube ENDED 이벤트가 곡 전환 담당 → tick()은 UI만 업데이트
+      // videoId 없는 곡: YouTube 미사용이므로 tick()이 직접 전환 (폴백)
+      if (!cur.videoId && elapsed >= cur.sec) {
         headIdx = (headIdx + 1) % allSongs.length;
         elapsed = 0;
-        // 오너이고 STOMP 연결 중이면 현재 곡 전송
         if (getOwnerToken() && stompClient && stompClient.connected) {
           const next = allSongs[headIdx % allSongs.length];
           stompClient.publish({
@@ -1670,6 +1671,8 @@
     let seekOnPlay = 0;
     let pendingUnmute = false; // PLAYING 이벤트 때 unmute 처리 플래그
     let userHasUnmuted = false; // 한 번 소리 켜면 다시 tooltip 안 뜸
+    let ytLoadToken = 0;    // loadVideoById 호출마다 증가
+    let ytPlayingToken = -1; // PLAYING 이벤트 시 캡처 → ENDED 시 비교용
 
     // YouTube IFrame API 동적 로드 (콜백 정의 후 로드해야 타이밍 보장)
     (function() {
@@ -1691,6 +1694,8 @@
           },
           onStateChange: (e) => {
             if (e.data === YT.PlayerState.PLAYING) {
+              // 이 PLAYING이 어느 load에 대한 것인지 캡처
+              ytPlayingToken = ytLoadToken;
               if (seekOnPlay > 0) {
                 ytPlayer.seekTo(seekOnPlay, true);
                 seekOnPlay = 0;
@@ -1704,8 +1709,17 @@
                 showUnmuteTooltip();
               }
             } else if (e.data === YT.PlayerState.ENDED) {
+              // ytPlayingToken이 현재 ytLoadToken과 다르면 이미 다음 곡 로드됨 → 무시
+              if (ytPlayingToken !== ytLoadToken) return;
               headIdx = (headIdx + 1) % allSongs.length;
               elapsed = 0;
+              if (getOwnerToken() && stompClient && stompClient.connected) {
+                const next = allSongs[headIdx % allSongs.length];
+                stompClient.publish({
+                  destination: `/app/stores/${storeId}/current-song`,
+                  body: JSON.stringify({ playlistSongId: next.playlistSongId || 0, elapsedSeconds: 0 })
+                });
+              }
               renderQueue();
               playCurrentYT();
             }
@@ -1727,8 +1741,9 @@
       if (!ytReady || allSongs.length === 0) return;
       const cur = allSongs[headIdx % allSongs.length];
       if (!cur.videoId) return;
+      ytLoadToken++; // 새 로드 시작 → 이전 ENDED 이벤트 무효화
       seekOnPlay = elapsed > 0 ? elapsed : 0;
-      console.log('[playCurrentYT] videoId:', cur.videoId, '/ elapsed:', elapsed);
+      console.log('[playCurrentYT] videoId:', cur.videoId, '/ elapsed:', elapsed, '/ token:', ytLoadToken);
       ytPlayer.loadVideoById({ videoId: cur.videoId, startSeconds: elapsed });
       showUnmuteTooltip();
     }
