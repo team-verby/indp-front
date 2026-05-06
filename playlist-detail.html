@@ -1435,7 +1435,10 @@
         reqData.orderName = recData.orderName;
         reqData.songRecommendationId = recData.songRecommendationId;
       } catch(e) {
-        console.warn('신청 API 실패, 로컬 처리로 대체:', e);
+        alert('노래 신청에 실패했습니다. 잠시 후 다시 시도해 주세요.');
+        nextBtn.disabled = false;
+        nextBtn.textContent = '다음';
+        return;
       }
 
       goStep(2);
@@ -1445,42 +1448,20 @@
       const btn = document.querySelector('.btn-modal-next.pay');
       if (btn) { btn.disabled = true; btn.textContent = '결제 모듈 로딩 중...'; }
 
-      if (reqData.orderId) {
-        try {
-          const displayAmount = reqData.amount != null ? reqData.amount : SONG_PRICE;
-          const tossPayments = TossPayments('test_gck_docs_Ovk5rk1EwkEbP0W43n07xlzm');
-          const widgets = tossPayments.widgets({ customerKey: TossPayments.ANONYMOUS });
-          await widgets.setAmount({ currency: 'KRW', value: displayAmount });
-          await widgets.renderPaymentMethods({ selector: '#rec-toss-widget', variantKey: 'DEFAULT' });
-          window._recTossWidgets = widgets;
-          document.getElementById('pay-overlay').classList.add('open');
-        } catch(e) {
-          console.warn('Toss 위젯 로드 실패:', e);
-          alert('결제 모듈 로딩에 실패했습니다. 잠시 후 다시 시도해 주세요.');
-        } finally {
-          if (btn) { btn.disabled = false; btn.textContent = '결제하기'; }
-        }
-        return;
+      try {
+        const displayAmount = reqData.amount != null ? reqData.amount : SONG_PRICE;
+        const tossPayments = TossPayments('test_gck_docs_Ovk5rk1EwkEbP0W43n07xlzm');
+        const widgets = tossPayments.widgets({ customerKey: TossPayments.ANONYMOUS });
+        await widgets.setAmount({ currency: 'KRW', value: displayAmount });
+        await widgets.renderPaymentMethods({ selector: '#rec-toss-widget', variantKey: 'DEFAULT' });
+        window._recTossWidgets = widgets;
+        document.getElementById('pay-overlay').classList.add('open');
+      } catch(e) {
+        console.warn('Toss 위젯 로드 실패:', e);
+        alert('결제 모듈 로딩에 실패했습니다. 잠시 후 다시 시도해 주세요.');
+      } finally {
+        if (btn) { btn.disabled = false; btn.textContent = '결제하기'; }
       }
-
-      // 결제 모듈 미연동 시 로컬 시뮬레이션
-      if (btn) { btn.disabled = true; btn.textContent = '결제 처리 중...'; }
-      setTimeout(() => {
-        const insertAt = (headIdx + 5) % allSongs.length;
-        const yt = reqData.yt;
-        allSongs.splice(insertAt, 0, {
-          title:  yt ? yt.title  : reqData.title,
-          artist: yt ? yt.artist : reqData.artist,
-          dur:    yt ? yt.dur    : '--:--',
-          sec:    yt ? (() => { const [m,s] = yt.dur.split(':').map(Number); return m*60+s; })() : 210,
-          rec:    reqData.name,
-          playlistSongId: null
-        });
-        if (insertAt <= headIdx) headIdx++;
-        renderQueue();
-        updateStats();
-        goStep(3);
-      }, 1500);
     }
 
     function closePayOverlay() {
