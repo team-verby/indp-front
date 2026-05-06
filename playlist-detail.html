@@ -1611,9 +1611,13 @@
       if (allSongs.length === 0) return;
       const cur = allSongs[headIdx % allSongs.length];
       elapsed++;
+
+      const isPlaying = isMyStore && ytPlayer && ytPlayer.getPlayerState() === 1;
+
       if (elapsed >= cur.sec) {
-        // YouTube가 실제 재생 중이면 ENDED 이벤트에서 곡 전환 처리
-        if (shouldPlay && ytReady) return;
+        // 점주만 YouTube 기준으로 넘김
+        if (isPlaying) return;
+
         headIdx = (headIdx + 1) % allSongs.length;
         elapsed = 0;
         renderQueue();
@@ -1647,6 +1651,7 @@
             }
           },
           onStateChange: (e) => {
+            if (!isMyStore) return;
             if (e.data === YT.PlayerState.PLAYING) {
               if (seekOnPlay > 0) {
                 ytPlayer.seekTo(seekOnPlay, true);
@@ -1673,6 +1678,7 @@
 
     function preloadAndPlay() {
       if (allSongs.length === 0) return;
+      if (!isMyStore) return;
       showUnmuteTooltip();
       if (ytReady) {
         playCurrentYT();
@@ -1681,6 +1687,7 @@
     }
 
     function playCurrentYT() {
+      if (!isMyStore) return;
       if (!ytReady || allSongs.length === 0) return;
       const cur = allSongs[headIdx % allSongs.length];
       if (!cur.videoId) return;
