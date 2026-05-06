@@ -1612,6 +1612,8 @@
       const cur = allSongs[headIdx % allSongs.length];
       elapsed++;
       if (elapsed >= cur.sec) {
+        // YouTube가 실제 재생 중이면 ENDED 이벤트에서 곡 전환 처리
+        if (shouldPlay && ytReady) return;
         headIdx = (headIdx + 1) % allSongs.length;
         elapsed = 0;
         renderQueue();
