@@ -1777,11 +1777,12 @@
         const newSong = {
           title: data.title,
           artist: data.artist,
-          dur: '--:--',
-          sec: 210,
+          dur: toMMSS(data.playTime),
+          sec: data.playTime,
           rec: data.refereeName,
-          playlistSongId: null,
-          playOrder: data.playOrder
+          playlistSongId: data.playlistSongId,
+          playOrder: data.playOrder,
+          videoId: data.vid
         };
         let insertIdx = allSongs.findIndex(s => s.playOrder > data.playOrder);
         if (insertIdx === -1) insertIdx = allSongs.length;
