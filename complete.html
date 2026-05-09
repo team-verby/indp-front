@@ -262,14 +262,14 @@
 
     function getStoredCredentials() {
       return {
-        id: localStorage.getItem('pendingLoginId'),
-        pw: localStorage.getItem('pendingPassword')
+        id: sessionStorage.getItem('pendingLoginId'),
+        pw: sessionStorage.getItem('pendingPassword')
       };
     }
 
     function clearStoredCredentials() {
-      localStorage.removeItem('pendingLoginId');
-      localStorage.removeItem('pendingPassword');
+      sessionStorage.removeItem('pendingLoginId');
+      sessionStorage.removeItem('pendingPassword');
       localStorage.removeItem('pendingApplyResult');
     }
 
@@ -278,7 +278,7 @@
       const paymentKey = params.get('paymentKey');
       const orderId = params.get('orderId') || localStorage.getItem('pendingOrderId');
       const amount = parseInt(params.get('amount') || localStorage.getItem('pendingAmount') || '0');
-      console.log('[complete] paymentKey:', paymentKey, '| pendingLoginId:', localStorage.getItem('pendingLoginId'), '| pendingPassword:', localStorage.getItem('pendingPassword') ? '있음' : '없음');
+      console.log('[complete] paymentKey:', paymentKey, '| pendingLoginId:', sessionStorage.getItem('pendingLoginId') ? '있음' : '없음', '| pendingPassword:', sessionStorage.getItem('pendingPassword') ? '있음' : '없음');
       if (!paymentKey || !orderId) return;
 
       try {
