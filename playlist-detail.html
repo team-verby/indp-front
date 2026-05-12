@@ -1040,6 +1040,15 @@
 <body>
 <div id="yt-player" style="position:fixed;width:0;height:0;overflow:hidden;pointer-events:none;"></div>
 
+  <!-- 세션 만료 배너 -->
+  <div id="session-banner" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:9999;background:#1b1b1d;color:#fff;padding:14px 20px;display:none;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+    <span id="session-banner-msg" style="font-size:14px;line-height:1.5;"></span>
+    <div style="display:flex;gap:10px;flex-shrink:0;">
+      <button id="session-relogin-btn" style="background:#233eff;color:#fff;border:none;border-radius:100px;padding:8px 20px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">다시 로그인</button>
+      <button id="session-banner-close" style="background:transparent;color:#aaa;border:none;font-size:18px;cursor:pointer;line-height:1;">✕</button>
+    </div>
+  </div>
+
   <!-- NAV -->
   <nav>
     <div class="nav-inner">
@@ -2153,6 +2162,53 @@
           else updateProgress();
         }
       });
+    })();
+
+    // ── 세션 만료 배너 ──
+    (function() {
+      const banner  = document.getElementById('session-banner');
+      const msgEl   = document.getElementById('session-banner-msg');
+      const closeBtn = document.getElementById('session-banner-close');
+      const reloginBtn = document.getElementById('session-relogin-btn');
+
+      function showBanner(msg) {
+        msgEl.textContent = msg;
+        banner.style.display = 'flex';
+      }
+
+      document.addEventListener('ownerSessionWarning', (e) => {
+        if (!isMyStore) return;
+        const min = Math.round((e.detail.expiresAt - Date.now()) / 60000);
+        showBanner(`세션이 약 ${min}분 후 만료됩니다. 음악은 계속 재생되지만 로그인 상태가 끊겨요.`);
+      });
+
+      document.addEventListener('ownerSessionExpired', () => {
+        if (!isMyStore) return;
+        showBanner('로그인 세션이 만료되었습니다. 다시 로그인해 주세요.');
+        updateNavAuth();
+      });
+
+      reloginBtn.addEventListener('click', () => {
+        window.open('login.html', '_blank');
+      });
+
+      closeBtn.addEventListener('click', () => {
+        banner.style.display = 'none';
+      });
+
+      // 페이지 로드 시 이미 만료된 토큰 체크
+      const token = getOwnerToken();
+      if (token) {
+        scheduleSessionWarning(token);
+        // 이미 만료된 경우
+        try {
+          const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+          if (payload.exp && payload.exp * 1000 < Date.now()) {
+            clearOwnerToken();
+            showBanner('로그인 세션이 만료되었습니다. 다시 로그인해 주세요.');
+          }
+        } catch(e) {}
+      }
     })();
 
   </script>

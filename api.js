@@ -1,5 +1,38 @@
 const BASE_URL = 'https://dev-api.indpmusic.co.kr';
 
+// JWT payload 디코딩 (서명 검증 없이 exp 클레임만 추출)
+function parseJwtExp(token) {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+    return payload.exp ? payload.exp * 1000 : null; // ms 단위 변환
+  } catch(e) { return null; }
+}
+
+let _sessionWarnTimer = null;
+let _sessionExpireTimer = null;
+
+function scheduleSessionWarning(token) {
+  clearTimeout(_sessionWarnTimer);
+  clearTimeout(_sessionExpireTimer);
+  const exp = parseJwtExp(token);
+  if (!exp) return;
+  const now = Date.now();
+  const warnAt  = exp - 5 * 60 * 1000; // 만료 5분 전
+  const expireAt = exp;
+
+  if (warnAt > now) {
+    _sessionWarnTimer = setTimeout(() => {
+      document.dispatchEvent(new CustomEvent('ownerSessionWarning', { detail: { expiresAt: exp } }));
+    }, warnAt - now);
+  }
+  if (expireAt > now) {
+    _sessionExpireTimer = setTimeout(() => {
+      clearOwnerToken();
+      document.dispatchEvent(new CustomEvent('ownerSessionExpired'));
+    }, expireAt - now);
+  }
+}
+
 async function apiFetch(method, path, body, token) {
   const headers = { 'Content-Type': 'application/json' };
   if (token) headers['Authorization'] = `Bearer ${token}`;
@@ -7,6 +40,10 @@ async function apiFetch(method, path, body, token) {
   if (body !== undefined) opts.body = JSON.stringify(body);
   const res = await fetch(BASE_URL + path, opts);
   if (!res.ok) {
+    if (res.status === 401) {
+      clearOwnerToken();
+      document.dispatchEvent(new CustomEvent('ownerSessionExpired'));
+    }
     let msg = `API 오류 (${res.status})`;
     try { const d = await res.json(); console.error('[API 에러 응답]', JSON.stringify(d)); msg = d.message || msg; } catch(e) {}
     throw new Error(msg);
@@ -18,8 +55,15 @@ async function apiFetch(method, path, body, token) {
 }
 
 function getOwnerToken() { return localStorage.getItem('ownerToken'); }
-function setOwnerToken(t) { localStorage.setItem('ownerToken', t); }
-function clearOwnerToken() { localStorage.removeItem('ownerToken'); }
+function setOwnerToken(t) {
+  localStorage.setItem('ownerToken', t);
+  scheduleSessionWarning(t);
+}
+function clearOwnerToken() {
+  localStorage.removeItem('ownerToken');
+  clearTimeout(_sessionWarnTimer);
+  clearTimeout(_sessionExpireTimer);
+}
 function getOwnerStoreId() { return localStorage.getItem('ownerStoreId'); }
 function setOwnerStoreId(id) { localStorage.setItem('ownerStoreId', String(id)); }
 
