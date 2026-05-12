@@ -1613,30 +1613,37 @@
       });
     }
 
+    // wall clock 기준으로 현재 곡·위치 재계산 (throttling으로 건너뛴 곡 일괄 처리)
+    function syncFromWallClock() {
+      let wallElapsed = Math.floor((Date.now() - songStartedAt) / 1000);
+      let changed = false;
+      while (allSongs.length > 0) {
+        const cur = allSongs[headIdx % allSongs.length];
+        const dur = cur.sec || 1;
+        if (wallElapsed < dur) break;
+        songStartedAt += dur * 1000;
+        wallElapsed  -= dur;
+        headIdx = (headIdx + 1) % allSongs.length;
+        changed = true;
+      }
+      elapsed = wallElapsed;
+      return changed;
+    }
+
     function tick() {
       if (allSongs.length === 0) return;
-      const cur = allSongs[headIdx % allSongs.length];
 
-      // wall clock 기준으로 elapsed 계산 (탭 비활성화 시 throttling 영향 없음)
       if (isMyStore && ytPlayer && ytPlayer.getPlayerState() === 1) {
+        // 점주: YouTube 실제 재생 위치 사용, 곡 전환은 ENDED 이벤트가 담당
         elapsed = Math.floor(ytPlayer.getCurrentTime());
-      } else {
-        elapsed = Math.floor((Date.now() - songStartedAt) / 1000);
-      }
-
-      const isPlaying = isMyStore && ytPlayer && ytPlayer.getPlayerState() === 1;
-
-      if (elapsed >= cur.sec) {
-        // 점주만 YouTube 기준으로 넘김
-        if (isPlaying) return;
-
-        headIdx = (headIdx + 1) % allSongs.length;
-        elapsed = 0;
-        songStartedAt = Date.now();
-        renderQueue();
-      } else {
         updateProgress();
+        return;
       }
+
+      // 손님: wall clock 기준, 탭 비활성화 동안 건너뛴 곡 일괄 처리
+      const changed = syncFromWallClock();
+      if (changed) renderQueue();
+      else updateProgress();
     }
 
     // ── YouTube 플레이어 ──
@@ -2135,14 +2142,16 @@
       document.addEventListener('visibilitychange', () => {
         if (document.visibilityState !== 'visible' || allSongs.length === 0) return;
         if (isMyStore && ytPlayer && ytPlayer.getPlayerState() === 1) {
-          // 점주: YouTube 실제 재생 위치로 elapsed 보정
+          // 점주: YouTube 실제 재생 위치로 보정
           elapsed = Math.floor(ytPlayer.getCurrentTime());
           songStartedAt = Date.now() - elapsed * 1000;
+          updateProgress();
         } else {
-          // 손님: wall clock 기준으로 elapsed 재계산
-          elapsed = Math.floor((Date.now() - songStartedAt) / 1000);
+          // 손님: 비활성 동안 건너뛴 곡 포함해 재계산
+          const changed = syncFromWallClock();
+          if (changed) renderQueue();
+          else updateProgress();
         }
-        updateProgress();
       });
     })();
 
