@@ -1556,6 +1556,7 @@
     const WINDOW = 10;
     let headIdx     = 0;
     let elapsed     = 0;
+    let songStartedAt = 0; // 현재 곡이 시작된 wall clock (Date.now())
     let ticker      = null;
     let shouldPlay  = false; // currentSong이 있을 때만 true
 
@@ -1615,7 +1616,13 @@
     function tick() {
       if (allSongs.length === 0) return;
       const cur = allSongs[headIdx % allSongs.length];
-      elapsed++;
+
+      // wall clock 기준으로 elapsed 계산 (탭 비활성화 시 throttling 영향 없음)
+      if (isMyStore && ytPlayer && ytPlayer.getPlayerState() === 1) {
+        elapsed = Math.floor(ytPlayer.getCurrentTime());
+      } else {
+        elapsed = Math.floor((Date.now() - songStartedAt) / 1000);
+      }
 
       const isPlaying = isMyStore && ytPlayer && ytPlayer.getPlayerState() === 1;
 
@@ -1625,6 +1632,7 @@
 
         headIdx = (headIdx + 1) % allSongs.length;
         elapsed = 0;
+        songStartedAt = Date.now();
         renderQueue();
       } else {
         updateProgress();
@@ -1673,6 +1681,7 @@
             } else if (e.data === YT.PlayerState.ENDED) {
               headIdx = (headIdx + 1) % allSongs.length;
               elapsed = 0;
+              songStartedAt = Date.now();
               renderQueue();
               playCurrentYT();
             }
@@ -1968,6 +1977,7 @@
             if (idx >= 0) {
               headIdx = idx;
               elapsed = currentSong.elapsedSeconds || 0;
+              songStartedAt = Date.now() - elapsed * 1000;
               shouldPlay = true;
               if (!allSongs[idx].videoId && (currentSong.vid || currentSong.videoId)) {
                 allSongs[idx].videoId = currentSong.vid || currentSong.videoId;
@@ -2120,6 +2130,20 @@
         updateStats();
       }
       ticker = setInterval(tick, 1000);
+
+      // 탭 복귀 시 즉시 싱크 보정
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState !== 'visible' || allSongs.length === 0) return;
+        if (isMyStore && ytPlayer && ytPlayer.getPlayerState() === 1) {
+          // 점주: YouTube 실제 재생 위치로 elapsed 보정
+          elapsed = Math.floor(ytPlayer.getCurrentTime());
+          songStartedAt = Date.now() - elapsed * 1000;
+        } else {
+          // 손님: wall clock 기준으로 elapsed 재계산
+          elapsed = Math.floor((Date.now() - songStartedAt) / 1000);
+        }
+        updateProgress();
+      });
     })();
 
   </script>
