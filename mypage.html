@@ -512,6 +512,230 @@
         max-height: 200px;
       }
     }
+
+    /* ── QR 리플렛 배너 ── */
+    .qr-reorder-banner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      background: #f0f3ff;
+      border: 1.5px solid #c7cfff;
+      border-radius: 14px;
+      padding: 16px 20px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .qr-reorder-banner-text {
+      font-size: 15px;
+      color: #1a1a2e;
+      font-weight: 500;
+      line-height: 1.5;
+    }
+    .qr-reorder-banner-text strong {
+      font-weight: 700;
+      color: #233eff;
+    }
+    .qr-reorder-btn {
+      background: #1b1b1d;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 11px 20px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+      font-family: inherit;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.18s;
+      flex-shrink: 0;
+    }
+    .qr-reorder-btn:hover { background: #333; }
+    .qr-reorder-btn::after { content: '→'; font-size: 15px; }
+
+    /* ── QR 주문 팝업 ── */
+    .qr-order-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 9000;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(4px);
+    }
+    .qr-order-overlay.open { display: flex; }
+    .qr-order-modal {
+      background: #fff;
+      border-radius: 24px;
+      padding: 36px 32px 28px;
+      width: 90%;
+      max-width: 420px;
+      max-height: 90vh;
+      overflow-y: auto;
+      position: relative;
+      animation: qrModalIn 0.22s ease;
+    }
+    @keyframes qrModalIn {
+      from { opacity: 0; transform: scale(0.94) translateY(8px); }
+      to   { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    .qr-order-close {
+      position: absolute;
+      top: 14px; right: 18px;
+      background: none; border: none;
+      font-size: 22px; color: #aaa;
+      cursor: pointer; line-height: 1;
+    }
+    .qr-order-close:hover { color: #333; }
+    .qr-order-title {
+      font-size: 20px;
+      font-weight: 900;
+      color: #111;
+      margin-bottom: 6px;
+    }
+    .qr-order-desc {
+      font-size: 14px;
+      color: #888;
+      margin-bottom: 28px;
+      line-height: 1.6;
+    }
+    .qr-qty-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #f8f9fb;
+      border-radius: 12px;
+      padding: 16px 18px;
+      margin-bottom: 16px;
+    }
+    .qr-qty-label {
+      font-size: 15px;
+      font-weight: 600;
+      color: #111;
+    }
+    .qr-qty-ctrl {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .qr-qty-btn {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      border: 1.5px solid #d1d5db;
+      background: #fff;
+      font-size: 18px;
+      font-weight: 700;
+      color: #333;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: border-color 0.15s;
+    }
+    .qr-qty-btn:hover { border-color: #233eff; color: #233eff; }
+    .qr-qty-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+    .qr-qty-value {
+      font-size: 17px;
+      font-weight: 800;
+      color: #111;
+      min-width: 48px;
+      text-align: center;
+    }
+    .qr-price-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 18px;
+      background: #fff;
+      border: 1.5px solid #e5e7eb;
+      border-radius: 12px;
+      margin-bottom: 24px;
+    }
+    .qr-price-label { font-size: 14px; color: #666; }
+    .qr-price-value { font-size: 22px; font-weight: 900; color: #233eff; }
+    .qr-pay-btn {
+      width: 100%;
+      background: #1b1b1d;
+      color: #fff;
+      border: none;
+      border-radius: 14px;
+      padding: 16px;
+      font-size: 16px;
+      font-weight: 800;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 0.18s;
+    }
+    .qr-pay-btn:hover { background: #333; }
+    .qr-order-note {
+      font-size: 12px;
+      color: #aaa;
+      text-align: center;
+      margin-top: 14px;
+      line-height: 1.6;
+    }
+
+    /* 결제 모달 (2단계) */
+    .qr-payment-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.55);
+      z-index: 9100;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(4px);
+    }
+    .qr-payment-overlay.open { display: flex; }
+    .qr-payment-modal {
+      background: #fff;
+      border-radius: 24px;
+      padding: 36px 32px 28px;
+      width: 90%;
+      max-width: 480px;
+      max-height: 90vh;
+      overflow-y: auto;
+      position: relative;
+      animation: qrModalIn 0.22s ease;
+    }
+    .qr-payment-close {
+      position: absolute;
+      top: 14px; right: 18px;
+      background: none; border: none;
+      font-size: 22px; color: #aaa;
+      cursor: pointer; line-height: 1;
+    }
+    .qr-payment-close:hover { color: #333; }
+    .qr-payment-title {
+      font-size: 18px;
+      font-weight: 900;
+      color: #111;
+      margin-bottom: 4px;
+    }
+    .qr-payment-summary {
+      font-size: 14px;
+      color: #888;
+      margin-bottom: 24px;
+    }
+    .qr-payment-summary strong { color: #233eff; font-weight: 700; }
+    #qr-toss-widget { margin-bottom: 20px; }
+    .qr-confirm-btn {
+      width: 100%;
+      background: #233eff;
+      color: #fff;
+      border: none;
+      border-radius: 14px;
+      padding: 16px;
+      font-size: 16px;
+      font-weight: 800;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 0.18s;
+    }
+    .qr-confirm-btn:hover { background: #1a2ecc; }
+    .qr-confirm-btn:disabled { background: #c0c7ff; cursor: not-allowed; }
   </style>
 </head>
 <body>
@@ -565,6 +789,12 @@
           <div class="summary-status-badge pending" id="sum-status">확인 중</div>
         </div>
       </div>
+    </div>
+
+    <!-- QR 리플렛 추가 주문 배너 -->
+    <div class="qr-reorder-banner">
+      <p class="qr-reorder-banner-text">매장 <strong>QR 코드 리플렛</strong>을 모두 사용하셨나요? 추가 주문을 진행해주세요.</p>
+      <button class="qr-reorder-btn" id="qrReorderOpenBtn">추가 주문하기</button>
     </div>
 
     <div class="tab-header-row" style="display:flex; align-items:center; justify-content:space-between; margin-bottom:24px;">
@@ -820,6 +1050,7 @@
   </footer>
   <div class="copyright">Copyright 2026. VERBY Co. all rights reserved.</div>
 
+  <script src="https://js.tosspayments.com/v2/standard"></script>
   <script src="api.js"></script>
   <script>
     let currentStoreId = null;
@@ -1750,6 +1981,133 @@
     }
 
     load();
+  </script>
+
+  <!-- QR 리플렛 주문 팝업 -->
+  <div class="qr-order-overlay" id="qrOrderOverlay">
+    <div class="qr-order-modal">
+      <button class="qr-order-close" id="qrOrderClose">✕</button>
+      <p class="qr-order-title">QR 코드 리플렛 추가 주문</p>
+      <p class="qr-order-desc">20장 단위로 주문 가능합니다.<br>배송은 주문 완료 후 3~5 영업일 내 도착합니다.</p>
+
+      <div class="qr-qty-row">
+        <span class="qr-qty-label">주문 수량</span>
+        <div class="qr-qty-ctrl">
+          <button class="qr-qty-btn" id="qrQtyMinus">−</button>
+          <span class="qr-qty-value" id="qrQtyDisplay">20장</span>
+          <button class="qr-qty-btn" id="qrQtyPlus">＋</button>
+        </div>
+      </div>
+
+      <div class="qr-price-row">
+        <span class="qr-price-label">결제 금액</span>
+        <span class="qr-price-value" id="qrPriceDisplay">10,000원</span>
+      </div>
+
+      <button class="qr-pay-btn" id="qrPayBtn">결제하기 →</button>
+      <p class="qr-order-note">결제 완료 후 등록된 주소로 배송됩니다.<br>문의: verbykorea@gmail.com</p>
+    </div>
+  </div>
+
+  <!-- 결제 모달 (2단계) -->
+  <div class="qr-payment-overlay" id="qrPaymentOverlay">
+    <div class="qr-payment-modal">
+      <button class="qr-payment-close" id="qrPaymentClose">✕</button>
+      <p class="qr-payment-title">결제 수단 선택</p>
+      <p class="qr-payment-summary" id="qrPaymentSummary"></p>
+      <div id="qr-toss-widget"></div>
+      <button class="qr-confirm-btn" id="qrConfirmBtn">최종 결제하기</button>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      const UNIT       = 20;
+      const UNIT_PRICE = 10000;
+      const CLIENT_KEY = 'test_gck_docs_Ovk5rk1EwkEbP0W43n07xlzm';
+
+      let qty = 1;
+      let tossWidgets = null;
+
+      // 수량 선택 팝업
+      const orderOverlay  = document.getElementById('qrOrderOverlay');
+      const openBtn       = document.getElementById('qrReorderOpenBtn');
+      const orderClose    = document.getElementById('qrOrderClose');
+      const minusBtn      = document.getElementById('qrQtyMinus');
+      const plusBtn       = document.getElementById('qrQtyPlus');
+      const qtyDisplay    = document.getElementById('qrQtyDisplay');
+      const priceDisplay  = document.getElementById('qrPriceDisplay');
+      const payBtn        = document.getElementById('qrPayBtn');
+
+      // 결제 모달
+      const payOverlay    = document.getElementById('qrPaymentOverlay');
+      const payClose      = document.getElementById('qrPaymentClose');
+      const summaryEl     = document.getElementById('qrPaymentSummary');
+      const confirmBtn    = document.getElementById('qrConfirmBtn');
+
+      function updateDisplay() {
+        qtyDisplay.textContent   = `${qty * UNIT}장`;
+        priceDisplay.textContent = (qty * UNIT_PRICE).toLocaleString() + '원';
+        minusBtn.disabled = qty <= 1;
+      }
+
+      // 수량 팝업 열기/닫기
+      openBtn.addEventListener('click', () => orderOverlay.classList.add('open'));
+      orderClose.addEventListener('click', () => orderOverlay.classList.remove('open'));
+      orderOverlay.addEventListener('click', (e) => { if (e.target === orderOverlay) orderOverlay.classList.remove('open'); });
+
+      minusBtn.addEventListener('click', () => { if (qty > 1) { qty--; updateDisplay(); } });
+      plusBtn.addEventListener('click',  () => { qty++; updateDisplay(); });
+
+      // 결제하기 → 수량 팝업 닫고 결제 모달 열기
+      payBtn.addEventListener('click', async () => {
+        orderOverlay.classList.remove('open');
+        const amount    = qty * UNIT_PRICE;
+        const orderName = `QR 코드 리플렛 ${qty * UNIT}장`;
+        summaryEl.innerHTML = `<strong>${qty * UNIT}장</strong> · ${amount.toLocaleString()}원`;
+
+        payOverlay.classList.add('open');
+        confirmBtn.disabled   = true;
+        confirmBtn.textContent = '결제 수단 불러오는 중...';
+
+        try {
+          if (!tossWidgets) {
+            const tp = TossPayments(CLIENT_KEY);
+            tossWidgets = tp.widgets({ customerKey: TossPayments.ANONYMOUS });
+            await tossWidgets.setAmount({ currency: 'KRW', value: amount });
+            await tossWidgets.renderPaymentMethods({ selector: '#qr-toss-widget', variantKey: 'DEFAULT' });
+          } else {
+            await tossWidgets.setAmount({ currency: 'KRW', value: amount });
+          }
+          confirmBtn.disabled   = false;
+          confirmBtn.textContent = '최종 결제하기';
+        } catch(e) {
+          confirmBtn.textContent = '결제 수단 로드 실패';
+          console.error(e);
+        }
+      });
+
+      // 최종 결제
+      confirmBtn.addEventListener('click', async () => {
+        const orderId   = 'qr-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7);
+        const amount    = qty * UNIT_PRICE;
+        const orderName = `QR 코드 리플렛 ${qty * UNIT}장`;
+        localStorage.setItem('pendingOrderId', orderId);
+        localStorage.setItem('pendingAmount', String(amount));
+        await tossWidgets.requestPayment({
+          orderId, orderName,
+          successUrl: `${window.location.origin}/complete.html`,
+          failUrl:    `${window.location.origin}/mypage.html?qr_error=1`,
+        });
+      });
+
+      // 결제 모달 닫기
+      payClose.addEventListener('click', () => payOverlay.classList.remove('open'));
+      payOverlay.addEventListener('click', (e) => { if (e.target === payOverlay) payOverlay.classList.remove('open'); });
+      document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { orderOverlay.classList.remove('open'); payOverlay.classList.remove('open'); } });
+
+      updateDisplay();
+    })();
   </script>
 
 </body>

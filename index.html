@@ -1584,6 +1584,130 @@
       .curation-heading { font-size: 26px; }
       .curation-card { padding: 16px 18px; }
     }
+
+    /* ── QR 스티커 팝업 ── */
+    /* 밝은 배경용 트리거 */
+    .qr-sticker-trigger {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: #eef0ff;
+      border: 1.5px solid #233eff;
+      border-radius: 100px;
+      padding: 3px 10px;
+      color: #233eff;
+      font-weight: 700;
+      font-size: 0.88em;
+      line-height: 1.4;
+      cursor: pointer;
+      white-space: nowrap;
+      vertical-align: middle;
+      position: relative;
+      top: -1px;
+      transition: background 0.18s;
+    }
+    .qr-sticker-trigger:hover { background: #dde0ff; }
+    .qr-sticker-trigger .trigger-icon {
+      font-size: 12px;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+
+    /* 어두운 배경용 트리거 */
+    .qr-sticker-trigger-on-dark {
+      background: rgba(255,255,255,0.15);
+      border-color: rgba(255,255,255,0.7);
+      color: #fff;
+    }
+    .qr-sticker-trigger-on-dark:hover { background: rgba(255,255,255,0.25); }
+
+    .qr-sticker-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      z-index: 9000;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(4px);
+    }
+    .qr-sticker-overlay.open { display: flex; }
+
+    .qr-sticker-modal {
+      background: #fff;
+      border-radius: 24px;
+      padding: 36px 32px 28px;
+      max-width: 380px;
+      width: 90%;
+      max-height: 90vh;
+      overflow-y: auto;
+      position: relative;
+      text-align: center;
+      animation: modalIn 0.22s ease;
+    }
+    @keyframes modalIn {
+      from { opacity: 0; transform: scale(0.93) translateY(8px); }
+      to   { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    .qr-sticker-close {
+      position: absolute;
+      top: 14px;
+      right: 18px;
+      background: none;
+      border: none;
+      font-size: 22px;
+      color: #aaa;
+      cursor: pointer;
+      line-height: 1;
+    }
+    .qr-sticker-close:hover { color: #333; }
+
+    .qr-sticker-modal-title {
+      font-size: 17px;
+      font-weight: 800;
+      color: #111;
+      margin-bottom: 6px;
+    }
+    .qr-sticker-modal-desc {
+      font-size: 13px;
+      color: #888;
+      margin-bottom: 24px;
+      line-height: 1.6;
+    }
+
+    .qr-sticker-imgs {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    .qr-sticker-img-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+    }
+    .qr-sticker-img-wrap img {
+      width: 100%;
+      max-width: 300px;
+      border-radius: 14px;
+      border: 1px solid #eee;
+      object-fit: contain;
+    }
+    .qr-sticker-img-wrap span {
+      font-size: 12px;
+      color: #aaa;
+      font-weight: 500;
+    }
+
+    .qr-sticker-modal-note {
+      font-size: 12px;
+      color: #bbb;
+      line-height: 1.6;
+    }
   </style>
   <script src="api.js"></script>
   <script type="application/ld+json">
@@ -1741,7 +1865,7 @@
       <div class="step-card dark">
         <div class="step-text">
           <p class="step-number">STEP1</p>
-          <p class="step-desc">홈페이지에서 바로<br>서비스 신청</p>
+          <p class="step-desc">홈페이지에서<br>도입 문의 선택</p>
         </div>
         <div class="step-illustration">
           <img src="step-globe.png" alt="서비스 신청" />
@@ -1752,7 +1876,7 @@
       <div class="step-card light">
         <div class="step-text">
           <p class="step-number">STEP2</p>
-          <p class="step-desc">우리 매장에 대한<br>상세 정보 입력</p>
+          <p class="step-desc">업종·분위기·운영 시간 등<br>매장 정보 입력</p>
         </div>
         <div class="step-illustration">
           <img src="step-store.png" alt="정보 입력" />
@@ -1763,7 +1887,7 @@
       <div class="step-card dark">
         <div class="step-text">
           <p class="step-number">STEP3</p>
-          <p class="step-desc">플레이리스트 탭에서<br>내 공간 클릭</p>
+          <p class="step-desc">전문 큐레이터가<br>매장 맞춤 플레이리스트 제작</p>
         </div>
         <div class="step-illustration">
           <img src="step-mystore.png" alt="공간 클릭" />
@@ -1774,7 +1898,7 @@
       <div class="step-card light">
         <div class="step-text">
           <p class="step-number">STEP4</p>
-          <p class="step-desc">관리자에게 부여받은<br>계정으로 재생!</p>
+          <p class="step-desc">전달받은 계정으로<br>로그인 후 볼륨 켜면 음악 시작!</p>
         </div>
         <div class="step-illustration">
           <img src="step-play.png" alt="계정으로 재생" />
@@ -1801,7 +1925,7 @@
         </div>
         <p class="feature-text">클릭 한 번으로 영업 마감까지 재생할 수 있도록,<br class="mobile-only"> <strong>영업 시간 맞춤형</strong>으로 구성</p>
         <p class="feature-text">공간, <strong>업종에 맞는 음악</strong>을 선별하여 제공</p>
-        <p class="feature-text">노래를 재생만 해도 돈을 벌 수 있는 <strong>신개념 수익 창출 수단</strong></p>
+        <p class="feature-text">QR을 통해 손님과 <strong>음악으로 커뮤니케이션 가능</strong></p>
         <p class="feature-text">사람들이 잘 알지 못하는 <strong>깊이 있는 음악</strong>까지 섭렵</p>
       </div>
     </div>
@@ -1822,7 +1946,7 @@
         <div class="qr-section">
           <div class="qr-icon"><img src="qr-icon.png" alt="QR 아이콘" style="width:140px;height:auto;display:block;" /></div>
           <h3 class="qr-title">QR 매장 음악 추천 기능이<br>무엇인가요?</h3>
-          <p class="qr-text">PLAN B를 신청하면<br>매장으로 QR 스티커가 배송됩니다.<br>QR을 통해 접속하면<br>매장에서 플레이리스트를 바로 확인 가능하고<br>손님들은 QR을 통해<br>노래를 신청할 수 있습니다.</p>
+          <p class="qr-text">PLAN B를 신청하면<br>매장으로 <span class="qr-sticker-trigger qr-sticker-trigger-on-dark">QR 스티커<span class="trigger-icon">🖼</span></span>가 배송됩니다.<br>QR을 통해 접속하면<br>매장에서 플레이리스트를 바로 확인 가능하고<br>손님들은 QR을 통해<br>노래를 신청할 수 있습니다.</p>
         </div>
       </div>
     </div>
@@ -1834,7 +1958,7 @@
       <div class="qr-feature-header">
         <span class="qr-feature-badge">PLAN B EXCLUSIVE</span>
         <h2 class="qr-feature-heading">QR CODE 매장 음악 추천 기능</h2>
-        <p class="qr-feature-desc">PLAN B 신청 시 매장으로 QR 스티커가 배송됩니다.<br>손님이 QR 코드를 스캔하면 매장의 플레이리스트를 바로 확인하고, 원하는 노래를 직접 신청할 수 있습니다.</p>
+        <p class="qr-feature-desc">PLAN B 신청 시 매장으로 <span class="qr-sticker-trigger" id="qrStickerTrigger">QR 스티커<span class="trigger-icon">🖼</span></span>가 배송됩니다.<br>손님이 QR 코드를 스캔하면 매장의 플레이리스트를 바로 확인하고, 원하는 노래를 직접 신청할 수 있습니다.</p>
         <a href="plan.html" class="qr-feature-cta">PLAN B 신청하기 →</a>
       </div>
       <div class="qr-flow">
@@ -2190,6 +2314,45 @@
       const update = () => nav.classList.toggle('scrolled', window.scrollY > 10);
       window.addEventListener('scroll', update, { passive: true });
       update();
+    })();
+  </script>
+
+  <!-- QR 스티커 팝업 -->
+  <div class="qr-sticker-overlay" id="qrStickerOverlay">
+    <div class="qr-sticker-modal">
+      <button class="qr-sticker-close" id="qrStickerClose">✕</button>
+      <p class="qr-sticker-modal-title">QR 스티커 미리보기</p>
+      <p class="qr-sticker-modal-desc">PLAN B 신청 완료 후 아래와 같은<br>스티커가 매장으로 배송됩니다.</p>
+
+      <div class="qr-sticker-imgs">
+        <div class="qr-sticker-img-wrap">
+          <img src="QR_front.png" alt="QR 스티커 앞면" />
+          <span>앞면</span>
+        </div>
+        <div class="qr-sticker-img-wrap">
+          <img src="QR_back.png" alt="QR 스티커 뒷면" />
+          <span>뒷면</span>
+        </div>
+      </div>
+
+      <p class="qr-sticker-modal-note">스티커를 매장 테이블·카운터에 부착하면<br>손님이 QR을 스캔해 플레이리스트 확인 및 노래 신청이 가능합니다.</p>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      const overlay  = document.getElementById('qrStickerOverlay');
+      const triggers = document.querySelectorAll('.qr-sticker-trigger');
+      const close    = document.getElementById('qrStickerClose');
+
+      triggers.forEach(t => t.addEventListener('click', () => overlay.classList.add('open')));
+      close.addEventListener('click',   () => overlay.classList.remove('open'));
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) overlay.classList.remove('open');
+      });
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') overlay.classList.remove('open');
+      });
     })();
   </script>
 </body>
