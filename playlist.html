@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>플레이리스트 - 인디피 뮤직</title>
+  <meta name="description" content="인디피 뮤직 플레이리스트 - 카페, 헬스장, 클라이밍장, 레스토랑 등 매장별 맞춤 플레이리스트를 확인하세요. 공간 분위기에 어울리는 음악을 전문가가 큐레이션합니다." />
+  <meta name="keywords" content="매장 플레이리스트, 카페 플레이리스트, 헬스장 플레이리스트, 클라이밍장 플레이리스트, 레스토랑 플레이리스트, 공간 음악, 매장 BGM, 음악 큐레이션, 인디피뮤직" />
+  <meta name="robots" content="index, follow" />
+  <meta name="author" content="버비컴퍼니" />
+  <meta name="theme-color" content="#233eff" />
+  <link rel="canonical" href="https://indpmusic.co.kr/playlist.html" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="플레이리스트 - 인디피 뮤직" />
+  <meta property="og:description" content="카페, 헬스장, 클라이밍장, 레스토랑 등 매장별 맞춤 플레이리스트를 확인하세요. 공간 분위기에 어울리는 음악을 전문가가 큐레이션합니다." />
+  <meta property="og:image" content="https://indpmusic.co.kr/og-image.png" />
+  <meta property="og:url" content="https://indpmusic.co.kr/playlist.html" />
+  <meta property="og:locale" content="ko_KR" />
+  <meta property="og:site_name" content="인디피 뮤직" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="플레이리스트 - 인디피 뮤직" />
+  <meta name="twitter:description" content="카페, 헬스장, 클라이밍장, 레스토랑 등 매장별 맞춤 플레이리스트를 확인하세요." />
+  <meta name="twitter:image" content="https://indpmusic.co.kr/og-image.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="favicon-192.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=SUIT:wght@100..900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="shared.css" />
+  <script src="api.js"></script>
+  <style>
+    body { background: var(--light-bg); }
+
+    .playlist-page-wrap {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 60px 24px 80px;
+    }
+
+    /* ── Store Grid ── */
+    .store-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 120px 28px;
+      margin-top: 40px;
+      padding-top: 80px; /* space for vinyl rising above card */
+    }
+
+    /* ── Blob Card ── */
+    .store-card-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      cursor: pointer;
+      text-decoration: none;
+      position: relative;
+    }
+
+    /* Vinyl sits behind card, rises clearly on hover */
+    .card-vinyl {
+      position: absolute;
+      top: -110px;
+      left: 50%;
+      transform: translateX(-50%) translateY(120px);
+      width: 240px;
+      height: 240px;
+      object-fit: contain;
+      z-index: 0;
+      transition: transform 0.45s cubic-bezier(0.34, 1.4, 0.64, 1);
+      pointer-events: none;
+    }
+
+    .store-card-wrap:hover .card-vinyl {
+      transform: translateX(-50%) translateY(0px);
+    }
+
+    /* The blob card itself */
+    .blob-card {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      aspect-ratio: 1 / 0.82;
+      border-radius: 28px;
+      overflow: hidden;
+      background: #c0c3ca;
+    }
+
+    .blob-card-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    /* Dark overlay */
+    .blob-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.55) 100%);
+      transition: background 0.25s;
+    }
+
+    .store-card-wrap:hover .blob-overlay {
+      background: linear-gradient(180deg, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.70) 100%);
+    }
+
+    /* Badges row */
+    .blob-top {
+      position: absolute;
+      top: 18px;
+      left: 18px;
+      right: 18px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+    }
+
+    .playing-badge {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(0,0,0,0.40);
+      color: white;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 5px 11px;
+      border-radius: 100px;
+      backdrop-filter: blur(6px);
+      white-space: nowrap;
+    }
+
+    .playing-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #c6f135;
+      flex-shrink: 0;
+      animation: pulse 1.5s infinite;
+    }
+
+    .standby-badge {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(0,0,0,0.40);
+      color: rgba(255,255,255,0.6);
+      font-size: 11px;
+      font-weight: 600;
+      padding: 5px 11px;
+      border-radius: 100px;
+      backdrop-filter: blur(6px);
+      white-space: nowrap;
+    }
+
+    .standby-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.4);
+      flex-shrink: 0;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(198,241,53,0.5); }
+      50% { opacity: 0.7; box-shadow: 0 0 0 4px rgba(198,241,53,0); }
+    }
+
+    .genre-tags {
+      display: flex;
+      gap: 5px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .genre-tag {
+      background: #c6f135;
+      color: #1b1b1d;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 100px;
+    }
+
+    /* Bottom area: soundwave + name + addr (inside blob) */
+    .blob-bottom {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 48px 20px 20px;
+    }
+
+    /* Soundwave */
+    .soundwave-wrap {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 50px;
+      width: 100%;
+      background: rgba(50, 50, 50, 0.72);
+      border-radius: 100px;
+      padding: 0 10px;
+      box-sizing: border-box;
+      overflow: hidden;
+      margin-bottom: 10px;
+    }
+
+    .soundwave-wrap span {
+      display: inline-block;
+      width: 2.5px;
+      border-radius: 2px;
+      background: rgba(255, 255, 255, 0.88);
+      flex-shrink: 0;
+      animation: wave 2.4s ease-in-out infinite;
+    }
+
+    @keyframes wave {
+      0%, 100% { transform: scaleY(1); }
+      50%       { transform: scaleY(0.2); }
+    }
+
+    .blob-store-name {
+      font-size: 15px;
+      font-weight: 700;
+      color: white;
+      margin-bottom: 3px;
+    }
+
+    .blob-store-addr {
+      font-size: 11px;
+      color: rgba(255,255,255,0.75);
+    }
+
+    /* Store name/address BELOW the card */
+    .card-info {
+      margin-top: 14px;
+      text-align: center;
+    }
+
+    .card-info-name {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--dark);
+      margin-bottom: 4px;
+    }
+
+    .card-info-addr {
+      font-size: 13px;
+      color: var(--text-gray);
+    }
+
+    /* ── CTA + Footer Section ── */
+    .playlist-cta-footer {
+      background: var(--blue);
+      border-radius: 32px 32px 0 0;
+      padding: 80px 120px 0;
+      overflow: hidden;
+      margin-top: 80px;
+    }
+
+    .playlist-cta-content {
+      text-align: center;
+      padding-bottom: 80px;
+    }
+
+    .playlist-cta-title {
+      font-size: 48px;
+      font-weight: 800;
+      color: white;
+      margin-bottom: 40px;
+      line-height: 1.3;
+    }
+
+    .cta-btn-row {
+      display: inline-flex;
+      align-items: center;
+      gap: 0;
+    }
+
+    .cta-inquiry-btn {
+      display: inline-block;
+      background: var(--white);
+      color: var(--dark);
+      font-size: 17px;
+      font-weight: 700;
+      padding: 16px 34px;
+      border-radius: 100px;
+      text-decoration: none;
+      white-space: nowrap;
+      border: 1.5px solid var(--white);
+      transition: background 0.2s, color 0.2s, border-color 0.2s;
+    }
+
+    .cta-inquiry-arrow {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 54px;
+      height: 54px;
+      flex-shrink: 0;
+      border-radius: 50%;
+      background: var(--blue);
+      color: var(--white);
+      font-size: 22px;
+      text-decoration: none;
+      border: 2px solid var(--white);
+      transition: border-color 0.2s, color 0.2s, background 0.2s;
+    }
+
+    .cta-btn-row:hover .cta-inquiry-btn {
+      background: #1DFF28;
+      color: var(--dark);
+      border-color: #1DFF28;
+    }
+
+    .cta-btn-row:hover .cta-inquiry-arrow {
+      border-color: #1DFF28;
+      color: #1DFF28;
+    }
+
+    .footer-title-big {
+      font-size: clamp(120px, 17vw, 280px);
+      font-weight: 900;
+      color: var(--white);
+      margin: 0 -120px;
+    }
+
+    /* Default LP image for stores without photo */
+    .blob-card-default {
+      width: 100%; height: 100%;
+      background: #1a1a2e;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 10px;
+    }
+    .default-lp {
+      width: 80px; height: 80px; opacity: 0.85;
+    }
+    .default-store-name {
+      font-size: 13px; font-weight: 700;
+      color: rgba(255,255,255,0.75);
+      text-align: center; padding: 0 12px;
+    }
+
+    @media (max-width: 900px) {
+      .store-grid { grid-template-columns: repeat(2, 1fr); }
+      .playlist-page-wrap { padding: 40px 16px 60px; }
+    }
+    @media (max-width: 580px) {
+      .store-grid { grid-template-columns: 1fr; gap: 60px 0; padding-top: 60px; }
+      .card-vinyl { width: 110px; height: 110px; top: -50px; }
+      .playlist-cta-footer { padding: 48px 24px 0; border-radius: 20px 20px 0 0; margin-top: 40px; }
+      .playlist-cta-title { font-size: 26px; margin-bottom: 24px; }
+      .cta-inquiry-btn { font-size: 15px; padding: 13px 24px; }
+      .cta-inquiry-arrow { width: 46px; height: 46px; font-size: 18px; }
+      .footer-title-big { margin: 0 -24px; }
+    }
+
+    /* ── My Store Section ── */
+    #my-store-section {
+      display: none;
+      margin-top: 40px;
+    }
+
+    .my-store-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-gray);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-bottom: 28px;
+    }
+
+    .my-store-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: #e0e0e0;
+    }
+
+    #my-store-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 120px 28px;
+      padding-top: 80px;
+    }
+
+    .my-store-divider {
+      height: 1px;
+      background: #e0e0e0;
+      margin-top: 60px;
+    }
+
+    @media (max-width: 900px) {
+      #my-store-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 580px) {
+      #my-store-grid { grid-template-columns: 1fr; gap: 60px 0; padding-top: 60px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <div class="nav-inner">
+      <a href="index.html" class="nav-logo"><img src="logo.png" alt="인디피 뮤직" /></a>
+      <ul class="nav-links">
+        <li><a href="index.html">인디피 뮤직</a></li>
+        <li><a href="playlist.html">플레이리스트</a></li>
+      </ul>
+      <div class="nav-actions">
+        <a href="login.html" class="nav-login">로그인</a>
+        <a href="plan.html" class="nav-cta-blue">도입 문의</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- PAGE -->
+  <div class="playlist-page-wrap">
+
+    <h1 class="page-title">플레이리스트</h1>
+    <p class="page-subtitle" style="margin-bottom:0">지금, 인디피와 함께하는 매장들을 방문하여 흘러나오는 노래를 청취해 보세요</p>
+
+    <!-- 내 매장 (로그인 시에만 표시) -->
+    <div id="my-store-section">
+      <div class="my-store-label">나의 공간</div>
+      <div id="my-store-grid"></div>
+    </div>
+
+    <!-- 3×2 Store Grid -->
+    <div class="my-store-label" id="all-stores-label" style="margin-top:40px">인디피 뮤직을 사용하고 있는 공간</div>
+    <div class="store-grid" id="store-grid"></div>
+
+  </div>
+
+  <!-- CTA + FOOTER -->
+  <section class="playlist-cta-footer">
+    <div class="playlist-cta-content">
+      <h2 class="playlist-cta-title">지금 바로, 인디피 뮤직을 도입해 보세요</h2>
+      <div class="cta-btn-row">
+        <a href="plan.html" class="cta-inquiry-btn">도입 문의하기</a>
+        <a href="plan.html" class="cta-inquiry-arrow">↗</a>
+      </div>
+    </div>
+    <div class="footer-inner">
+      <div class="footer-info" style="text-align: center;">
+        <p>대표이사: 박완</p>
+        <p>사업자 등록번호: 666-20-01980</p>
+        <p>통신판매업 번호: 2026-서울서대문-0358</p>
+        <p>주소 03628 서울특별시 서대문구 통일로 484 서대문구창업지원센터 321호 버비컴퍼니</p>
+        <p class="contact">고객 문의: verbykorea@gmail.com</p>
+        <div class="footer-policy-links">
+          <a href="terms.html">서비스 이용약관</a>
+          <span>|</span>
+          <a href="privacy.html">개인정보 처리방침</a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-title-big">INDP MUSIC</div>
+  </section>
+  <div class="copyright">Copyright 2026. VERBY Co. all rights reserved.</div>
+
+  <script>
+    function resolveImgUrl(url) {
+      if (!url) return '';
+      return url.startsWith('/') ? BASE_URL + url : url;
+    }
+
+    // 사운드웨이브 바 생성
+    const WAVE_HEIGHTS = [8,18,28,10,32,6,24,14,30,8,20,26,12,32,16,28,6,22,18,30,10,24,8,30,16,22,12,28,6,20,26,10,32,14,24,8,18,28,12,22,6,30,16,26,20];
+    function buildSoundwaves() {
+      document.querySelectorAll('.soundwave-wrap').forEach(wrap => {
+        if (wrap.children.length) return; // 이미 생성된 경우 스킵
+        wrap.innerHTML = WAVE_HEIGHTS.map((h, i) =>
+          `<span style="height:${h}px;animation-delay:${(i * 0.065 % 1.2).toFixed(2)}s"></span>`
+        ).join('');
+      });
+    }
+
+    function buildCard(store, isPlaying) {
+      const tag = store.industry ? `<span class="genre-tag">${store.industry}</span>` : '';
+      const storePhoto = store.mainPhotoUrl
+        || (Array.isArray(store.photoUrls) && store.photoUrls[0])
+        || store.imageUrl || store.photo || '';
+      const imgContent = storePhoto
+        ? `<img src="${resolveImgUrl(storePhoto)}" alt="${store.name}" class="blob-card-img" />`
+        : `<div class="blob-card-default"><img src="lp.png" alt="" class="default-lp" /><span class="default-store-name">${store.name}</span></div>`;
+      const statusBadge = isPlaying
+        ? `<div class="playing-badge"><div class="playing-dot"></div>지금 재생 중</div>`
+        : `<div class="standby-badge"><div class="standby-dot"></div>대기 중</div>`;
+      const bottomArea = isPlaying
+        ? `<div class="blob-bottom"><div class="soundwave-wrap"></div></div>`
+        : '';
+      return `
+        <img src="lp.png" alt="" class="card-vinyl" />
+        <div class="blob-card">
+          ${imgContent}
+          <div class="blob-overlay"></div>
+          <div class="blob-top">
+            ${statusBadge}
+            <div class="genre-tags">${tag}</div>
+          </div>
+          ${bottomArea}
+        </div>
+        <div class="card-info">
+          <p class="card-info-name">${store.name}</p>
+          <p class="card-info-addr">${store.address || ''}</p>
+        </div>`;
+    }
+
+    async function checkPlaying(storeId) {
+      try {
+        const res = await fetch(`${BASE_URL}/api/stores/${storeId}/playlists`);
+        if (!res.ok) return false;
+        const data = await res.json();
+        return !!(data.currentSong || (data.playlist && data.playlist.currentSong));
+      } catch(e) {
+        return false;
+      }
+    }
+
+    async function renderDynamicStores() {
+      try {
+        const data = await apiFetch('GET', '/api/stores?page=0&size=20');
+        const grid = document.getElementById('store-grid');
+        const stores = data.stores || data || [];
+
+        // 1차: currentSong 기준으로 렌더
+        const cards = stores.map(store => {
+          const card = document.createElement('a');
+          card.href = `playlist-detail.html?storeId=${store.storeId}`;
+          card.className = 'store-card-wrap';
+          card.dataset.storeId = store.storeId;
+          card.addEventListener('click', () => {
+            localStorage.setItem('storeCache_' + store.storeId, JSON.stringify(store));
+          });
+          const isPlaying = !!(store.currentSong);
+          card.innerHTML = buildCard(store, isPlaying);
+          grid.appendChild(card);
+          return { card, store, isPlaying };
+        });
+
+        buildSoundwaves();
+
+        // 2차: 재생 중 여부 재확인
+        await Promise.all(cards.map(async ({ card, store, isPlaying }) => {
+          if (isPlaying) return;
+          const playing = await checkPlaying(store.storeId);
+          if (playing) {
+            card.innerHTML = buildCard(store, true);
+            buildSoundwaves();
+          }
+        }));
+      } catch(e) {
+        console.warn('매장 목록 로드 실패:', e);
+      }
+    }
+
+    const REFUNDED_STATUSES = ['REFUNDED', 'CANCELLED', 'CANCELED', 'CANCEL'];
+
+    const fmtDateTime = raw => {
+      if (!raw) return '';
+      const d = new Date(raw);
+      const pad = n => String(n).padStart(2, '0');
+      return `${d.getFullYear()}년 ${pad(d.getMonth()+1)}월 ${pad(d.getDate())}일 ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    };
+
+    async function checkRefundedStatus(storeId, token) {
+      try {
+        console.log('[refund] checking storeId:', storeId);
+        const payRes = await apiFetch('GET', `/api/owner/payments/stores/${storeId}?page=0&size=20`, undefined, token);
+        console.log('[refund] payRes:', JSON.stringify(payRes));
+        const payList = Array.isArray(payRes) ? payRes : (payRes?.payments || []);
+
+        let refundedAt = '';
+        for (const p of payList) {
+          const lastRefund = Array.isArray(p.refunds) && p.refunds.length > 0 ? p.refunds[p.refunds.length - 1] : null;
+          const raw = lastRefund?.refundedAt || p.refundedAt || p.cancelledAt || p.canceledAt;
+          console.log('[refund] payment item:', p.paymentId || p.id, 'refunds:', p.refunds, 'raw:', raw);
+          if (raw && (!refundedAt || raw > refundedAt)) refundedAt = raw;
+        }
+
+        const hasPaymentRefund = !!refundedAt;
+        let hasSubRefund = false;
+        try {
+          const subRes = await apiFetch('GET', `/api/owner/stores/${storeId}/subscriptions`, undefined, token);
+          console.log('[refund] subRes:', JSON.stringify(subRes));
+          const subList = Array.isArray(subRes?.subscriptions) ? subRes.subscriptions
+                        : Array.isArray(subRes) ? subRes : (subRes ? [subRes] : []);
+          hasSubRefund = subList.length > 0 && subList.every(s => REFUNDED_STATUSES.includes((s.status || '').toUpperCase()));
+          console.log('[refund] hasSubRefund:', hasSubRefund, 'statuses:', subList.map(s => s.status));
+        } catch(e) { console.log('[refund] sub check error:', e.message); }
+
+        console.log('[refund] hasPaymentRefund:', hasPaymentRefund, 'hasSubRefund:', hasSubRefund);
+        if (!hasPaymentRefund && !hasSubRefund) return null;
+        return { refundedAt };
+      } catch(e) {
+        console.log('[refund] error:', e.message);
+        return null;
+      }
+    }
+
+    async function renderMyStore() {
+      const token = getOwnerToken();
+      if (!token) return;
+
+      try {
+        // 오너의 매장 목록 조회
+        const storeListData = await apiFetch('GET', '/api/owner/stores', undefined, token);
+        const ownerStores = storeListData.stores || storeListData || [];
+        if (!ownerStores.length) return;
+
+        // 환불 여부 먼저 확인 — 환불 상태이면 섹션 미노출
+        console.log('[myStore] ownerStores[0]:', JSON.stringify(ownerStores[0]));
+        const firstStoreId = ownerStores[0]?.storeId ?? ownerStores[0]?.id;
+        console.log('[myStore] firstStoreId:', firstStoreId);
+        if (firstStoreId != null) {
+          const refundInfo = await checkRefundedStatus(firstStoreId, token);
+          if (refundInfo) return;
+        }
+
+        // 공개 API에서 매장 상세 정보(사진, 장르 등) 가져오기
+        const allStoresData = await apiFetch('GET', '/api/stores?page=0&size=100');
+        const allStores = allStoresData.stores || allStoresData || [];
+
+        const ownerStoreIds = new Set(ownerStores.map(s => String(s.storeId)));
+        const myStores = allStores.filter(s => ownerStoreIds.has(String(s.storeId)));
+
+        // 공개 목록에 없으면 오너 목록 데이터로 폴백
+        const storesToRender = myStores.length > 0 ? myStores : ownerStores;
+        if (!storesToRender.length) return;
+
+        const grid = document.getElementById('my-store-grid');
+        storesToRender.forEach(store => {
+          const isPlaying = !!(store.currentSong);
+          const card = document.createElement('a');
+          card.href = `playlist-detail.html?storeId=${store.storeId}`;
+          card.className = 'store-card-wrap';
+          card.dataset.storeId = store.storeId;
+          card.addEventListener('click', () => {
+            localStorage.setItem('storeCache_' + store.storeId, JSON.stringify(store));
+          });
+          card.innerHTML = buildCard(store, isPlaying);
+          grid.appendChild(card);
+        });
+
+        document.getElementById('my-store-section').style.display = 'block';
+        buildSoundwaves();
+
+        // 재생 중 여부 재확인
+        await Promise.all(storesToRender.map(async (store) => {
+          const card = grid.querySelector(`[data-store-id="${store.storeId}"]`);
+          if (!card || store.currentSong) return;
+          const playing = await checkPlaying(store.storeId);
+          if (playing) {
+            card.innerHTML = buildCard(store, true);
+            buildSoundwaves();
+          }
+        }));
+      } catch(e) {
+        console.warn('내 매장 로드 실패:', e);
+      }
+    }
+
+    updateNavAuth();
+    renderMyStore();
+    renderDynamicStores();
+
+    // GNB 스크롤 floating
+    (function() {
+      const nav = document.querySelector('nav');
+      if (!nav) return;
+      const update = () => nav.classList.toggle('scrolled', window.scrollY > 10);
+      window.addEventListener('scroll', update, { passive: true });
+      update();
+    })();
+  </script>
+
+</body>
+</html>

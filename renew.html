@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>기간 연장 - 인디피 뮤직</title>
+  <meta name="robots" content="noindex, nofollow" />
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="favicon-192.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=SUIT:wght@100..900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="shared.css" />
+  <script src="api.js"></script>
+  <script src="https://js.tosspayments.com/v2/standard"></script>
+  <style>
+    body { background: var(--light-bg); }
+
+    .refund-notice {
+      background: #fff5f5;
+      border: 1.5px solid #fca5a5;
+      border-radius: 14px;
+      padding: 16px 20px;
+      margin-bottom: 20px;
+      display: none;
+    }
+
+    .refund-notice-title {
+      font-size: 14px;
+      font-weight: 800;
+      color: #dc2626;
+      margin-bottom: 6px;
+    }
+
+    .refund-notice-body {
+      font-size: 13px;
+      color: #7f1d1d;
+      line-height: 1.7;
+    }
+
+    .current-plan-box {
+      background: #eef0ff;
+      border: 1.5px solid var(--blue);
+      border-radius: 14px;
+      padding: 18px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .current-plan-box.refunded {
+      background: #f5f5f5;
+      border-color: #d1d5db;
+    }
+
+    .current-plan-label {
+      font-size: 13px;
+      color: var(--blue);
+      font-weight: 700;
+      margin-bottom: 2px;
+    }
+
+    .current-plan-box.refunded .current-plan-label {
+      color: #9ca3af;
+    }
+
+    .current-plan-box.refunded .current-plan-price {
+      color: #9ca3af;
+    }
+
+    .current-plan-name {
+      font-size: 17px;
+      font-weight: 800;
+      color: var(--dark);
+    }
+
+    .current-plan-price {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--blue);
+    }
+
+    .current-period-box {
+      background: #f8f9fb;
+      border-radius: 14px;
+      padding: 16px 20px;
+      margin-bottom: 28px;
+    }
+
+    .current-period-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 14px;
+    }
+
+    .current-period-row + .current-period-row {
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid #eee;
+    }
+
+    .period-key {
+      color: var(--text-gray);
+      font-weight: 500;
+    }
+
+    .period-val {
+      color: var(--dark);
+      font-weight: 700;
+    }
+
+    .period-val.highlight {
+      color: var(--blue);
+    }
+
+    .duration-options {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+
+    .duration-box {
+      border: 1.5px solid #e5e7eb;
+      border-radius: 14px;
+      padding: 20px 16px;
+      text-align: center;
+      cursor: pointer;
+      background: #f8f9fb;
+      transition: all 0.15s;
+    }
+
+    .duration-box:hover { border-color: var(--blue); }
+
+    .duration-box.selected {
+      background: #eef0ff;
+      border-color: var(--blue);
+    }
+
+    .duration-months {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--dark);
+      margin-bottom: 2px;
+    }
+
+    .duration-weeks {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-gray);
+      margin-bottom: 6px;
+    }
+
+    .duration-price {
+      font-size: 13px;
+      color: var(--text-gray);
+    }
+
+    .duration-box.selected .duration-months,
+    .duration-box.selected .duration-weeks,
+    .duration-box.selected .duration-price { color: var(--blue); }
+
+    .service-period-preview {
+      margin-top: 14px;
+      background: #f0f3ff;
+      border-radius: 12px;
+      padding: 14px 16px;
+      font-size: 13px;
+      line-height: 1.8;
+      color: var(--text-gray);
+    }
+
+    .service-period-preview strong {
+      color: var(--blue);
+      font-weight: 700;
+    }
+
+    .service-period-preview .period-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .service-period-preview .period-row + .period-row {
+      margin-top: 4px;
+      padding-top: 4px;
+      border-top: 1px solid #dde2f5;
+    }
+
+    .new-period-preview {
+      font-size: 13px;
+      color: var(--text-gray);
+      margin-top: 10px;
+      text-align: center;
+    }
+
+    .new-period-preview strong {
+      color: var(--blue);
+      font-weight: 700;
+    }
+
+    .payment-summary {
+      background: #f8f9fb;
+      border-radius: 14px;
+      padding: 24px;
+      margin-top: 8px;
+    }
+
+    .payment-summary-label {
+      font-size: 14px;
+      color: var(--text-gray);
+      margin-bottom: 8px;
+    }
+
+    .payment-summary-amount {
+      font-size: 36px;
+      font-weight: 900;
+      color: var(--blue);
+      line-height: 1.1;
+    }
+
+    .payment-vat-note {
+      font-size: 13px;
+      color: var(--text-gray);
+      margin-top: 6px;
+    }
+
+    .section-label {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--dark);
+      margin-bottom: 14px;
+    }
+
+    /* Terms */
+    .terms-item { border-bottom: 1px solid #f3f4f6; }
+    .terms-item:first-child { border-top: 1px solid #f3f4f6; }
+    .terms-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 0;
+    }
+    .terms-check-wrap { display: flex; align-items: center; gap: 10px; }
+    .terms-check-wrap input[type="checkbox"] {
+      accent-color: var(--blue); width: 18px; height: 18px; cursor: pointer; flex-shrink: 0;
+    }
+    .terms-label { font-size: 15px; color: var(--text-sub); }
+    .terms-toggle {
+      background: none; border: none; font-size: 13px; color: var(--blue);
+      cursor: pointer; font-family: inherit; white-space: nowrap; padding: 0; flex-shrink: 0;
+    }
+    .terms-content {
+      display: none;
+      background: #f8f9fb; border-radius: 10px; padding: 18px 20px;
+      margin-bottom: 14px; font-size: 13px; color: var(--text-gray);
+      line-height: 1.8; max-height: 220px; overflow-y: auto;
+    }
+    .terms-content.open { display: block; }
+    .terms-content h4 {
+      font-size: 13px; font-weight: 700; color: var(--dark); margin: 14px 0 4px;
+    }
+    .terms-content h4:first-child { margin-top: 0; }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <div class="nav-inner">
+      <a href="index.html" class="nav-logo"><img src="logo.png" alt="인디피 뮤직" /></a>
+      <ul class="nav-links">
+        <li><a href="index.html">인디피 뮤직</a></li>
+        <li><a href="playlist.html">플레이리스트</a></li>
+      </ul>
+      <div class="nav-actions">
+        <a href="login.html" class="nav-login">로그아웃</a>
+        <a href="mypage.html" class="nav-cta-dark">마이페이지</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- PAGE -->
+  <div class="page-wrap">
+
+    <h1 class="page-title">이용 기간 연장</h1>
+    <p class="page-subtitle">현재 이용 중인 플랜으로 기간을 연장해 드립니다</p>
+
+    <div class="form-card">
+
+      <!-- 환불 안내 -->
+      <div class="refund-notice" id="refundNotice">
+        <p class="refund-notice-title">이용이 중단되었습니다</p>
+        <p class="refund-notice-body" id="refundNoticeBody"></p>
+      </div>
+
+      <!-- 현재 플랜 -->
+      <div class="form-group">
+        <p class="section-label" id="currentPlanSectionLabel">현재 이용 중인 플랜</p>
+        <div class="current-plan-box" id="currentPlanBox">
+          <div>
+            <p class="current-plan-label" id="currentPlanStatusLabel">이용 중</p>
+            <p class="current-plan-name" id="currentPlanName">—</p>
+          </div>
+          <p class="current-plan-price" id="currentPlanPrice">—</p>
+        </div>
+        <div class="current-period-box">
+          <div class="current-period-row">
+            <span class="period-key" id="currentPeriodKey">현재 이용 기간</span>
+            <span class="period-val" id="currentPeriod">불러오는 중...</span>
+          </div>
+          <div class="current-period-row" id="daysLeftRow">
+            <span class="period-key">남은 기간</span>
+            <span class="period-val highlight" id="daysLeft">—</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 연장 기간 선택 -->
+      <div class="form-group">
+        <p class="section-label">연장 기간 선택 <span class="required" style="color:var(--blue)">*</span></p>
+        <div class="duration-options" id="durationOptions"></div>
+        <div class="new-period-preview" id="newPeriodPreview"></div>
+      </div>
+
+      <!-- 최종 결제 금액 -->
+      <div class="form-group">
+        <p class="section-label">최종 결제 금액</p>
+        <div class="payment-summary">
+          <p class="payment-summary-label" id="summaryLabel"></p>
+          <p class="payment-summary-amount" id="summaryAmount"></p>
+          <p class="payment-vat-note">VAT 10% 포함된 금액입니다</p>
+        </div>
+      </div>
+
+      <!-- 이용 약관 -->
+      <div class="form-group">
+        <p class="section-label">이용 약관</p>
+        <div class="terms-item">
+          <div class="terms-row">
+            <div class="terms-check-wrap">
+              <input type="checkbox" id="terms1" />
+              <label class="terms-label" for="terms1">(필수) 서비스 이용 약관</label>
+            </div>
+            <button class="terms-toggle" onclick="toggleTerms('terms-service')">보기 ▾</button>
+          </div>
+          <div class="terms-content" id="terms-service">
+            <h4>제1조 (목적)</h4>
+            본 약관은 버비컴퍼니(이하 "회사")가 제공하는 인디피 뮤직 플레이리스트 구독 서비스(이하 "서비스")의 이용과 관련하여, 결제 및 이용 조건을 규정함을 목적으로 합니다.
+
+            <h4>제2조 (용어의 정의)</h4>
+            "플레이리스트 주차"란 매주 화요일 00시부터 다음 주 월요일 24시까지의 기간을 의미하며, 해당 기간을 1주차로 정의합니다.<br>
+            "구독 상품"이란 일정 기간 동안 플레이리스트를 이용할 수 있는 유료 이용권을 의미합니다.<br>
+            "구독 시작일"이란 유료 구독 이용이 시작되는 시점을 의미하며, 매주 화요일 00시를 기준으로 합니다.
+
+            <h4>제3조 (구독 상품 및 이용 기간)</h4>
+            서비스는 도입 문의 페이지에서 확인 가능한 구독 상품을 제공합니다.<br>
+            구독 시작일은 결제일이 속한 주(일요일~토요일)와 관계없이 다음 주 화요일 00시로 설정됩니다.<br>
+            구독 기간은 구독 시작일 기준으로 주차 단위로 계산되며, 각 주차는 화요일부터 다음 주 월요일까지를 기준으로 산정됩니다.
+
+            <h4>제4조 (플레이리스트 제공 기준)</h4>
+            서비스는 매주 화요일 새로운 플레이리스트를 제공합니다.<br>
+            사용자는 구독 기간 동안 각 주차에 해당하는 플레이리스트를 이용할 수 있습니다.<br>
+            플레이리스트는 주차 단위로 운영되며, 화요일을 기준으로 갱신됩니다.
+
+            <h4>제5조 (이용 범위)</h4>
+            사용자는 구독 기간 동안 제공되는 플레이리스트를 자유롭게 이용할 수 있습니다.<br>
+            구독 종료 후에는 서비스 이용이 제한될 수 있습니다.<br>
+            회사는 운영 정책에 따라 일부 이전 주차 플레이리스트에 대한 접근을 제한할 수 있습니다.
+
+            <h4>제6조 (중도 해지 및 환불)</h4>
+            사용자는 결제일로부터 7일 이내이며, 구독 시작일 이전인 경우 전액 환불을 요청할 수 있습니다.<br>
+            구독 시작 이후에는 이용한 주차를 기준으로 환불 금액이 산정됩니다.<br>
+            환불 금액은 다음 기준에 따라 계산됩니다: 결제 금액 ÷ 총 주차 수 × 이용 주차
+
+            <h4>제7조 (구독 상품 변경)</h4>
+            사용자는 구독 기간 중 상위 상품으로 변경할 수 있습니다.<br>
+            변경 시 기존 잔여 기간은 비율에 따라 반영됩니다.<br>
+            변경된 상품은 다음 주차(화요일)부터 적용될 수 있습니다.
+
+            <h4>제8조 (서비스 변경 및 중단)</h4>
+            회사는 서비스 운영을 위해 플레이리스트 구성 및 제공 방식을 변경할 수 있습니다.<br>
+            시스템 점검 또는 기타 사유로 서비스 제공이 일시 중단될 수 있습니다.<br>
+            이 경우 회사는 사전 또는 사후 공지를 통해 안내합니다.
+
+            <h4>제9조 (기타)</h4>
+            본 약관에서 정하지 않은 사항은 관련 법령 및 회사 정책에 따릅니다.
+          </div>
+        </div>
+        <div class="terms-item">
+          <div class="terms-row">
+            <div class="terms-check-wrap">
+              <input type="checkbox" id="terms2" />
+              <label class="terms-label" for="terms2">(필수) 개인정보 처리방안</label>
+            </div>
+            <button class="terms-toggle" onclick="toggleTerms('terms-privacy')">보기 ▾</button>
+          </div>
+          <div class="terms-content" id="terms-privacy">
+            <h4>1. 수집 항목 및 목적</h4>
+            기간 연장 결제 처리를 위해 기존에 수집된 개인정보(성명, 연락처, 매장 정보)를 활용합니다. 추가적인 개인정보 수집은 발생하지 않습니다.
+            <h4>2. 보유 및 이용 기간</h4>
+            연장된 이용 기간 종료 후 3개월 이내에 관련 정보를 파기합니다.
+            <h4>3. 이용자 권리</h4>
+            개인정보 열람, 수정, 삭제 요청은 verbykorea@gmail.com으로 접수 가능합니다.
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Toss Payment Modal -->
+    <div id="toss-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;padding:20px;">
+      <div style="background:white;border-radius:24px;padding:32px;width:100%;max-width:540px;max-height:90vh;overflow-y:auto;">
+        <h3 style="font-size:18px;font-weight:800;margin-bottom:20px;">기간 연장 결제</h3>
+        <div id="toss-payment-widget"></div>
+        <button onclick="confirmTossPayment()" class="btn-primary" style="width:100%;margin-top:20px;">결제 진행</button>
+        <button onclick="closeTossModal()" class="btn-secondary" style="width:100%;margin-top:10px;">취소</button>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <p class="form-submit-error" id="submit-error">필수 항목을 모두 확인해 주세요.</p>
+    <div class="form-actions">
+      <a href="mypage.html" class="btn-secondary">취소</a>
+      <button class="btn-primary" onclick="doRenew()">결제하기</button>
+    </div>
+
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div class="footer-info">
+        <p>대표이사: 박완</p>
+        <p>사업자 등록번호: 666-20-01980</p>
+        <p>통신판매업 번호: 2026-서울서대문-0358</p>
+        <p>주소 03628 서울특별시 서대문구 통일로 484 서대문구창업지원센터 321호 버비컴퍼니</p>
+        <p class="contact">고객 문의: verbykorea@gmail.com</p>
+        <div class="footer-policy-links">
+          <a href="terms.html">서비스 이용약관</a>
+          <span>|</span>
+          <a href="privacy.html">개인정보 처리방침</a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-title-big">INDP MUSIC</div>
+  </footer>
+  <div class="copyright">Copyright 2026. VERBY Co. all rights reserved.</div>
+
+  <script>
+    const PLAN_RATES = { A: 8800, B: 13200, PLAN_A: 8800, PLAN_B: 13200 };
+    const PLAN_NAMES = {
+      A: 'Plan A (기본 요금제)', B: 'Plan B (프리미엄 요금제)',
+      PLAN_A: 'Plan A (기본 요금제)', PLAN_B: 'Plan B (프리미엄 요금제)'
+    };
+
+    const fmt = d => `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`;
+    const fmtStr = s => s ? s.slice(0, 10).replace(/-/g, '.') : '-';
+
+    let expireDate = null;   // 실제 만료일 (Date 객체)
+    let isRefundedState = false;
+    let plan = localStorage.getItem('selectedPlan') || 'B';
+    let monthlyRate = PLAN_RATES[plan] || 13200;
+    let selectedMonths = 1;
+
+    const fmtDateTime = raw => {
+      if (!raw) return null;
+      const d = new Date(raw);
+      const pad = n => String(n).padStart(2, '0');
+      return `${d.getFullYear()}년 ${pad(d.getMonth()+1)}월 ${pad(d.getDate())}일 ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    };
+
+    /* 구독 API에서 현재 이용 기간·플랜 로드 */
+    async function loadCurrentSubscription() {
+      const token = getOwnerToken();
+      const storeId = getOwnerStoreId();
+      if (!token || !storeId) return;
+
+      try {
+        const res = await apiFetch('GET', `/api/owner/stores/${storeId}/subscriptions`, undefined, token);
+
+        // subscriptions 배열 처리
+        const subList = Array.isArray(res?.subscriptions) ? res.subscriptions
+                      : Array.isArray(res) ? res : (res ? [res] : []);
+        const REFUNDED_STATUSES = ['REFUNDED', 'CANCELLED', 'CANCELED', 'CANCEL'];
+        const STATUS_ORDER = { ACTIVE: 0, PENDING_ACTIVE: 1, EXPIRED: 2 };
+        const sorted = [...subList].sort((a, b) =>
+          (STATUS_ORDER[(a.status || '').toUpperCase()] ?? 9) - (STATUS_ORDER[(b.status || '').toUpperCase()] ?? 9)
+        );
+        const primary = sorted[0] || {};
+        const combinedStart = subList.reduce((min, s) => (!min || s.startDate < min ? s.startDate : min), null);
+        const combinedEnd   = subList.reduce((max, s) => (!max || s.endDate   > max ? s.endDate   : max), null);
+
+        // 결제 내역에서 환불 여부 및 환불 일시 확인 (백엔드가 구독 상태를 REFUNDED로 변경하지 않는 경우 대비)
+        let refundedAtRaw = null;
+        try {
+          const payRes = await apiFetch('GET', `/api/owner/payments/stores/${storeId}?page=0&size=20`, undefined, token);
+          const payList = Array.isArray(payRes) ? payRes : (payRes?.payments || []);
+          for (const p of payList) {
+            const lastRefund = Array.isArray(p.refunds) && p.refunds.length > 0 ? p.refunds[p.refunds.length - 1] : null;
+            const raw = lastRefund?.refundedAt || p.refundedAt || p.cancelledAt || p.canceledAt;
+            if (raw && (!refundedAtRaw || raw > refundedAtRaw)) refundedAtRaw = raw;
+          }
+        } catch(e) { /* 무시 */ }
+
+        const subRefunded = subList.length > 0 && subList.every(s => REFUNDED_STATUSES.includes((s.status || '').toUpperCase()));
+        isRefundedState = subRefunded || !!refundedAtRaw;
+
+        // 플랜 정보
+        const planRaw = primary.planType || primary.plan || plan;
+        plan = planRaw;
+        const planName = PLAN_NAMES[planRaw] || 'Plan B (프리미엄 요금제)';
+        monthlyRate = PLAN_RATES[planRaw] || monthlyRate;
+
+        document.getElementById('currentPlanName').textContent = planName;
+        document.getElementById('currentPlanPrice').textContent = `월 ${monthlyRate.toLocaleString()}원`;
+
+        // 이용 기간
+        if (combinedStart && combinedEnd) {
+          document.getElementById('currentPeriod').textContent =
+            `${fmtStr(combinedStart)} ~ ${fmtStr(combinedEnd)}`;
+
+          if (!isRefundedState) {
+            expireDate = new Date(combinedEnd);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const diff = Math.ceil((expireDate - today) / (1000 * 60 * 60 * 24));
+            document.getElementById('daysLeft').textContent = diff > 0 ? `${diff}일 남음` : '만료됨';
+          }
+        } else {
+          document.getElementById('currentPeriod').textContent = '-';
+          document.getElementById('daysLeft').textContent = '-';
+        }
+
+        // 환불 상태일 때 UI 업데이트
+        if (isRefundedState) {
+          expireDate = null;
+          document.getElementById('currentPlanBox').classList.add('refunded');
+          document.getElementById('currentPlanStatusLabel').textContent = '이용 중단';
+          document.getElementById('currentPlanSectionLabel').textContent = '이용 중단된 플랜';
+          document.getElementById('currentPeriodKey').textContent = '이용 기간';
+          document.getElementById('daysLeftRow').style.display = 'none';
+
+          const refundDateTimeStr = fmtDateTime(refundedAtRaw) || '';
+
+          const notice = document.getElementById('refundNotice');
+          const noticeBody = document.getElementById('refundNoticeBody');
+          notice.style.display = 'block';
+          noticeBody.innerHTML = refundDateTimeStr
+            ? `<strong>${refundDateTimeStr}</strong>에 환불 처리되어 서비스 이용이 중단되었습니다.<br>아래에서 연장 기간을 선택하시면 <strong>오늘 기준</strong>으로 서비스를 다시 이용하실 수 있습니다.`
+            : `환불 처리되어 서비스 이용이 중단되었습니다.<br>아래에서 연장 기간을 선택하시면 <strong>오늘 기준</strong>으로 서비스를 다시 이용하실 수 있습니다.`;
+        }
+
+        // 기간 옵션 재렌더 (monthlyRate 확정 후)
+        buildDurations();
+      } catch(e) {
+        console.warn('구독 정보 로드 실패:', e);
+        // 폴백: localStorage 기반으로 표시
+        document.getElementById('currentPlanName').textContent = PLAN_NAMES[plan] || '-';
+        document.getElementById('currentPlanPrice').textContent = `월 ${monthlyRate.toLocaleString()}원`;
+        document.getElementById('currentPeriod').textContent = '-';
+        document.getElementById('daysLeft').textContent = '-';
+        buildDurations();
+      }
+    }
+
+    /* 다음 화요일 계산 (date 당일 포함) */
+    function nextTuesdayOnOrAfter(date) {
+      const d = new Date(date);
+      d.setHours(0, 0, 0, 0);
+      // 일요일(0)~토요일(6) 어느 요일이든 다음 주 화요일로 고정
+      const daysToNextSunday = 7 - d.getDay();
+      d.setDate(d.getDate() + daysToNextSunday + 2);
+      return d;
+    }
+
+    const WEEKS_MAP = { 1: 4, 3: 12, 6: 24, 12: 48 };
+    const DAY_KO = ['일', '월', '화', '수', '목', '금', '토'];
+    const fmtWithDay = d =>
+      `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')} (${DAY_KO[d.getDay()]})`;
+
+    /* 연장 기간 옵션 */
+    function buildDurations() {
+      const container = document.getElementById('durationOptions');
+      container.innerHTML = '';
+      [1, 3, 6, 12].forEach(m => {
+        const total = monthlyRate * m;
+        const weeks = WEEKS_MAP[m];
+        const box = document.createElement('div');
+        box.className = 'duration-box' + (m === 1 ? ' selected' : '');
+        box.innerHTML = `
+          <div class="duration-months">${m}개월</div>
+          <div class="duration-weeks">(${weeks}주)</div>
+          <div class="duration-price">${total.toLocaleString()}원</div>`;
+        box.onclick = () => selectDuration(box, m, total);
+        container.appendChild(box);
+      });
+      updateSummary(1, monthlyRate);
+    }
+
+    function selectDuration(el, months, total) {
+      document.querySelectorAll('.duration-box').forEach(b => b.classList.remove('selected'));
+      el.classList.add('selected');
+      selectedMonths = months;
+      updateSummary(months, total);
+    }
+
+    function updateSummary(months, total) {
+      const weeks = WEEKS_MAP[months] || months * 4;
+      const planName = PLAN_NAMES[plan] || 'Plan B (프리미엄 요금제)';
+      document.getElementById('summaryLabel').textContent =
+        `${planName} · 월 ${monthlyRate.toLocaleString()}원 × ${months}개월`;
+      document.getElementById('summaryAmount').textContent = total.toLocaleString() + '원';
+
+      /* 서비스 시작: 환불 또는 구독 없으면 오늘 기준 다음 화요일, 이용 중이면 만료일 다음날 */
+      let serviceStart;
+      if (expireDate && !isRefundedState) {
+        serviceStart = new Date(expireDate.getTime() + 24 * 60 * 60 * 1000);
+        serviceStart.setHours(0, 0, 0, 0);
+      } else {
+        const ref = new Date();
+        ref.setHours(0, 0, 0, 0);
+        serviceStart = nextTuesdayOnOrAfter(ref);
+      }
+      const serviceEnd = new Date(serviceStart.getTime() + weeks * 7 * 24 * 60 * 60 * 1000 - 24 * 60 * 60 * 1000);
+
+      document.getElementById('newPeriodPreview').innerHTML = `
+        <div class="service-period-preview">
+          <div class="period-row"><span>서비스 시작</span><strong>${fmtWithDay(serviceStart)}</strong></div>
+          <div class="period-row"><span>서비스 종료</span><strong>${fmtWithDay(serviceEnd)}</strong></div>
+          <div class="period-row"><span>이용 기간</span><strong>${months}개월 (${weeks}주)</strong></div>
+        </div>`;
+    }
+
+    function toggleTerms(id) {
+      const el = document.getElementById(id);
+      const btn = el.previousElementSibling.querySelector('.terms-toggle');
+      const isOpen = el.classList.toggle('open');
+      btn.textContent = isOpen ? '닫기 ▴' : '보기 ▾';
+    }
+
+    async function initTossWidget(orderId, amount, orderName) {
+      const tossPayments = TossPayments('test_gck_docs_Ovk5rk1EwkEbP0W43n07xlzm');
+      const widgets = tossPayments.widgets({ customerKey: TossPayments.ANONYMOUS });
+      await widgets.setAmount({ currency: 'KRW', value: amount });
+      await widgets.renderPaymentMethods({ selector: '#toss-payment-widget', variantKey: 'DEFAULT' });
+      window._tossWidgets = widgets;
+      window._tossOrder = { orderId, orderName, amount };
+    }
+
+    async function confirmTossPayment() {
+      localStorage.setItem('pendingOrderId', window._tossOrder.orderId);
+      localStorage.setItem('pendingAmount', String(window._tossOrder.amount));
+      await window._tossWidgets.requestPayment({
+        orderId: window._tossOrder.orderId,
+        orderName: window._tossOrder.orderName,
+        successUrl: `${window.location.origin}/renew-complete.html`,
+        failUrl: `${window.location.origin}/renew.html?error=1`,
+      });
+    }
+
+    function openTossModal() {
+      document.getElementById('toss-modal').style.display = 'flex';
+    }
+
+    function closeTossModal() {
+      document.getElementById('toss-modal').style.display = 'none';
+    }
+
+    async function doRenew() {
+      const t1 = document.getElementById('terms1').checked;
+      const t2 = document.getElementById('terms2').checked;
+      const err = document.getElementById('submit-error');
+      if (!t1 || !t2) { err.classList.add('show'); return; }
+      err.classList.remove('show');
+
+      const storeId = getOwnerStoreId();
+      const token = getOwnerToken();
+      if (!storeId || !token) { alert('로그인이 필요합니다.'); return; }
+
+      const planId = parseInt(localStorage.getItem('selectedPlanId') || '1');
+      const btn = document.querySelector('.form-actions .btn-primary');
+
+      try {
+        if (btn) { btn.disabled = true; btn.textContent = '처리 중...'; }
+
+        const res = await apiFetch('POST', `/api/owner/stores/${storeId}/subscriptions`,
+          { planId, usagePeriod: selectedMonths }, token);
+
+        openTossModal();
+        await initTossWidget(res.orderId, res.amount, res.orderName);
+      } catch(e) {
+        alert('오류가 발생했습니다: ' + e.message);
+        if (btn) { btn.disabled = false; btn.textContent = '결제하기'; }
+      }
+    }
+
+    buildDurations();
+    loadCurrentSubscription();
+  </script>
+
+</body>
+</html>

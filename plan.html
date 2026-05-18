@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>요금제 안내 - 인디피 뮤직</title>
+  <meta name="description" content="인디피 뮤직 요금제 - 월정액 매장 BGM 서비스. 기본 요금제부터 QR 코드 음악 추천이 포함된 프리미엄 요금제까지 매장에 맞는 플랜을 선택하세요." />
+  <meta name="keywords" content="매장 음악 요금제, BGM 서비스 가격, 매장 플레이리스트 구독, 카페 음악 서비스, 매장 BGM 구독, 음악 큐레이션 요금제, QR 음악 추천, 인디피뮤직 요금제, INDP Music 플랜, 카페 BGM 저작권, 매장 음악 저작권, 공연권료, 카페 배경음악 서비스, 음식점 BGM 서비스, 술집 배경음악 서비스, 네일샵 음악 서비스, 미용실 BGM 서비스, 카페 창업, 음식점 창업, 매장 창업, 카페 오픈 준비, BGM 서비스 추천, BGM 서비스 비교, 합법적 매장 음악" />
+  <meta name="robots" content="index, follow" />
+  <meta name="author" content="버비컴퍼니" />
+  <meta name="theme-color" content="#233eff" />
+  <link rel="canonical" href="https://indpmusic.co.kr/plan.html" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="요금제 안내 - 인디피 뮤직" />
+  <meta property="og:description" content="월정액 매장 BGM 서비스. 기본 요금제부터 QR 코드 음악 추천이 포함된 프리미엄 요금제까지 매장에 맞는 플랜을 선택하세요." />
+  <meta property="og:image" content="https://indpmusic.co.kr/og-image.png" />
+  <meta property="og:url" content="https://indpmusic.co.kr/plan.html" />
+  <meta property="og:locale" content="ko_KR" />
+  <meta property="og:site_name" content="인디피 뮤직" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="요금제 안내 - 인디피 뮤직" />
+  <meta name="twitter:description" content="월정액 매장 BGM 서비스. 기본부터 QR 음악 추천 프리미엄까지 매장에 맞는 플랜을 선택하세요." />
+  <meta name="twitter:image" content="https://indpmusic.co.kr/og-image.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="favicon-192.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=SUIT:wght@100..900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="shared.css" />
+  <style>
+    body { background: var(--light-bg); }
+
+    .plan-cards-row {
+      display: flex;
+      gap: 24px;
+      margin-top: 24px;
+    }
+
+    .plan-card-name {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--dark);
+      margin-bottom: 6px;
+    }
+
+    .plan-card-subdesc {
+      font-size: 14px;
+      font-weight: 400;
+      color: var(--text-gray);
+      margin-bottom: 20px;
+      line-height: 1.5;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .subdesc-highlight {
+      color: var(--blue);
+      font-weight: 600;
+    }
+
+    .subdesc-tooltip-wrap {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .subdesc-tooltip-btn {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--blue);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      line-height: 1;
+    }
+
+    .subdesc-tooltip-box {
+      display: none;
+      position: absolute;
+      bottom: calc(100% + 8px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--dark);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 400;
+      line-height: 1.6;
+      padding: 12px 14px;
+      border-radius: 10px;
+      width: 220px;
+      white-space: normal;
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    .subdesc-tooltip-box::after {
+      content: '';
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 6px solid transparent;
+      border-top-color: var(--dark);
+    }
+
+    .subdesc-tooltip-wrap:hover .subdesc-tooltip-box,
+    .subdesc-tooltip-btn:focus + .subdesc-tooltip-box {
+      display: block;
+    }
+
+    .plan-original {
+      font-size: 15px;
+      color: var(--text-light-gray);
+      text-decoration: line-through;
+      margin-bottom: 4px;
+    }
+
+    .plan-price-row {
+      display: flex;
+      align-items: baseline;
+      gap: 4px;
+      margin-bottom: 8px;
+    }
+
+    .plan-price-main {
+      font-size: 40px;
+      font-weight: 900;
+      color: var(--dark);
+      line-height: 1;
+    }
+
+    .plan-price-unit {
+      font-size: 14px;
+      color: var(--text-gray);
+      font-weight: 400;
+    }
+
+    .plan-discount {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--blue);
+      margin-bottom: 0;
+    }
+
+    .plan-divider {
+      height: 1px;
+      background: #e5e7eb;
+      margin: 20px 0;
+    }
+
+    .plan-feat-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .plan-feat-list li {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-sub);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .feat-check {
+      color: var(--text-gray);
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+
+    .plan-highlight {
+      color: var(--blue);
+      font-weight: 800;
+    }
+
+    .feat-highlight-row {
+      color: var(--dark) !important;
+      font-weight: 500 !important;
+    }
+
+    .plan-center-action {
+      text-align: center;
+      margin-top: 32px;
+    }
+
+    .plan-center-action .btn-primary {
+      padding: 18px 80px;
+      font-size: 17px;
+    }
+
+    @media (max-width: 768px) {
+      .plan-cards-row { flex-direction: column; gap: 16px; }
+      .plan-price-main { font-size: 32px; }
+      .plan-center-action .btn-primary { width: 100%; text-align: center; display: block; }
+    }
+
+    @media (max-width: 480px) {
+      .plan-price-main { font-size: 26px; }
+      .plan-feat-list li { font-size: 13px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <div class="nav-inner">
+      <a href="index.html" class="nav-logo"><img src="logo.png" alt="인디피 뮤직" /></a>
+      <ul class="nav-links">
+        <li><a href="index.html">인디피 뮤직</a></li>
+        <li><a href="playlist.html">플레이리스트</a></li>
+      </ul>
+      <div class="nav-actions">
+        <a href="login.html" class="nav-login">로그인</a>
+        <a href="plan.html" class="nav-cta-blue">도입 문의</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- PAGE -->
+  <div class="page-wrap">
+
+    <h1 class="page-title">요금제 선택</h1>
+    <p class="page-subtitle">매장에 맞는 플랜을 선택해 주세요</p>
+
+    <!-- Stepper -->
+    <div class="form-card" style="margin-bottom: 0;">
+      <div class="stepper" style="margin-bottom: 0;">
+        <div class="step-item">
+          <div class="step-content">
+            <div class="step-circle active">1</div>
+            <div class="step-label active">요금제 선택</div>
+          </div>
+        </div>
+        <div class="step-line"></div>
+        <div class="step-item">
+          <div class="step-content">
+            <div class="step-circle">2</div>
+            <div class="step-label">정보 입력</div>
+          </div>
+        </div>
+        <div class="step-line"></div>
+        <div class="step-item">
+          <div class="step-content">
+            <div class="step-circle">3</div>
+            <div class="step-label">결제 진행</div>
+          </div>
+        </div>
+        <div class="step-line"></div>
+        <div class="step-item">
+          <div class="step-content">
+            <div class="step-circle">4</div>
+            <div class="step-label">신청 완료</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Plan Cards -->
+    <div class="plan-cards-row" id="plan-cards-row">
+
+      <!-- Plan A -->
+      <div class="plan-select-card" id="planA" onclick="selectPlan('A', 1, 8800)">
+        <p class="plan-card-name">Plan A 기본 요금제</p>
+        <p class="plan-card-subdesc">플레이리스트 큐레이션 전용 플랜</p>
+        <p class="plan-original">22,000원</p>
+        <div class="plan-price-row">
+          <span class="plan-price-main">8,800원</span>
+          <span class="plan-price-unit">/월 (VAT 10% 포함)</span>
+        </div>
+        <p class="plan-discount">신규 오픈 기념 60% 할인</p>
+        <div class="plan-divider"></div>
+        <ul class="plan-feat-list">
+          <li><span class="feat-check">✓</span> 매장 맞춤형 플레이리스트 제공</li>
+          <li><span class="feat-check">✓</span> 월 4회 업데이트(매주 월요일)</li>
+          <li><span class="feat-check">✓</span> 플레이리스트 결과 보고서 제공</li>
+        </ul>
+      </div>
+
+      <!-- Plan B -->
+      <div class="plan-select-card selected" id="planB" onclick="selectPlan('B', 2, 13200)">
+        <span class="popular-badge">인기</span>
+        <p class="plan-card-name">Plan B 프리미엄 요금제</p>
+        <p class="plan-card-subdesc">플레이리스트 큐레이션 + <span class="subdesc-highlight">추천곡 전용 플랜</span><span class="subdesc-tooltip-wrap"><button class="subdesc-tooltip-btn" onclick="event.stopPropagation()">?</button><span class="subdesc-tooltip-box">손님이 매장 QR을 스캔해 원하는 노래를 직접 신청할 수 있는 기능입니다. 신청된 곡은 플레이리스트에 반영됩니다.<br><br>📦 해당 플랜 신청 시 QR 스티커가 매장으로 무료 발송됩니다.</span></span></p>
+        <p class="plan-original">33,000원</p>
+        <div class="plan-price-row">
+          <span class="plan-price-main">13,200원</span>
+          <span class="plan-price-unit">/월 (VAT 10% 포함)</span>
+        </div>
+        <p class="plan-discount">신규 오픈 기념 60% 할인</p>
+        <div class="plan-divider"></div>
+        <ul class="plan-feat-list">
+          <li><span class="feat-check">✓</span> 매장 맞춤형 플레이리스트 제공</li>
+          <li><span class="feat-check">✓</span> 월 4회 업데이트(매주 월요일)</li>
+          <li><span class="feat-check">✓</span> 플레이리스트 결과 보고서 제공</li>
+        </ul>
+      </div>
+
+    </div>
+
+    <div class="plan-center-action">
+      <a href="apply.html" class="btn-primary" id="btn-go-apply" onclick="event.preventDefault(); window.name='selectedPlan:'+selectedPlan; localStorage.setItem('selectedPlan',selectedPlan); window.location.href='apply.html?plan='+selectedPlan;">도입 문의하기</a>
+    </div>
+
+  </div>
+
+  <!-- FOOTER -->
+  <section class="cta-footer-section">
+    <div class="footer-inner">
+      <div class="footer-info">
+        <p>대표이사: 박완</p>
+        <p>사업자 등록번호: 666-20-01980</p>
+        <p>통신판매업 번호: 2026-서울서대문-0358</p>
+        <p>주소 03628 서울특별시 서대문구 통일로 484 서대문구창업지원센터 321호 버비컴퍼니</p>
+        <p class="contact">고객 문의: verbykorea@gmail.com</p>
+        <div class="footer-policy-links">
+          <a href="terms.html">서비스 이용약관</a>
+          <span>|</span>
+          <a href="privacy.html">개인정보 처리방침</a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-title-big" style="white-space: nowrap;">INDP MUSIC</div>
+  </section>
+  <div class="copyright">Copyright 2026. VERBY Co. all rights reserved.</div>
+
+  <script src="api.js"></script>
+  <script>
+    let selectedPlan = 'B';
+    let selectedPlanId = null;
+    let selectedMonthlyRate = 0;
+    let plansData = [];
+
+    // 페이지 로드 시 기본값(Plan B) 즉시 저장
+    localStorage.setItem('selectedPlan', 'B');
+    localStorage.setItem('selectedPlanId', '2');
+
+    // Fallback hardcoded plans
+
+    const PLAN_INFO = {
+      'PLAN_A': {
+        shortName: '기본 요금제',
+        subdesc: '플레이리스트 큐레이션 전용 플랜',
+        features: ['매장 맞춤형 플레이리스트 제공', '월 4회 업데이트(매주 월요일)', '플레이리스트 결과 보고서 제공']
+      },
+      'PLAN_B': {
+        shortName: '프리미엄 요금제',
+        subdesc: '플레이리스트 큐레이션 + <span class="subdesc-highlight">추천곡 전용 플랜</span><span class="subdesc-tooltip-wrap"><button class="subdesc-tooltip-btn" onclick="event.stopPropagation()">?</button><span class="subdesc-tooltip-box">손님이 매장 QR을 스캔해 원하는 노래를 직접 신청할 수 있는 기능입니다. 신청된 곡은 플레이리스트에 반영됩니다.<br><br>📦 해당 플랜 신청 시 QR 스티커가 매장으로 무료 발송됩니다.</span></span>',
+        features: ['매장 맞춤형 플레이리스트 제공', '월 4회 업데이트(매주 월요일)', '플레이리스트 결과 보고서 제공']
+      }
+    };
+
+    function renderPlans(plans) {
+      const row = document.getElementById('plan-cards-row');
+      row.innerHTML = '';
+      plans.forEach((plan, idx) => {
+        const planType = plan.type || plan.code || '';
+        const codeShort = idx === 0 ? 'A' : 'B';
+        const defaultSelected = idx === plans.length - 1 || plans.length === 1;
+
+        const info = PLAN_INFO[planType] || {};
+        const planShortName = info.shortName || planType;
+        const planSubdesc = info.subdesc || '';
+        const featuresList = info.features || [];
+
+        const discountRate = plan.discountRate != null ? plan.discountRate : 0;
+        const monthlyPrice = plan.monthlyPrice || 0;
+        const priceVal = discountRate > 0
+          ? Math.round(monthlyPrice * (1 - discountRate / 100))
+          : monthlyPrice;
+        const originalHtml = discountRate > 0
+          ? `<p class="plan-original">${monthlyPrice.toLocaleString()}원</p>` : '';
+        const discountHtml = discountRate > 0
+          ? `<p class="plan-discount">신규 오픈 기념 ${discountRate}% 할인</p>` : '';
+        const featuresHtml = featuresList.map((f, fi) => {
+          const isHighlight = fi === (featuresList.length - 1) && idx > 0;
+          return `<li${isHighlight ? ' class="feat-highlight-row"' : ''}><span class="feat-check">✓</span> ${f}</li>`;
+        }).join('');
+        const popularBadge = (plans.length > 1 && idx === plans.length - 1) ? '<span class="popular-badge">인기</span>' : '';
+
+        const card = document.createElement('div');
+        card.className = 'plan-select-card' + (defaultSelected ? ' selected' : '');
+        card.id = 'plan' + codeShort;
+        const resolvedPlanId = plan.planId ?? plan.id ?? null;
+        card.onclick = () => selectPlan(codeShort, resolvedPlanId, priceVal);
+        card.innerHTML = `
+          ${popularBadge}
+          <p class="plan-card-name">Plan ${codeShort} ${planShortName}</p>
+          <p class="plan-card-subdesc">${planSubdesc}</p>
+          ${originalHtml}
+          <div class="plan-price-row">
+            <span class="plan-price-main">${priceVal.toLocaleString()}원</span>
+            <span class="plan-price-unit">/월 (VAT 10% 포함)</span>
+          </div>
+          ${discountHtml}
+          <div class="plan-divider"></div>
+          <ul class="plan-feat-list">${featuresHtml}</ul>`;
+        row.appendChild(card);
+
+        if (defaultSelected) {
+          // 사용자가 이미 명시적으로 선택한 플랜이 있으면 그걸 유지
+          const alreadyChosen = localStorage.getItem('selectedPlan');
+          if (!alreadyChosen) {
+            selectedPlan = codeShort;
+            selectedPlanId = plan.planId ?? plan.id ?? null;
+            selectedMonthlyRate = priceVal;
+          }
+        }
+      });
+    }
+
+    function selectPlan(planCode, planId, monthlyRate) {
+      selectedPlan = planCode;
+      selectedPlanId = planId ?? null;
+      selectedMonthlyRate = monthlyRate ?? 0;
+      document.querySelectorAll('.plan-select-card').forEach(c => c.classList.remove('selected'));
+      const el = document.getElementById('plan' + planCode);
+      if (el) el.classList.add('selected');
+      localStorage.setItem('selectedPlan', selectedPlan);
+      localStorage.setItem('selectedPlanId', String(selectedPlanId));
+      localStorage.setItem('selectedPlanMonthlyRate', String(selectedMonthlyRate));
+      window.name = 'selectedPlan:' + selectedPlan;
+    }
+
+    (async function loadPlans() {
+      try {
+        const data = await apiFetch('GET', '/api/plans');
+        console.log('[plans API 응답]', JSON.stringify(data));
+        plansData = data.plans || data || [];
+        renderPlans(plansData);
+      } catch(e) {
+        console.error('요금제 로드 실패:', e);
+        document.getElementById('plan-cards-row').innerHTML =
+          '<p style="text-align:center;color:var(--text-gray);padding:40px 0;font-size:15px;">요금제 정보를 불러오지 못했습니다.<br>잠시 후 다시 시도해 주세요.</p>';
+      }
+    })();
+
+    // GNB 스크롤 floating
+    (function() {
+      const nav = document.querySelector('nav');
+      if (!nav) return;
+      const update = () => nav.classList.toggle('scrolled', window.scrollY > 10);
+      window.addEventListener('scroll', update, { passive: true });
+      update();
+    })();
+  </script>
+
+</body>
+</html>

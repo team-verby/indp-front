@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>음악 무드 입력 - 인디피 뮤직</title>
+  <meta name="robots" content="noindex, nofollow" />
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="favicon-192.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=SUIT:wght@100..900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="shared.css" />
+  <script src="api.js"></script>
+  <style>
+    body { background: var(--light-bg); }
+
+    .option-note {
+      font-size: 13px;
+      color: var(--text-gray);
+      margin-top: 10px;
+      line-height: 1.6;
+    }
+
+    /* Timeslot mood grid */
+    .timeslot-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .timeslot-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .timeslot-label {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-sub);
+      min-width: 110px;
+      flex-shrink: 0;
+    }
+
+    .timeslot-select {
+      flex: 1;
+      padding: 10px 14px;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      font-size: 14px;
+      font-family: inherit;
+      background: #f8f9fb;
+      color: var(--dark);
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23767778' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      padding-right: 36px;
+      cursor: pointer;
+    }
+
+    .timeslot-select:focus {
+      outline: none;
+      border-color: var(--blue);
+      background-color: #fff;
+    }
+
+    /* Vibe image cards */
+    .vibe-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    .vibe-card {
+      position: relative;
+      border: 2px solid #e5e7eb;
+      border-radius: 14px;
+      overflow: hidden;
+      background: none;
+      cursor: pointer;
+      padding: 0;
+      transition: border-color 0.2s, transform 0.15s;
+      text-align: left;
+    }
+
+    .vibe-card:hover {
+      border-color: var(--blue);
+      transform: translateY(-2px);
+    }
+
+    .vibe-card.selected {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(35,62,255,0.12);
+    }
+
+    .vibe-img {
+      width: 100%;
+      display: block;
+      line-height: 0;
+    }
+
+    .vibe-img svg {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .vibe-label {
+      padding: 10px 12px 10px;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--dark);
+    }
+
+    .vibe-check {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--blue);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .vibe-card.selected .vibe-check {
+      display: flex;
+    }
+
+    @media (max-width: 600px) {
+      .vibe-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <div class="nav-inner">
+      <a href="index.html" class="nav-logo"><img src="logo.png" alt="인디피 뮤직" /></a>
+      <ul class="nav-links">
+        <li><a href="index.html">인디피 뮤직</a></li>
+        <li><a href="playlist.html">플레이리스트</a></li>
+      </ul>
+      <div class="nav-actions">
+        <a href="login.html" class="nav-login">로그인</a>
+        <a href="plan.html" class="nav-cta-blue">도입 문의</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- PAGE -->
+  <div class="page-wrap">
+
+    <h1 class="page-title">매장/플레이리스트 정보 입력</h1>
+    <p class="page-subtitle">매장과 재생할 플레이리스트 정보를 입력해 주세요</p>
+
+    <!-- Stepper -->
+    <div class="stepper">
+      <div class="step-item">
+        <div class="step-content">
+          <div class="step-circle done">✓</div>
+          <div class="step-label done">요금제 선택</div>
+        </div>
+      </div>
+      <div class="step-line done"></div>
+      <div class="step-item">
+        <div class="step-content">
+          <div class="step-circle active">2</div>
+          <div class="step-label active">정보 입력</div>
+        </div>
+      </div>
+      <div class="step-line"></div>
+      <div class="step-item">
+        <div class="step-content">
+          <div class="step-circle">3</div>
+          <div class="step-label">결제 진행</div>
+        </div>
+      </div>
+      <div class="step-line"></div>
+      <div class="step-item">
+        <div class="step-content">
+          <div class="step-circle">4</div>
+          <div class="step-label">신청 완료</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sub-stepper -->
+    <div class="sub-stepper">
+      <div class="sub-step done">
+        <div class="sub-step-num">✓</div>
+        <div class="sub-step-label">신청 정보</div>
+      </div>
+      <div class="sub-step-line done"></div>
+      <div class="sub-step done">
+        <div class="sub-step-num">✓</div>
+        <div class="sub-step-label">매장 정보</div>
+      </div>
+      <div class="sub-step-line done"></div>
+      <div class="sub-step active">
+        <div class="sub-step-num">3</div>
+        <div class="sub-step-label">음악 무드</div>
+      </div>
+    </div>
+
+    <!-- Form Card: 음악 무드 -->
+    <div class="form-card">
+      <h2 class="form-card-title">매장 음악 무드</h2>
+
+      <div class="form-group">
+        <label class="form-label" for="platform">기존에 사용하던 음악 플랫폼 <span class="required">*</span></label>
+        <textarea id="platform" class="form-input" placeholder="기존에 사용하고 있는 음악 플랫폼을 작성해 주세요 ex) 유튜브 뮤직, 벨론 등"></textarea>
+        <p class="field-error" id="err-platform">사용하던 음악 플랫폼을 입력해 주세요.</p>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="genres">매장에서 재생하던 장르 혹은 음악 <span class="required">*</span></label>
+        <textarea id="genres" class="form-input" placeholder="재생하던 장르 혹은 음악을 작성해 주세요"></textarea>
+        <p class="field-error" id="err-genres">재생하던 장르 또는 음악을 입력해 주세요.</p>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="age-range">매장 방문 손님 연령대 <span class="required">*</span></label>
+        <input type="text" id="age-range" class="form-input" placeholder="방문 연령대를 작성해 주세요 ex) 10~30대, 다양한 사람들 방문 등" />
+        <p class="field-error" id="err-age">연령대를 입력해 주세요.</p>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">매장에서 음악을 재생하는 방식(복수 선택 가능) <span class="required">*</span></label>
+        <div class="chip-group" id="chip-playmode">
+          <button class="chip" onclick="toggleChip(this)">블루투스</button>
+          <button class="chip" onclick="toggleChip(this)">유선 연결</button>
+          <button class="chip" onclick="toggleChip(this)">기타</button>
+        </div>
+        <p class="field-error" id="err-playmode">재생 방식을 1개 이상 선택해 주세요.</p>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">매장 분위기(복수 선택 가능) <span class="required">*</span></label>
+        <div class="vibe-grid">
+
+          <!-- 차분한 -->
+          <button class="vibe-card" onclick="toggleVibe(this)" type="button">
+            <div class="vibe-img">
+              <svg viewBox="0 0 200 130" xmlns="http://www.w3.org/2000/svg">
+                <rect width="200" height="130" fill="#dde8f0"/>
+                <!-- wall -->
+                <rect x="0" y="0" width="200" height="85" fill="#e8eff5"/>
+                <!-- floor -->
+                <rect x="0" y="85" width="200" height="45" fill="#cfd9e3"/>
+                <!-- window light -->
+                <rect x="30" y="10" width="50" height="65" fill="#f5f8fb" rx="2"/>
+                <rect x="36" y="10" width="1.5" height="65" fill="#c5d4e0"/>
+                <rect x="55" y="10" width="1.5" height="65" fill="#c5d4e0"/>
+                <rect x="30" y="37" width="50" height="1.5" fill="#c5d4e0"/>
+                <!-- light beam -->
+                <polygon points="30,10 80,10 95,85 15,85" fill="rgba(255,255,255,0.18)"/>
+                <!-- sofa -->
+                <rect x="95" y="62" width="90" height="28" fill="#b8ccd8" rx="6"/>
+                <rect x="98" y="55" width="84" height="14" fill="#c9dae4" rx="5"/>
+                <rect x="95" y="56" width="12" height="34" fill="#a8bfcc" rx="4"/>
+                <rect x="173" y="56" width="12" height="34" fill="#a8bfcc" rx="4"/>
+                <!-- table -->
+                <rect x="118" y="82" width="44" height="6" fill="#9eb5c2" rx="2"/>
+                <rect x="128" y="88" width="4" height="10" fill="#8faab7"/>
+                <rect x="148" y="88" width="4" height="10" fill="#8faab7"/>
+                <!-- plant -->
+                <rect x="152" y="72" width="5" height="12" fill="#8faab7"/>
+                <ellipse cx="154" cy="70" rx="9" ry="11" fill="#7da89c"/>
+                <ellipse cx="149" cy="65" rx="6" ry="8" fill="#8fb8ac"/>
+                <ellipse cx="159" cy="66" rx="6" ry="7" fill="#6e9e93"/>
+                <!-- ceiling lamp -->
+                <line x1="100" y1="0" x2="100" y2="18" stroke="#b0c4d0" stroke-width="1.5"/>
+                <ellipse cx="100" cy="22" rx="10" ry="5" fill="#d4e4ed"/>
+                <ellipse cx="100" cy="20" rx="6" ry="3" fill="#f0f6fa"/>
+              </svg>
+            </div>
+            <div class="vibe-label">차분한</div>
+            <div class="vibe-check">✓</div>
+          </button>
+
+          <!-- 모던한 -->
+          <button class="vibe-card" onclick="toggleVibe(this)" type="button">
+            <div class="vibe-img">
+              <svg viewBox="0 0 200 130" xmlns="http://www.w3.org/2000/svg">
+                <rect width="200" height="130" fill="#2a2a2e"/>
+                <!-- wall -->
+                <rect x="0" y="0" width="200" height="88" fill="#1e1e22"/>
+                <!-- floor -->
+                <rect x="0" y="88" width="200" height="42" fill="#2f2f34"/>
+                <!-- floor lines -->
+                <line x1="0" y1="100" x2="200" y2="100" stroke="#3a3a40" stroke-width="0.8"/>
+                <line x1="0" y1="112" x2="200" y2="112" stroke="#3a3a40" stroke-width="0.8"/>
+                <line x1="50" y1="88" x2="30" y2="130" stroke="#3a3a40" stroke-width="0.8"/>
+                <line x1="100" y1="88" x2="80" y2="130" stroke="#3a3a40" stroke-width="0.8"/>
+                <line x1="150" y1="88" x2="130" y2="130" stroke="#3a3a40" stroke-width="0.8"/>
+                <!-- accent wall panel -->
+                <rect x="0" y="0" width="60" height="88" fill="#252528"/>
+                <rect x="8" y="8" width="44" height="72" fill="#1a1a1d" rx="2"/>
+                <!-- sofa - sleek -->
+                <rect x="70" y="65" width="110" height="26" fill="#3c3c44" rx="3"/>
+                <rect x="70" y="56" width="110" height="14" fill="#48484f" rx="3"/>
+                <rect x="70" y="56" width="10" height="35" fill="#35353c" rx="3"/>
+                <rect x="170" y="56" width="10" height="35" fill="#35353c" rx="3"/>
+                <!-- table metal -->
+                <rect x="105" y="83" width="40" height="4" fill="#666" rx="1"/>
+                <rect x="115" y="87" width="2" height="10" fill="#555"/>
+                <rect x="133" y="87" width="2" height="10" fill="#555"/>
+                <rect x="113" y="95" width="24" height="2" fill="#555" rx="1"/>
+                <!-- track lights -->
+                <rect x="40" y="2" width="120" height="4" fill="#3a3a3a" rx="2"/>
+                <circle cx="65" cy="6" r="5" fill="#4a4a4a"/>
+                <circle cx="100" cy="6" r="5" fill="#4a4a4a"/>
+                <circle cx="135" cy="6" r="5" fill="#4a4a4a"/>
+                <!-- light cones -->
+                <polygon points="65,11 58,50 72,50" fill="rgba(255,230,150,0.07)"/>
+                <polygon points="100,11 93,50 107,50" fill="rgba(255,230,150,0.07)"/>
+                <polygon points="135,11 128,50 142,50" fill="rgba(255,230,150,0.07)"/>
+                <!-- art on wall -->
+                <rect x="16" y="18" width="28" height="40" fill="#222226" rx="1"/>
+                <line x1="16" y1="38" x2="44" y2="38" stroke="#333338" stroke-width="0.8"/>
+                <line x1="30" y1="18" x2="30" y2="58" stroke="#333338" stroke-width="0.8"/>
+              </svg>
+            </div>
+            <div class="vibe-label">모던한</div>
+            <div class="vibe-check">✓</div>
+          </button>
+
+          <!-- 우아한 -->
+          <button class="vibe-card" onclick="toggleVibe(this)" type="button">
+            <div class="vibe-img">
+              <svg viewBox="0 0 200 130" xmlns="http://www.w3.org/2000/svg">
+                <rect width="200" height="130" fill="#f5ede0"/>
+                <!-- wall -->
+                <rect x="0" y="0" width="200" height="85" fill="#faf3e8"/>
+                <!-- wainscoting -->
+                <rect x="0" y="60" width="200" height="25" fill="#f0e4d0"/>
+                <rect x="0" y="60" width="200" height="2" fill="#ddd0b8"/>
+                <rect x="0" y="83" width="200" height="2" fill="#ddd0b8"/>
+                <!-- floor parquet -->
+                <rect x="0" y="85" width="200" height="45" fill="#c8a87a"/>
+                <line x1="0" y1="97" x2="200" y2="97" stroke="#b8986a" stroke-width="0.8"/>
+                <line x1="0" y1="109" x2="200" y2="109" stroke="#b8986a" stroke-width="0.8"/>
+                <line x1="0" y1="121" x2="200" y2="121" stroke="#b8986a" stroke-width="0.8"/>
+                <line x1="25" y1="85" x2="25" y2="130" stroke="#b8986a" stroke-width="0.5"/>
+                <line x1="50" y1="85" x2="50" y2="130" stroke="#b8986a" stroke-width="0.5"/>
+                <line x1="75" y1="85" x2="75" y2="130" stroke="#b8986a" stroke-width="0.5"/>
+                <line x1="100" y1="85" x2="100" y2="130" stroke="#b8986a" stroke-width="0.5"/>
+                <line x1="125" y1="85" x2="125" y2="130" stroke="#b8986a" stroke-width="0.5"/>
+                <line x1="150" y1="85" x2="150" y2="130" stroke="#b8986a" stroke-width="0.5"/>
+                <line x1="175" y1="85" x2="175" y2="130" stroke="#b8986a" stroke-width="0.5"/>
+                <!-- chandelier -->
+                <line x1="100" y1="0" x2="100" y2="16" stroke="#c8b090" stroke-width="1.5"/>
+                <ellipse cx="100" cy="18" rx="18" ry="5" fill="#e8d8b8"/>
+                <line x1="82" y1="18" x2="78" y2="28" stroke="#c8b090" stroke-width="1"/>
+                <line x1="100" y1="23" x2="100" y2="33" stroke="#c8b090" stroke-width="1"/>
+                <line x1="118" y1="18" x2="122" y2="28" stroke="#c8b090" stroke-width="1"/>
+                <circle cx="78" cy="30" r="3" fill="#f0d878"/>
+                <circle cx="100" cy="35" r="3" fill="#f0d878"/>
+                <circle cx="122" cy="30" r="3" fill="#f0d878"/>
+                <!-- chair -->
+                <rect x="20" y="65" width="50" height="22" fill="#d4b896" rx="3"/>
+                <rect x="20" y="58" width="50" height="12" fill="#e0c8a8" rx="4"/>
+                <rect x="20" y="58" width="8" height="30" fill="#c4a880" rx="3"/>
+                <rect x="62" y="58" width="8" height="30" fill="#c4a880" rx="3"/>
+                <!-- table -->
+                <ellipse cx="120" cy="82" rx="35" ry="6" fill="#d4b07a"/>
+                <rect x="117" y="82" width="6" height="14" fill="#c0a060"/>
+                <ellipse cx="120" cy="96" rx="12" ry="3" fill="#b89050"/>
+                <!-- vase -->
+                <rect x="115" y="68" width="10" height="16" fill="#c8b898" rx="3"/>
+                <ellipse cx="120" cy="68" rx="7" ry="3" fill="#d4c4a8"/>
+                <ellipse cx="116" cy="62" rx="4" ry="7" fill="#8faa88" opacity="0.9"/>
+                <ellipse cx="120" cy="60" rx="5" ry="8" fill="#7a9878"/>
+                <ellipse cx="124" cy="63" rx="4" ry="6" fill="#8faa88" opacity="0.9"/>
+                <!-- mirror frame -->
+                <rect x="148" y="8" width="44" height="56" fill="#e0d0b8" rx="3"/>
+                <rect x="152" y="12" width="36" height="48" fill="#f8f0e4" rx="2"/>
+                <rect x="154" y="14" width="32" height="44" fill="#e8f0f4" rx="1"/>
+              </svg>
+            </div>
+            <div class="vibe-label">우아한</div>
+            <div class="vibe-check">✓</div>
+          </button>
+
+          <!-- 다크한 -->
+          <button class="vibe-card" onclick="toggleVibe(this)" type="button">
+            <div class="vibe-img">
+              <svg viewBox="0 0 200 130" xmlns="http://www.w3.org/2000/svg">
+                <rect width="200" height="130" fill="#0d0d10"/>
+                <!-- wall -->
+                <rect x="0" y="0" width="200" height="88" fill="#0a0a0d"/>
+                <!-- brick texture -->
+                <rect x="0" y="10" width="200" height="10" fill="none" stroke="#161618" stroke-width="0.5"/>
+                <rect x="0" y="20" width="200" height="10" fill="none" stroke="#161618" stroke-width="0.5"/>
+                <rect x="0" y="30" width="200" height="10" fill="none" stroke="#161618" stroke-width="0.5"/>
+                <line x1="0" y1="15" x2="200" y2="15" stroke="#141416" stroke-width="0.5"/>
+                <line x1="0" y1="25" x2="200" y2="25" stroke="#141416" stroke-width="0.5"/>
+                <line x1="0" y1="35" x2="200" y2="35" stroke="#141416" stroke-width="0.5"/>
+                <line x1="0" y1="45" x2="200" y2="45" stroke="#141416" stroke-width="0.5"/>
+                <line x1="0" y1="55" x2="200" y2="55" stroke="#141416" stroke-width="0.5"/>
+                <!-- floor -->
+                <rect x="0" y="88" width="200" height="42" fill="#111114"/>
+                <!-- neon sign -->
+                <text x="28" y="38" font-family="serif" font-size="11" fill="none" stroke="#ff4060" stroke-width="0.8" opacity="0.85">OPEN</text>
+                <rect x="24" y="25" width="46" height="18" fill="none" stroke="#ff4060" stroke-width="0.5" rx="2" opacity="0.4"/>
+                <!-- glow under neon -->
+                <ellipse cx="47" cy="42" rx="30" ry="6" fill="#ff406018"/>
+                <!-- bar counter -->
+                <rect x="0" y="70" width="90" height="20" fill="#1a1a1e" rx="2"/>
+                <rect x="0" y="68" width="90" height="5" fill="#252528" rx="1"/>
+                <!-- bottles on bar -->
+                <rect x="10" y="52" width="5" height="18" fill="#2a3a50" rx="2"/>
+                <rect x="10" y="50" width="5" height="4" fill="#3a4a60" rx="1"/>
+                <rect x="20" y="54" width="5" height="16" fill="#4a2020" rx="2"/>
+                <rect x="20" y="52" width="5" height="4" fill="#5a3030" rx="1"/>
+                <rect x="30" y="50" width="5" height="20" fill="#1e3a28" rx="2"/>
+                <rect x="30" y="48" width="5" height="4" fill="#2e4a38" rx="1"/>
+                <rect x="40" y="55" width="5" height="15" fill="#3a2a10" rx="2"/>
+                <rect x="40" y="53" width="5" height="4" fill="#4a3a20" rx="1"/>
+                <!-- bar stool -->
+                <rect x="55" y="78" width="16" height="2" fill="#333"/>
+                <rect x="62" y="80" width="2" height="16" fill="#2a2a2a"/>
+                <rect x="58" y="94" width="10" height="2" fill="#222" rx="1"/>
+                <!-- ambient light spots -->
+                <circle cx="150" cy="5" r="3" fill="#ff8c3a" opacity="0.9"/>
+                <polygon points="150,8 143,55 157,55" fill="rgba(255,140,58,0.06)"/>
+                <circle cx="180" cy="5" r="3" fill="#ff8c3a" opacity="0.9"/>
+                <polygon points="180,8 173,55 187,55" fill="rgba(255,140,58,0.06)"/>
+                <!-- lounge chair -->
+                <rect x="110" y="66" width="70" height="24" fill="#1c1c22" rx="4"/>
+                <rect x="110" y="58" width="70" height="14" fill="#222228" rx="4"/>
+                <rect x="110" y="58" width="9" height="32" fill="#181820" rx="3"/>
+                <rect x="171" y="58" width="9" height="32" fill="#181820" rx="3"/>
+              </svg>
+            </div>
+            <div class="vibe-label">다크한</div>
+            <div class="vibe-check">✓</div>
+          </button>
+
+          <!-- 내추럴한 -->
+          <button class="vibe-card" onclick="toggleVibe(this)" type="button">
+            <div class="vibe-img">
+              <svg viewBox="0 0 200 130" xmlns="http://www.w3.org/2000/svg">
+                <rect width="200" height="130" fill="#f0ebe2"/>
+                <!-- wall -->
+                <rect x="0" y="0" width="200" height="86" fill="#f5f0e6"/>
+                <!-- wood floor -->
+                <rect x="0" y="86" width="200" height="44" fill="#c8a870"/>
+                <line x1="0" y1="96" x2="200" y2="96" stroke="#b89060" stroke-width="1"/>
+                <line x1="0" y1="106" x2="200" y2="106" stroke="#b89060" stroke-width="1"/>
+                <line x1="0" y1="116" x2="200" y2="116" stroke="#b89060" stroke-width="1"/>
+                <line x1="30" y1="86" x2="30" y2="130" stroke="#b89060" stroke-width="0.6"/>
+                <line x1="80" y1="86" x2="80" y2="130" stroke="#b89060" stroke-width="0.6"/>
+                <line x1="130" y1="86" x2="130" y2="130" stroke="#b89060" stroke-width="0.6"/>
+                <line x1="170" y1="86" x2="170" y2="130" stroke="#b89060" stroke-width="0.6"/>
+                <!-- large window -->
+                <rect x="110" y="5" width="80" height="78" fill="#ddeef4" rx="2"/>
+                <line x1="150" y1="5" x2="150" y2="83" stroke="#c8dde8" stroke-width="1.5"/>
+                <line x1="110" y1="44" x2="190" y2="44" stroke="#c8dde8" stroke-width="1.5"/>
+                <!-- sunlight -->
+                <polygon points="110,5 190,5 190,83 110,83" fill="rgba(255,248,220,0.25)"/>
+                <!-- hanging plants -->
+                <line x1="40" y1="0" x2="40" y2="18" stroke="#a09060" stroke-width="1"/>
+                <circle cx="40" cy="22" r="8" fill="#a09060"/>
+                <ellipse cx="35" cy="16" rx="7" ry="10" fill="#7a9e68" transform="rotate(-20,35,16)"/>
+                <ellipse cx="45" cy="15" rx="7" ry="10" fill="#6a8e58" transform="rotate(15,45,15)"/>
+                <ellipse cx="40" cy="13" rx="6" ry="9" fill="#8aae78"/>
+                <!-- rattan chair -->
+                <rect x="8" y="62" width="44" height="26" fill="#c8a870" rx="8"/>
+                <rect x="8" y="55" width="44" height="14" fill="#d4b880" rx="8"/>
+                <rect x="8" y="55" width="10" height="34" fill="#b89860" rx="5"/>
+                <rect x="42" y="55" width="10" height="34" fill="#b89860" rx="5"/>
+                <!-- rattan texture -->
+                <line x1="12" y1="60" x2="48" y2="60" stroke="#c0a058" stroke-width="0.5"/>
+                <line x1="12" y1="66" x2="48" y2="66" stroke="#c0a058" stroke-width="0.5"/>
+                <line x1="12" y1="72" x2="48" y2="72" stroke="#c0a058" stroke-width="0.5"/>
+                <line x1="12" y1="78" x2="48" y2="78" stroke="#c0a058" stroke-width="0.5"/>
+                <!-- floor plant large -->
+                <rect x="62" y="72" width="12" height="16" fill="#a09060" rx="3"/>
+                <ellipse cx="68" cy="70" rx="14" ry="10" fill="#6aaa60"/>
+                <ellipse cx="60" cy="62" rx="10" ry="14" fill="#7aba70" transform="rotate(-15,60,62)"/>
+                <ellipse cx="76" cy="60" rx="10" ry="15" fill="#5a9a50" transform="rotate(10,76,60)"/>
+                <ellipse cx="68" cy="55" rx="9" ry="13" fill="#80c078"/>
+                <!-- cushion on chair -->
+                <ellipse cx="30" cy="67" rx="14" ry="6" fill="#e8c898" rx="4"/>
+                <!-- small table -->
+                <rect x="58" y="80" width="30" height="4" fill="#b89060" rx="2"/>
+                <rect x="63" y="84" width="4" height="10" fill="#a08050"/>
+                <rect x="79" y="84" width="4" height="10" fill="#a08050"/>
+              </svg>
+            </div>
+            <div class="vibe-label">내추럴한</div>
+            <div class="vibe-check">✓</div>
+          </button>
+
+          <!-- 기타 -->
+          <button class="vibe-card" onclick="toggleVibe(this)" type="button">
+            <div class="vibe-img">
+              <svg viewBox="0 0 200 130" xmlns="http://www.w3.org/2000/svg">
+                <rect width="200" height="130" fill="#f2f2f4"/>
+                <rect x="0" y="0" width="200" height="86" fill="#f7f7f9"/>
+                <rect x="0" y="86" width="200" height="44" fill="#e8e8ec"/>
+                <!-- question mark large -->
+                <text x="85" y="62" font-family="sans-serif" font-size="52" font-weight="700" fill="#d0d0d8">?</text>
+                <text x="100" y="88" font-family="sans-serif" font-size="11" fill="#b0b0b8" text-anchor="middle">해당하는 분위기가 없어요</text>
+              </svg>
+            </div>
+            <div class="vibe-label">기타</div>
+            <div class="vibe-check">✓</div>
+          </button>
+
+        </div>
+        <p class="field-error" id="err-vibe">매장 분위기를 1개 이상 선택해 주세요.</p>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">매장 조명 <span class="required">*</span></label>
+        <div class="lighting-grid" id="lightingGrid"></div>
+        <p class="field-error" id="err-lighting">매장 조명을 선택해 주세요.</p>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">재생하고 싶은 음악을 선택해 주세요 <span class="required">*</span></label>
+        <div class="option-boxes" id="musicPref">
+          <div class="option-box selected" onclick="selectOptionBox(this, 'musicPref'); toggleTimeslots(this)">음악에 대해 잘 몰라요.<br>편하게 추천받고 싶어요.</div>
+          <div class="option-box" id="option-timebased" onclick="selectOptionBox(this, 'musicPref'); toggleTimeslots(this)">시간대별로 노래 취향을<br>다르게 하고 싶어요.</div>
+          <div class="option-box" id="option-single" onclick="selectOptionBox(this, 'musicPref'); toggleTimeslots(this)">하나의 노래로 일관되게<br>운영 시간 내내 재생하고 싶어요.</div>
+        </div>
+        <p class="option-note" id="recommend-note" style="display:none"></p>
+      </div>
+
+      <!-- 단일 무드 설정 (일관되게 선택 시 노출) -->
+      <div class="form-group" id="single-mood-section" style="display:none">
+        <label class="form-label">음악 무드 선택 <span class="required">*</span></label>
+        <p class="option-note" style="margin-bottom:14px" id="single-mood-note"></p>
+        <div class="timeslot-row">
+          <select class="timeslot-select" id="single-mood-select">
+            <option value="">무드를 선택해 주세요</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- 시간대별 무드 설정 (시간대별 옵션 선택 시 노출) -->
+      <div class="form-group" id="timeslot-section" style="display:none">
+        <label class="form-label">시간대별 음악 무드 설정 <span class="required">*</span></label>
+        <p class="option-note" style="margin-bottom:14px">영업 시간 기준으로 1시간 단위로 무드를 설정해 주세요</p>
+        <div class="timeslot-grid" id="timeslotGrid"></div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">전반적인 템포 <span class="required">*</span></label>
+        <div class="chip-group" id="chip-tempo">
+          <button class="chip" onclick="toggleChip(this)">느림</button>
+          <button class="chip" onclick="toggleChip(this)">잔잔한</button>
+          <button class="chip" onclick="toggleChip(this)">보통</button>
+          <button class="chip" onclick="toggleChip(this)">활기찬</button>
+          <button class="chip" onclick="toggleChip(this)">경쾌한</button>
+        </div>
+        <p class="field-error" id="err-tempo">템포를 1개 이상 선택해 주세요.</p>
+      </div>
+
+      <div class="form-group plan-b-only" id="section-block-genre" style="display:none">
+        <label class="form-label">추천 거부 장르 설정(복수 선택 가능)</label>
+        <div class="chip-group">
+          <button class="chip" onclick="toggleChip(this)">발라드</button>
+          <button class="chip" onclick="toggleChip(this)">힙합</button>
+          <button class="chip" onclick="toggleChip(this)">인디</button>
+          <button class="chip" onclick="toggleChip(this)">락</button>
+          <button class="chip" onclick="toggleChip(this)">댄스</button>
+          <button class="chip" onclick="toggleChip(this)">클래식</button>
+          <button class="chip" onclick="toggleChip(this)">동요</button>
+        </div>
+      </div>
+
+      <div class="form-group plan-b-only" id="section-block-song" style="display:none">
+        <label class="form-label">이런 곡은 받고 싶지 않아요</label>
+        <textarea id="rejected-song-note" class="form-input" placeholder="댄스 곡은 받고 싶지 않아요."></textarea>
+      </div>
+
+    </div>
+
+    <!-- Actions -->
+    <p class="form-submit-error" id="submit-error">필수 항목을 모두 입력해 주세요.</p>
+    <div class="form-actions">
+      <a href="apply-store.html" class="btn-secondary">이전</a>
+      <button class="btn-primary" onclick="goNext()">다음</button>
+    </div>
+
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div class="footer-info">
+        <p>대표이사: 박완</p>
+        <p>사업자 등록번호: 666-20-01980</p>
+        <p>통신판매업 번호: 2026-서울서대문-0358</p>
+        <p>주소 03628 서울특별시 서대문구 통일로 484 서대문구창업지원센터 321호 버비컴퍼니</p>
+        <p class="contact">고객 문의: verbykorea@gmail.com</p>
+        <div class="footer-policy-links">
+          <a href="terms.html">서비스 이용약관</a>
+          <span>|</span>
+          <a href="privacy.html">개인정보 처리방침</a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-title-big">INDP MUSIC</div>
+  </footer>
+  <div class="copyright">Copyright 2026. VERBY Co. all rights reserved.</div>
+
+  <script>
+    // Build lighting grid
+    const lightingLabels = ['1000K','2000K','3000K','4000K','5000K','6000K','7000K','8000K','9000K','10000K'];
+    const grid = document.getElementById('lightingGrid');
+    lightingLabels.forEach((label, i) => {
+      const box = document.createElement('div');
+      box.className = 'lighting-box';
+      box.textContent = label;
+      box.onclick = () => {
+        document.querySelectorAll('.lighting-box').forEach(b => b.classList.remove('selected'));
+        box.classList.add('selected');
+      };
+      grid.appendChild(box);
+    });
+
+    function goNext() {
+      let valid = true;
+      const setErr = (id, show) => document.getElementById(id).classList.toggle('show', show);
+      const setInputErr = (id, show) => { const el = document.getElementById(id); if(el) el.classList.toggle('error', show); };
+
+      const platform = document.getElementById('platform').value.trim();
+      const genres = document.getElementById('genres').value.trim();
+      const age = document.getElementById('age-range').value.trim();
+      const playmode = [...document.querySelectorAll('#chip-playmode .chip.selected')].length > 0;
+      const vibe = [...document.querySelectorAll('.vibe-card.selected')].length > 0;
+      const lighting = !!document.querySelector('.lighting-box.selected');
+      const tempo = [...document.querySelectorAll('#chip-tempo .chip.selected')].length > 0;
+
+      setErr('err-platform', !platform);   setInputErr('platform', !platform);
+      setErr('err-genres', !genres);       setInputErr('genres', !genres);
+      setErr('err-age', !age);             setInputErr('age-range', !age);
+      setErr('err-playmode', !playmode);
+      setErr('err-vibe', !vibe);
+      setErr('err-lighting', !lighting);
+      setErr('err-tempo', !tempo);
+
+      if (!platform || !genres || !age || !playmode || !vibe || !lighting || !tempo) valid = false;
+      document.getElementById('submit-error').classList.toggle('show', !valid);
+      if (valid) {
+        localStorage.setItem('platform', document.getElementById('platform').value.trim());
+        localStorage.setItem('genres', document.getElementById('genres').value.trim());
+        localStorage.setItem('ageRange', document.getElementById('age-range').value.trim());
+        localStorage.setItem('playmode', JSON.stringify([...document.querySelectorAll('#chip-playmode .chip.selected')].map(c => c.textContent)));
+        localStorage.setItem('vibe', JSON.stringify([...document.querySelectorAll('.vibe-card.selected .vibe-label')].map(c => c.textContent)));
+
+        // 조명: "3000K" → 3000 정수로 저장
+        const lightingText = document.querySelector('.lighting-box.selected')?.textContent || '';
+        const lightingNum = parseInt(lightingText.replace('K', ''));
+        localStorage.setItem('lighting_level', isNaN(lightingNum) ? '3000' : String(lightingNum));
+
+        // 재생 방식 선택
+        const prefEl = document.querySelector('#musicPref .option-box.selected');
+        localStorage.setItem('musicPref', prefEl ? prefEl.innerText.replace(/\n/g, ' ').trim() : '');
+
+        // playlistType 결정 및 저장
+        const isTimebased = prefEl === document.getElementById('option-timebased');
+        const isSingle    = prefEl === document.getElementById('option-single');
+        const playlistType = isTimebased ? 'TIME_BASED' : isSingle ? 'CONSISTENT_MOOD' : 'MUSIC_RECOMMENDED';
+        localStorage.setItem('playlistType', playlistType);
+
+        // 시간대별 무드 저장
+        if (isTimebased) {
+          const prefs = [...document.querySelectorAll('#timeslotGrid .timeslot-row')].map(row => {
+            const label   = row.querySelector('.timeslot-label').textContent; // "09:00 ~ 10:00"
+            const mood    = row.querySelector('.timeslot-select').value;
+            const startH  = parseInt(label.split(' ~ ')[0].split(':')[0]);
+            return { startTimeHour: startH, endTimeHour: startH + 1, mood };
+          });
+          localStorage.setItem('timePreferences', JSON.stringify(prefs));
+          localStorage.setItem('singleMood', '');
+        } else if (isSingle) {
+          localStorage.setItem('singleMood', document.getElementById('single-mood-select').value);
+          localStorage.setItem('timePreferences', '[]');
+        } else {
+          localStorage.setItem('singleMood', '');
+          localStorage.setItem('timePreferences', '[]');
+        }
+
+        localStorage.setItem('tempo', JSON.stringify([...document.querySelectorAll('#chip-tempo .chip.selected')].map(c => c.textContent)));
+
+        // 플랜 B 전용 필드
+        const GENRE_ENUM = { '발라드':'BALLAD', '힙합':'HIPHOP', '인디':'INDIE', '락':'ROCK', '댄스':'DANCE', '클래식':'CLASSIC', '동요':'CHILDREN' };
+        if (parseInt(localStorage.getItem('selectedPlanId') || '0') === 2) {
+          const rejectGenres = [...document.querySelectorAll('#section-block-genre .chip.selected')].map(c => GENRE_ENUM[c.textContent] || c.textContent);
+          localStorage.setItem('rejectGenres', JSON.stringify(rejectGenres));
+          localStorage.setItem('rejectedSongNote', document.getElementById('rejected-song-note').value.trim());
+        } else {
+          localStorage.setItem('rejectGenres', '[]');
+          localStorage.setItem('rejectedSongNote', '');
+        }
+        window.location.href = 'payment.html';
+      }
+    }
+
+    function toggleChip(el) {
+      el.classList.toggle('selected');
+    }
+
+    function toggleVibe(el) {
+      el.classList.toggle('selected');
+    }
+
+    function selectOptionBox(el, groupId) {
+      const group = document.getElementById(groupId);
+      group.querySelectorAll('.option-box').forEach(b => b.classList.remove('selected'));
+      el.classList.add('selected');
+    }
+
+    // 플랜 B 전용 섹션 표시 여부
+    // Plan B일 때만 해당 섹션 노출 (기본 hidden)
+    // planId: 1 = Plan A, 2 = Plan B
+    const planId = parseInt(localStorage.getItem('selectedPlanId') || '0');
+    if (planId === 2) {
+      document.getElementById('section-block-genre').style.display = '';
+      document.getElementById('section-block-song').style.display = '';
+    }
+
+    // 시간대별 무드 옵션
+    const MOODS = ['선택 안 함', '차분한', '모던한', '우아한', '다크한', '내추럴한', '활기찬', '신나는', '로맨틱한', '재즈/소울', '클래식', '어쿠스틱'];
+
+    // apply-store.html에서 저장한 { "월": { open, close }, ... } 형태를 파싱해 전체 운영 범위 반환
+    function getOverallHours() {
+      const saved = localStorage.getItem('storeHours');
+      if (!saved) return { open: '09:00', close: '22:00' };
+      const perDay = JSON.parse(saved);
+      const days = Object.values(perDay);
+      if (!days.length) return { open: '09:00', close: '22:00' };
+      let minOpen = '23:59', maxClose = '00:00';
+      days.forEach(d => {
+        if (d.open < minOpen) minOpen = d.open;
+        if (d.close > maxClose) maxClose = d.close;
+      });
+      return { open: minOpen, close: maxClose };
+    }
+
+    function buildTimeslots() {
+      const { open, close } = getOverallHours();
+      const startH = parseInt(open.split(':')[0]);
+      const endH   = parseInt(close.split(':')[0]);
+      const grid = document.getElementById('timeslotGrid');
+      grid.innerHTML = '';
+      for (let h = startH; h < endH; h++) {
+        const startStr = String(h).padStart(2, '0') + ':00';
+        const endStr   = String(h + 1).padStart(2, '0') + ':00';
+        const row = document.createElement('div');
+        row.className = 'timeslot-row';
+        const opts = MOODS.map(m => `<option value="${m}">${m}</option>`).join('');
+        row.innerHTML = `
+          <span class="timeslot-label">${startStr} ~ ${endStr}</span>
+          <select class="timeslot-select">${opts}</select>
+        `;
+        grid.appendChild(row);
+      }
+    }
+
+    function buildSingleMood() {
+      const { open, close } = getOverallHours();
+      document.getElementById('single-mood-note').textContent =
+        `영업 시간 ${open} ~ ${close} 동안 재생할 음악 무드를 선택해 주세요`;
+      const sel = document.getElementById('single-mood-select');
+      sel.innerHTML = '<option value="">무드를 선택해 주세요</option>' +
+        MOODS.slice(1).map(m => `<option value="${m}">${m}</option>`).join('');
+    }
+
+    const storeName = localStorage.getItem('storeName') || '매장';
+
+    function toggleTimeslots(el) {
+      const isTimebased = el === document.getElementById('option-timebased');
+      const isSingle    = el === document.getElementById('option-single');
+      const isRecommend = el === document.querySelector('#musicPref .option-box:first-child');
+
+      const timeslotSection = document.getElementById('timeslot-section');
+      timeslotSection.style.display = isTimebased ? '' : 'none';
+      if (isTimebased) buildTimeslots();
+
+      const singleSection = document.getElementById('single-mood-section');
+      singleSection.style.display = isSingle ? '' : 'none';
+      if (isSingle) buildSingleMood();
+
+      const note = document.getElementById('recommend-note');
+      if (isRecommend) {
+        note.textContent = `입력해주신 매장 정보를 바탕으로 ${storeName} 매장에 어울리는 노래를 추천해드릴게요!`;
+        note.style.display = '';
+      } else {
+        note.style.display = 'none';
+      }
+    }
+
+    // 초기 로드 시 기본 선택(첫 번째)이므로 추천 문구 표시
+    window.addEventListener('DOMContentLoaded', () => {
+      const note = document.getElementById('recommend-note');
+      note.textContent = `입력해주신 매장 정보를 바탕으로 ${storeName} 매장에 어울리는 노래를 추천해드릴게요!`;
+      note.style.display = '';
+    });
+  </script>
+
+</body>
+</html>

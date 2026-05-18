@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>관리자 로그인 - 인디피 뮤직</title>
+  <meta name="robots" content="noindex, nofollow" />
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="favicon-192.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=SUIT:wght@100..900&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'SUIT', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #0f0f11;
+      color: #fff;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .admin-login-wrap {
+      width: 100%;
+      max-width: 440px;
+      padding: 24px;
+    }
+
+    /* Logo area */
+    .admin-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 48px;
+    }
+
+    .admin-logo img {
+      height: 32px;
+      width: auto;
+      /* invert white logo for dark bg */
+      filter: brightness(0) invert(1);
+    }
+
+    .admin-logo-badge {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      color: #1b1b1d;
+      background: #c6f135;
+      padding: 3px 10px;
+      border-radius: 100px;
+    }
+
+    /* Card */
+    .admin-card {
+      background: #1a1a1e;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 24px;
+      padding: 44px 40px 40px;
+    }
+
+    .admin-title {
+      font-size: 26px;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 6px;
+    }
+
+    .admin-subtitle {
+      font-size: 14px;
+      color: rgba(255,255,255,0.4);
+      margin-bottom: 36px;
+    }
+
+    /* Form */
+    .form-group {
+      margin-bottom: 18px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.55);
+      margin-bottom: 8px;
+      letter-spacing: 0.02em;
+    }
+
+    .form-input {
+      width: 100%;
+      background: #111113;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px;
+      padding: 14px 16px;
+      font-size: 15px;
+      font-family: inherit;
+      color: #fff;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .form-input::placeholder {
+      color: rgba(255,255,255,0.2);
+    }
+
+    .form-input:focus {
+      border-color: #c6f135;
+    }
+
+    .pw-wrap {
+      position: relative;
+    }
+
+    .pw-wrap .form-input {
+      padding-right: 48px;
+    }
+
+    .pw-toggle {
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: rgba(255,255,255,0.3);
+      padding: 0;
+      display: flex;
+      align-items: center;
+      transition: color 0.2s;
+    }
+
+    .pw-toggle:hover { color: rgba(255,255,255,0.7); }
+
+    /* Error message */
+    .form-error {
+      font-size: 12px;
+      color: #ff5c5c;
+      margin-top: 6px;
+      display: none;
+    }
+
+    .form-error.show { display: block; }
+
+    /* Remember + Forgot */
+    .form-options {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 28px;
+      margin-top: 4px;
+    }
+
+    .remember-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+    }
+
+    .remember-wrap input[type="checkbox"] {
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border: 1.5px solid rgba(255,255,255,0.2);
+      border-radius: 5px;
+      background: #111113;
+      cursor: pointer;
+      position: relative;
+      transition: border-color 0.2s, background 0.2s;
+      flex-shrink: 0;
+    }
+
+    .remember-wrap input[type="checkbox"]:checked {
+      background: #c6f135;
+      border-color: #c6f135;
+    }
+
+    .remember-wrap input[type="checkbox"]:checked::after {
+      content: '';
+      position: absolute;
+      left: 4px;
+      top: 2px;
+      width: 6px;
+      height: 9px;
+      border: 2px solid #111113;
+      border-top: none;
+      border-left: none;
+      transform: rotate(45deg);
+    }
+
+    .remember-label {
+      font-size: 13px;
+      color: rgba(255,255,255,0.4);
+      cursor: pointer;
+    }
+
+    .forgot-link {
+      font-size: 13px;
+      color: rgba(255,255,255,0.4);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .forgot-link:hover { color: #c6f135; }
+
+    /* Submit button */
+    .btn-admin-login {
+      width: 100%;
+      background: #c6f135;
+      color: #111113;
+      border: none;
+      border-radius: 12px;
+      padding: 16px;
+      font-size: 16px;
+      font-weight: 800;
+      font-family: inherit;
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.1s;
+      letter-spacing: 0.01em;
+    }
+
+    .btn-admin-login:hover { opacity: 0.88; }
+    .btn-admin-login:active { transform: scale(0.98); }
+
+    /* Bottom */
+    .admin-back {
+      text-align: center;
+      margin-top: 24px;
+      font-size: 13px;
+      color: rgba(255,255,255,0.25);
+    }
+
+    .admin-back a {
+      color: rgba(255,255,255,0.4);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .admin-back a:hover { color: #c6f135; }
+
+    /* Loading state */
+    .btn-admin-login.loading {
+      opacity: 0.6;
+      pointer-events: none;
+    }
+
+    .btn-admin-login.loading::after {
+      content: '';
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border: 2px solid #111113;
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      vertical-align: middle;
+      margin-left: 8px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="admin-login-wrap">
+
+    <div class="admin-logo">
+      <img src="logo.png" alt="인디피 뮤직" />
+      <span class="admin-logo-badge">ADMIN</span>
+    </div>
+
+    <div class="admin-card">
+      <h1 class="admin-title">관리자 로그인</h1>
+      <p class="admin-subtitle">인디피 뮤직 관리자만 접근할 수 있습니다</p>
+
+      <form onsubmit="handleLogin(event)" novalidate>
+
+        <div class="form-group">
+          <label class="form-label" for="admin-id">아이디</label>
+          <input
+            type="text"
+            id="admin-id"
+            class="form-input"
+            placeholder="관리자 아이디"
+            autocomplete="username"
+          />
+          <p class="form-error" id="id-error">아이디를 입력해 주세요.</p>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="admin-pw">비밀번호</label>
+          <div class="pw-wrap">
+            <input
+              type="password"
+              id="admin-pw"
+              class="form-input"
+              placeholder="비밀번호"
+              autocomplete="current-password"
+            />
+            <button class="pw-toggle" type="button" onclick="togglePw()" aria-label="비밀번호 표시/숨기기">
+              <svg id="eye-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+            </button>
+          </div>
+          <p class="form-error" id="pw-error">비밀번호를 입력해 주세요.</p>
+          <p class="form-error" id="auth-error">아이디 또는 비밀번호가 올바르지 않습니다.</p>
+        </div>
+
+        <button type="submit" class="btn-admin-login" id="login-btn">로그인</button>
+
+      </form>
+    </div>
+
+
+  </div>
+
+  <script src="api.js"></script>
+  <script>
+    function togglePw() {
+      const pw = document.getElementById('admin-pw');
+      const icon = document.getElementById('eye-icon');
+      if (pw.type === 'password') {
+        pw.type = 'text';
+        icon.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
+      } else {
+        pw.type = 'password';
+        icon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+      }
+    }
+
+    function clearErrors() {
+      document.querySelectorAll('.form-error').forEach(el => el.classList.remove('show'));
+    }
+
+    async function handleLogin(e) {
+      e.preventDefault();
+      clearErrors();
+
+      const id = document.getElementById('admin-id').value.trim();
+      const pw = document.getElementById('admin-pw').value;
+      let valid = true;
+
+      if (!id) {
+        document.getElementById('id-error').classList.add('show');
+        valid = false;
+      }
+      if (!pw) {
+        document.getElementById('pw-error').classList.add('show');
+        valid = false;
+      }
+      if (!valid) return;
+
+      const btn = document.getElementById('login-btn');
+      btn.classList.add('loading');
+      btn.textContent = '로그인 중';
+
+      try {
+        const res = await fetch(BASE_URL + '/api/admin/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ loginId: id, password: pw })
+        });
+        if (!res.ok) throw new Error('auth');
+        const data = await res.json();
+        const token = data.token || data.accessToken || data.adminToken;
+        localStorage.setItem('adminToken', token);
+        window.location.href = 'admin-dashboard.html';
+      } catch(e) {
+        btn.classList.remove('loading');
+        btn.textContent = '로그인';
+        document.getElementById('auth-error').classList.add('show');
+        document.getElementById('admin-pw').value = '';
+      }
+    }
+  </script>
+
+</body>
+</html>
