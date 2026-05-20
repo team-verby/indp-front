@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>결과 도출 로직 문서 — 공간 무드 분석 테스트</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=SUIT:wght@100..900&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --blue: #233eff; --blue-light: #eef0ff; --blue-mid: #c8cdff;
+      --dark: #1b1b1d; --sub: #39393b; --gray: #767778; --lg: #a3a4a6;
+      --bg: #f8f9fb; --white: #fff; --border: #e8eaed;
+      --green: #00b96b; --amber: #f59e0b; --red: #ef4444;
+    }
+    html, body {
+      background: var(--bg); color: var(--dark);
+      font-family: 'SUIT', -apple-system, sans-serif;
+    }
+
+    /* ── Nav ── */
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      background: var(--bg); border-bottom: 1px solid var(--border);
+    }
+    .nav-inner {
+      max-width: 960px; margin: 0 auto; padding: 0 24px;
+      height: 52px; display: flex; align-items: center; justify-content: space-between;
+    }
+    .nav-logo { display: flex; align-items: center; text-decoration: none; gap: 10px; }
+    .nav-logo img { height: 24px; width: auto; }
+    .nav-back {
+      font-size: 13px; font-weight: 600; color: var(--gray);
+      text-decoration: none; display: flex; align-items: center; gap: 5px;
+      transition: color 0.15s;
+    }
+    .nav-back:hover { color: var(--dark); }
+
+    /* ── Layout ── */
+    .page { max-width: 960px; margin: 0 auto; padding: 48px 24px 80px; }
+
+    /* ── Hero ── */
+    .hero {
+      background: var(--white); border: 1px solid var(--border);
+      border-radius: 20px; padding: 40px 36px; margin-bottom: 40px;
+    }
+    .hero-chip {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 11px; font-weight: 700; letter-spacing: 0.1em;
+      color: var(--blue); background: var(--blue-light);
+      border: 1px solid var(--blue-mid); border-radius: 100px;
+      padding: 4px 12px; margin-bottom: 16px;
+    }
+    .hero h1 { font-size: 28px; font-weight: 900; letter-spacing: -0.03em; margin-bottom: 10px; }
+    .hero p  { font-size: 15px; color: var(--sub); line-height: 1.8; max-width: 600px; }
+
+    /* ── Section ── */
+    .section { margin-bottom: 40px; }
+    .section-title {
+      font-size: 11px; font-weight: 700; letter-spacing: 0.2em;
+      color: var(--blue); text-transform: uppercase; margin-bottom: 18px;
+      padding-bottom: 10px; border-bottom: 1.5px solid var(--blue-mid);
+    }
+
+    /* ── Card ── */
+    .card {
+      background: var(--white); border: 1px solid var(--border);
+      border-radius: 14px; padding: 24px 22px; margin-bottom: 12px;
+    }
+    .card-title { font-size: 14px; font-weight: 800; color: var(--dark); margin-bottom: 6px; }
+    .card-body  { font-size: 13px; color: var(--sub); line-height: 1.75; }
+
+    /* ── 플로우차트 ── */
+    .flow {
+      display: flex; flex-direction: column; align-items: center; gap: 0;
+    }
+    .flow-step {
+      width: 100%; max-width: 680px; position: relative;
+    }
+    .flow-box {
+      background: var(--white); border: 1.5px solid var(--border);
+      border-radius: 14px; padding: 18px 20px;
+      display: flex; align-items: flex-start; gap: 14px;
+    }
+    .flow-box.blue   { border-color: var(--blue);  background: var(--blue-light); }
+    .flow-box.green  { border-color: #86efac;       background: #f0fdf4; }
+    .flow-box.amber  { border-color: #fde68a;       background: #fffbeb; }
+    .flow-num {
+      flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%;
+      background: var(--blue); color: var(--white);
+      font-size: 12px; font-weight: 800;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .flow-box.green  .flow-num { background: var(--green); }
+    .flow-box.amber  .flow-num { background: var(--amber); }
+    .flow-content {}
+    .flow-label { font-size: 14px; font-weight: 800; color: var(--dark); margin-bottom: 3px; }
+    .flow-desc  { font-size: 12px; color: var(--sub); line-height: 1.65; }
+    .flow-desc code {
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      background: rgba(35,62,255,0.08); color: var(--blue);
+      border-radius: 4px; padding: 1px 5px; font-size: 11px;
+    }
+
+    .flow-arrow {
+      display: flex; justify-content: center;
+      padding: 6px 0; color: var(--lg); font-size: 18px; line-height: 1;
+    }
+
+    /* ── 점수 히트맵 ── */
+    .heatmap-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .heatmap {
+      border-collapse: collapse; font-size: 12px;
+      min-width: 700px; width: 100%;
+    }
+    .heatmap th, .heatmap td {
+      border: 1px solid var(--border);
+      padding: 7px 8px; text-align: center; white-space: nowrap;
+    }
+    .heatmap thead th {
+      background: var(--bg); font-weight: 700; font-size: 11px; color: var(--sub);
+    }
+    .heatmap thead th:first-child { text-align: left; width: 260px; white-space: normal; }
+    .heatmap tbody td:first-child {
+      text-align: left; font-size: 11px; color: var(--sub);
+      background: var(--bg); font-weight: 600; white-space: normal;
+    }
+    .heatmap tbody tr:hover td { background: var(--blue-light) !important; }
+    .heatmap tbody tr:hover td:first-child { background: var(--blue-light) !important; }
+
+    .cell-0 { background: var(--bg); color: var(--lg); }
+    .cell-1 { background: #dbeafe; color: #1d4ed8; font-weight: 700; }
+    .cell-2 { background: #93c5fd; color: #1e3a8a; font-weight: 700; }
+    .cell-3 { background: #2563eb; color: #fff;     font-weight: 800; }
+
+    /* ── 타입 그리드 ── */
+    .type-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 12px;
+    }
+    .type-card {
+      border-radius: 14px; padding: 18px 16px;
+      border: 1.5px solid var(--border);
+    }
+    .type-card-header {
+      display: flex; align-items: center; gap: 10px; margin-bottom: 10px;
+    }
+    .type-emoji { font-size: 24px; }
+    .type-name  { font-size: 13px; font-weight: 900; letter-spacing: -0.01em; }
+    .type-ko    { font-size: 11px; font-weight: 500; opacity: 0.6; }
+    .type-tags  { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 10px; }
+    .type-tag   { font-size: 10px; font-weight: 700; border-radius: 100px; padding: 3px 9px; }
+    .type-desc  { font-size: 12px; color: var(--sub); line-height: 1.65; }
+    .type-max   { margin-top: 8px; font-size: 11px; font-weight: 700; }
+    .type-tagline { font-size: 11px; color: var(--sub); line-height: 1.6; margin: 8px 0 6px; font-style: italic; }
+    .type-sincerity {
+      display: flex; align-items: center; gap: 8px; margin-top: 10px;
+    }
+    .type-sincerity-bar {
+      flex: 1; height: 5px; background: var(--border); border-radius: 100px; overflow: hidden;
+    }
+    .type-sincerity-fill { height: 100%; border-radius: 100px; background: linear-gradient(90deg,#4f8cff,#a78bfa); }
+    .type-sincerity-score { font-size: 11px; font-weight: 800; color: var(--blue); flex-shrink: 0; }
+
+    /* ── 문항 상세 ── */
+    .q-section-label {
+      font-size: 11px; font-weight: 700; letter-spacing: 0.18em;
+      color: var(--blue); text-transform: uppercase;
+      background: var(--blue-light); border-left: 3px solid var(--blue);
+      padding: 8px 14px; border-radius: 0 8px 8px 0;
+      margin: 20px 0 10px;
+    }
+    .q-item {
+      background: var(--white); border: 1px solid var(--border);
+      border-radius: 12px; margin-bottom: 8px; overflow: hidden;
+    }
+    .q-header {
+      padding: 12px 16px; cursor: pointer;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 10px; user-select: none;
+      transition: background 0.15s;
+    }
+    .q-header:hover { background: var(--bg); }
+    .q-num   { font-size: 10px; font-weight: 700; color: var(--blue); flex-shrink: 0; }
+    .q-text  { font-size: 13px; font-weight: 700; flex: 1; line-height: 1.4; }
+    .q-arrow { font-size: 12px; color: var(--lg); transition: transform 0.2s; flex-shrink: 0; }
+    .q-item.open .q-arrow { transform: rotate(180deg); }
+    .q-body  { display: none; padding: 0 16px 14px; }
+    .q-item.open .q-body { display: block; }
+
+    .answer-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 8px; }
+    .answer-table th {
+      background: var(--bg); padding: 6px 8px; text-align: center;
+      font-size: 10px; font-weight: 700; color: var(--sub);
+      border: 1px solid var(--border); white-space: nowrap;
+    }
+    .answer-table th:first-child { text-align: left; }
+    .answer-table td {
+      padding: 6px 8px; border: 1px solid var(--border);
+      text-align: center; font-weight: 700;
+    }
+    .answer-table td:first-child { text-align: left; font-size: 12px; color: var(--sub); }
+    .s0 { color: var(--lg); }
+    .s1 { color: #1d4ed8; background: #dbeafe; }
+    .s2 { color: #1e3a8a; background: #93c5fd; }
+    .s3 { color: #fff;    background: #2563eb; }
+
+    /* ── 도출 알고리즘 ── */
+    .algo-box {
+      background: var(--dark); border-radius: 14px; padding: 24px 22px;
+    }
+    .algo-box pre {
+      font-family: 'SF Mono', 'Fira Code', 'Courier New', monospace;
+      font-size: 13px; color: #e2e8f0; line-height: 1.8;
+      white-space: pre-wrap; word-break: break-word;
+    }
+    .algo-box .cm  { color: #94a3b8; }
+    .algo-box .kw  { color: #93c5fd; }
+    .algo-box .fn  { color: #86efac; }
+    .algo-box .st  { color: #fde68a; }
+    .algo-box .nm  { color: #f9a8d4; }
+
+    /* ── 통계 요약 ── */
+    .stat-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 10px;
+    }
+    .stat-card {
+      background: var(--white); border: 1px solid var(--border);
+      border-radius: 12px; padding: 16px 14px; text-align: center;
+    }
+    .stat-num   { font-size: 28px; font-weight: 900; color: var(--blue); }
+    .stat-label { font-size: 11px; font-weight: 600; color: var(--lg); margin-top: 2px; }
+
+    @media (max-width: 600px) {
+      .hero { padding: 24px 20px; }
+      .hero h1 { font-size: 22px; }
+      .page { padding: 24px 16px 60px; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo"><img src="logo.png" alt="인디피 뮤직" /></a>
+    <a href="mood-test.html" class="nav-back">← 테스트로 돌아가기</a>
+  </div>
+</nav>
+
+<div class="page">
+
+  <!-- Hero -->
+  <div class="hero">
+    <div class="hero-chip">LOGIC DOCUMENT</div>
+    <h1>결과 도출 로직 문서</h1>
+    <p>공간 무드 분석 테스트가 20개 답변을 어떻게 분석해 16가지 공간 타입 중 하나를 도출하는지, 전체 플로우와 4축 점수 체계를 설명합니다.</p>
+  </div>
+
+  <!-- 통계 요약 -->
+  <div class="section">
+    <p class="section-title">OVERVIEW</p>
+    <div class="stat-grid" id="stat-grid"></div>
+  </div>
+
+  <!-- 전체 플로우 -->
+  <div class="section">
+    <p class="section-title">전체 플로우차트</p>
+    <div class="flow">
+
+      <div class="flow-step">
+        <div class="flow-box blue">
+          <div class="flow-num">1</div>
+          <div class="flow-content">
+            <p class="flow-label">인트로 화면 진입</p>
+            <p class="flow-desc">사용자가 "테스트 시작하기"를 클릭하면 4축 점수 배열 초기화.<br>
+              <code>scores = [0, 0, 0, 0]</code> &nbsp;→&nbsp; <code>[energy(-Q/+E), tone(-W/+S), relation(-C/+I), music(-B/+M)]</code></p>
+          </div>
+        </div>
+      </div>
+      <div class="flow-arrow">↓</div>
+
+      <div class="flow-step">
+        <div class="flow-box">
+          <div class="flow-num">2</div>
+          <div class="flow-content">
+            <p class="flow-label">20문항 순차 진행 (4개 섹션)</p>
+            <p class="flow-desc">한 번에 1문항씩 표시. 사용자가 답변을 클릭하면 해당 답변의 점수 배열이 <code>scores</code>에 누적됨. 이전 답변을 바꾸면 이전 점수 차감 후 새 점수 가산.</p>
+          </div>
+        </div>
+      </div>
+      <div class="flow-arrow">↓</div>
+
+      <div class="flow-step">
+        <div class="flow-box">
+          <div class="flow-num" style="background:var(--sub);">▸</div>
+          <div class="flow-content">
+            <p class="flow-label" style="color:var(--gray); font-size:12px;">내부 반복 (각 문항마다)</p>
+            <p class="flow-desc">
+              선택한 답변의 <code>scores[4]</code> 배열을 누적 배열에 합산 (음수 포함).<br>
+              <code>scores = scores.map((s, i) => s + answer.scores[i])</code>
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="flow-arrow">↓</div>
+
+      <div class="flow-step">
+        <div class="flow-box amber">
+          <div class="flow-num" style="background:var(--amber); color:#1b1b1d;">3</div>
+          <div class="flow-content">
+            <p class="flow-label">20번째 문항 완료</p>
+            <p class="flow-desc">로딩 화면 1.8초 표시 후 결과 도출 함수 실행.</p>
+          </div>
+        </div>
+      </div>
+      <div class="flow-arrow">↓</div>
+
+      <div class="flow-step">
+        <div class="flow-box">
+          <div class="flow-num">4</div>
+          <div class="flow-content">
+            <p class="flow-label">4축 부호로 16개 타입 결정</p>
+            <p class="flow-desc">
+              각 축의 합산 부호를 보고 2개 중 하나를 선택 → 4글자 타입 코드 조합.<br>
+              <code>E축 ≥0 → 'E', &lt;0 → 'Q' &nbsp;/&nbsp; T축 ≥0 → 'S', &lt;0 → 'W'</code><br>
+              <code>R축 ≥0 → 'I', &lt;0 → 'C' &nbsp;/&nbsp; M축 ≥0 → 'M', &lt;0 → 'B'</code><br>
+              결과: QWCB ~ ESIM 중 1개 (동점 = 0 → 앞쪽 극(Q/W/C/B) 우선)
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="flow-arrow">↓</div>
+
+      <div class="flow-step">
+        <div class="flow-box green">
+          <div class="flow-num" style="background:var(--green);">5</div>
+          <div class="flow-content">
+            <p class="flow-label">결과 화면 표시</p>
+            <p class="flow-desc">최고점 타입의 결과 데이터를 렌더링. 출력 순서: ① 공유 카드(이모지·이름·태그라인) → ② <strong>음악 진심 지수</strong>(점수 게이지·라벨·한 줄 설명) → ③ 공유 버튼 → ④ SPACE STORY · 분석 그리드 · 추천 음악 · 운영 팁 순.</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 16개 결과 타입 -->
+  <div class="section">
+    <p class="section-title">16개 결과 타입 정의 (4축 MBTI식)</p>
+    <div class="type-grid" id="type-grid"></div>
+  </div>
+
+  <!-- 섹션별 역할 -->
+  <div class="section">
+    <p class="section-title">섹션별 측정 목적</p>
+    <div class="card">
+      <div class="card-title">SECTION 1 — 공간 분위기 & 감성 (Q1~Q5)</div>
+      <div class="card-body">공간이 주고 싶은 <strong>감정적 방향성</strong>을 분석. <strong>Energy(Q↔E)</strong>와 <strong>Tone(W↔S)</strong> 축에 주로 기여. 조용하고 차분한지(Q) vs 활기차고 에너제틱한지(E), 따뜻하고 감성적인지(W) vs 세련되고 쿨한지(S)를 결정.</div>
+    </div>
+    <div class="card">
+      <div class="card-title">SECTION 2 — 손님 행동 & 공간 목적 (Q6~Q10)</div>
+      <div class="card-body">손님의 <strong>행동 패턴과 공간 운영 목적</strong>을 분석. <strong>Energy(Q↔E)</strong>와 <strong>Relation(C↔I)</strong> 축에 기여. 함께하는 공간(C)인지 개인적인 공간(I)인지, 활동적(E)인지 차분(Q)인지를 세분화.</div>
+    </div>
+    <div class="card">
+      <div class="card-title">SECTION 3 — 음악 취향 & 감각 (Q11~Q15)</div>
+      <div class="card-body">공간에 맞는 <strong>음악의 방향성</strong>을 직접 분석. <strong>Music(B↔M)</strong>과 <strong>Tone(W↔S)</strong> 축에 기여. 클래식/어쿠스틱 계열(B) vs 인디팝/일렉트로닉 계열(M), 감성적(W) vs 세련된(S) 음악 방향.</div>
+    </div>
+    <div class="card">
+      <div class="card-title">SECTION 4 — 공간 스타일 & 브랜드 취향 (Q16~Q20)</div>
+      <div class="card-body">인테리어와 <strong>브랜드 감성</strong>을 분석해 타입을 확정. <strong>Tone(W↔S)</strong>과 <strong>Relation(C↔I)</strong> 축에 주로 기여. 앞선 섹션의 방향성을 보강하거나 역전시켜 최종 4글자 타입을 결정.</div>
+    </div>
+  </div>
+
+  <!-- 결과 도출 알고리즘 -->
+  <div class="section">
+    <p class="section-title">결과 도출 알고리즘 (의사 코드)</p>
+    <div class="algo-box">
+      <pre><span class="cm">// 1. 초기화 — 4개 축 점수 (음수 가능)</span>
+<span class="cm">//   scores[0] = Energy   (-Q / +E)</span>
+<span class="cm">//   scores[1] = Tone     (-W / +S)</span>
+<span class="cm">//   scores[2] = Relation (-C / +I)</span>
+<span class="cm">//   scores[3] = Music    (-B / +M)</span>
+<span class="kw">let</span> scores = [<span class="nm">0</span>, <span class="nm">0</span>, <span class="nm">0</span>, <span class="nm">0</span>]
+
+<span class="cm">// 2. 각 답변 선택 시 점수 누적</span>
+<span class="kw">function</span> <span class="fn">onAnswerSelect</span>(questionIndex, answerIndex) {
+  <span class="cm">// 이전 답변 취소</span>
+  <span class="kw">if</span> (previousAnswer !== null) {
+    scores = scores.<span class="fn">map</span>((s, i) => s - prevAnswer.scores[i])
+  }
+  <span class="cm">// 새 답변 점수 가산 (음수 포함)</span>
+  scores = scores.<span class="fn">map</span>((s, i) => s + selectedAnswer.scores[i])
+}
+
+<span class="cm">// 3. 20문항 완료 후 4축 부호로 타입 결정</span>
+<span class="kw">function</span> <span class="fn">getResult</span>() {
+  <span class="kw">const</span> e = scores[<span class="nm">0</span>] >= <span class="nm">0</span> ? <span class="st">'E'</span> : <span class="st">'Q'</span>
+  <span class="kw">const</span> t = scores[<span class="nm">1</span>] >= <span class="nm">0</span> ? <span class="st">'S'</span> : <span class="st">'W'</span>
+  <span class="kw">const</span> r = scores[<span class="nm">2</span>] >= <span class="nm">0</span> ? <span class="st">'I'</span> : <span class="st">'C'</span>
+  <span class="kw">const</span> m = scores[<span class="nm">3</span>] >= <span class="nm">0</span> ? <span class="st">'M'</span> : <span class="st">'B'</span>
+  <span class="kw">return</span> e + t + r + m   <span class="cm">// 예: 'QWCB', 'ESIM' 등 16가지</span>
+}</pre>
+    </div>
+  </div>
+
+  <!-- 점수 히트맵 -->
+  <div class="section">
+    <p class="section-title">문항별 최대 기여 점수 히트맵</p>
+    <div class="card" style="padding:14px;">
+      <p style="font-size:12px; color:var(--sub); margin-bottom:12px;">
+        각 문항에서 선택 가능한 답변 중 각 축에 줄 수 있는 <strong>최대 절댓값 점수</strong>. 셀이 진할수록 해당 문항이 그 축에 더 큰 영향을 줌. 음수(-) = 앞쪽 극(Q/W/C/B), 양수(+) = 뒤쪽 극(E/S/I/M).
+      </p>
+      <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px; font-size:11px; font-weight:700;">
+        <span style="display:flex; align-items:center; gap:4px;"><span class="cell-0" style="display:inline-block;width:18px;height:14px;border-radius:3px;border:1px solid var(--border);"></span> 0</span>
+        <span style="display:flex; align-items:center; gap:4px;"><span class="cell-1" style="display:inline-block;width:18px;height:14px;border-radius:3px;"></span> ±1</span>
+        <span style="display:flex; align-items:center; gap:4px;"><span class="cell-2" style="display:inline-block;width:18px;height:14px;border-radius:3px;"></span> ±2</span>
+        <span style="display:flex; align-items:center; gap:4px;"><span class="cell-3" style="display:inline-block;width:18px;height:14px;border-radius:3px;"></span> ±3</span>
+      </div>
+      <div class="heatmap-wrap">
+        <table class="heatmap" id="heatmap-table"></table>
+      </div>
+    </div>
+  </div>
+
+  <!-- 문항별 답변 상세 -->
+  <div class="section">
+    <p class="section-title">문항별 답변 점수 상세</p>
+    <p style="font-size:12px; color:var(--sub); margin-bottom:16px;">각 문항을 클릭하면 답변별 4개 축 점수 배분을 확인할 수 있습니다. 음수(-) = 앞쪽 극, 양수(+) = 뒤쪽 극.</p>
+    <div id="q-list"></div>
+  </div>
+
+</div>
+
+<script>
+// ─── 4축 정의 ───────────────────────────────────
+// scores[0] = Energy   (-Q 조용 / +E 활기)
+// scores[1] = Tone     (-W 따뜻·감성 / +S 쿨·세련)
+// scores[2] = Relation (-C 함께·사교 / +I 개인·몰입)
+// scores[3] = Music    (-B 클래식·어쿠스틱 / +M 인디팝·일렉)
+
+const AXES = ['Energy','Tone','Relation','Music'];
+const AXIS_POLES = [['Q(조용)','E(활기)'],['W(따뜻)','S(쿨)'],['C(함께)','I(개인)'],['B(클래식)','M(인디)']];
+
+const TYPES = [
+  'QWCB','QWCM','QWIB','QWIM',
+  'QSCB','QSCM','QSIB','QSIM',
+  'EWCB','EWCM','EWIB','EWIM',
+  'ESCB','ESCM','ESIB','ESIM',
+];
+
+// sincerity: 사장님 음악 진심 지수 (0~100)
+const TYPE_DATA = {
+  QWCB:{ emoji:'🍲', ko:'단골장인',    ename:'COZY',   chipColor:'#7A4A1A', cardBg:'#fff8f0', cardBorder:'#e8c99a', tags:['따뜻함','친근함','단골','배경음'],
+    tagline:'왜 또 왔냐고요? 모르겠어요, 여기 BGM이 자꾸 머릿속에서 흘러서 발이 알아서 여기로 왔어요. 그 매장.',
+    sincerity:{score:42, label:'음악은 온기의 조연'},
+    desc:'따뜻하고 익숙한 온기. 처음 와도 긴장 풀리는 동네 맛집·단골 카페 감성. BGM은 주장하지 않고 그냥 거기 있어요.' },
+  QWCM:{ emoji:'📻', ko:'분위기부자',  ename:'VIBE',   chipColor:'#7A3A10', cardBg:'#fff5e8', cardBorder:'#dbb888', tags:['음악 발견','따뜻함','플레이리스트','소통'],
+    tagline:'"여기서 나오는 노래 뭐야?" 하고 Shazam 켰다가 어느새 30분이 더 지난 그 매장.',
+    sincerity:{score:71, label:'음악이 대화를 여는 열쇠'},
+    desc:'음악이 대화의 시작점이 되는 공간. 흘러나오는 노래에 손님들이 귀를 기울이는 곳.' },
+  QWIB:{ emoji:'☕', ko:'조용함만렙',  ename:'SOFT',   chipColor:'#6A3A80', cardBg:'#fdf8ff', cardBorder:'#d0a8d8', tags:['집중','조용함','나만의 공간','배경음'],
+    tagline:'카페인가 수면실인가… 흘러나오는 로파이에 취해서 노트북 폈다가 어느새 3시간이 사라진 그 매장.',
+    sincerity:{score:28, label:'음악은 침묵을 채우는 존재'},
+    desc:'조용하고 따뜻한 혼자만의 섬. 음악은 그 시간을 방해하지 않아요. 그냥 있어요. 그게 완벽합니다.' },
+  QWIM:{ emoji:'🌧️', ko:'감성팔이러',  ename:'RAIN',   chipColor:'#7A2840', cardBg:'#fff0f5', cardBorder:'#d8a0b8', tags:['감성','음악 주인공','혼자만의 시간','아날로그'],
+    tagline:'일부러 비 오는 날만 골라 오는데, 알고 보니 비 오는 날 여기서 흘러나오는 그 노래 때문에 비를 기다리고 있던 그 매장.',
+    sincerity:{score:76, label:'음악이 감성의 온도계'},
+    desc:'음악이 혼자만의 세계를 완성하는 공간. 조용하고 따뜻한 분위기 속, 음악이 손님 각자의 감성과 맞닿아요.' },
+  QSCB:{ emoji:'🖼️', ko:'있어빌리티',  ename:'CHIC',   chipColor:'#1A5848', cardBg:'#f0faf8', cardBorder:'#80c8b8', tags:['세련됨','큐레이션','조용한 소통','분위기'],
+    tagline:'들어오는 순간 왠지 자세가 펴지고, 흘러나오는 재즈에 목소리까지 낮아지는 그 매장. 여기선 나도 좀 있어 보인다.',
+    sincerity:{score:58, label:'음악은 큐레이션된 배경화면'},
+    desc:'공간 자체가 말을 합니다. 세련되고 조용한 분위기 속에 음악은 큐레이션된 배경이고, 분위기가 주인공.' },
+  QSCM:{ emoji:'🍷', ko:'재즈교주',    ename:'JAZZ',   chipColor:'#182870', cardBg:'#f0f4ff', cardBorder:'#8098d8', tags:['재즈','감각적','음악과 대화','세련됨'],
+    tagline:'한 잔 더 시킨 건 내 의지가 아니라 다음 곡 때문이었다는 그 매장.',
+    sincerity:{score:87, label:'음악이 메뉴판만큼 중요함'},
+    desc:'음악은 안주가 됩니다. 차분하고 세련된 분위기 속에서 음악이 대화만큼 존재감을 가져요.' },
+  QSIB:{ emoji:'◻️', ko:'침묵애호가',  ename:'VOID',   chipColor:'#2A3850', cardBg:'#f5f7fa', cardBorder:'#9aacbf', tags:['미니멀','집중','세련됨','배경음'],
+    tagline:'집에서 세 시간 동안 못 한 일을 여기서 한 시간에 끝낸다. 비밀이 이 앰비언트 BGM이었다는 걸 나가서야 깨닫는 그 매장.',
+    sincerity:{score:22, label:'음악보다 여백을 사랑함'},
+    desc:'정제된 집중의 공간. 세련되고 조용하고, 개인의 시간에 최적화. 음악은 주장하지 않고 공간을 완성합니다.' },
+  QSIM:{ emoji:'🎧', ko:'선곡오타쿠',  ename:'DEEP',   chipColor:'#184830', cardBg:'#f0f8f2', cardBorder:'#78b888', tags:['음악 전면','세련됨','청음','감각'],
+    tagline:'커피 맛은 기억 안 나도 첫 곡은 기억난다. 그래도 다음 주에 또 오는 그 매장.',
+    sincerity:{score:96, label:'음악이 곧 이 공간의 전부'},
+    desc:'음악이 전부인 공간. 차분하고 세련된 분위기이지만, 오는 이유가 음악에 있어요.' },
+  EWCB:{ emoji:'🥩', ko:'불판BGM러',   ename:'FIRE',   chipColor:'#802010', cardBg:'#fff3f0', cardBorder:'#e8a090', tags:['활기','단골','친근함','배경음'],
+    tagline:'처음 만난 사람이랑 2차 갈 사이가 됐다. BGM 한 곡에 건배하다 보면 불판 앞에서 친구 안 되기가 더 어려운 그 매장.',
+    sincerity:{score:48, label:'음악은 흥 올리는 조연'},
+    desc:'활기차고 친근한 에너지. 처음 온 사람도 30분이면 단골처럼 편해지는 곳.' },
+  EWCM:{ emoji:'🎤', ko:'떼창유도러',  ename:'SING',   chipColor:'#7A4000', cardBg:'#fff8e6', cardBorder:'#e8c070', tags:['신남','함께하는','음악 흥','에너지'],
+    tagline:'모르는 노래인데 어느새 따라 부르고 있다. 나 원래 이런 사람 아닌데. 그 매장.',
+    sincerity:{score:83, label:'음악이 분위기를 만든다고 믿음'},
+    desc:'음악은 흥이 됩니다. 활기차고 따뜻한 분위기 속에 음악이 파티의 일원처럼 존재해요.' },
+  EWIB:{ emoji:'🏃', ko:'혼자신남러',  ename:'PUMP',   chipColor:'#606000', cardBg:'#fffdf0', cardBorder:'#d8c850', tags:['운동','개인','에너지','배경음'],
+    tagline:'"딱 한 시간만" 했는데 BGM이 너무 좋아서 두 시간이 지나 있다. 그리고 다음 주 또 예약하는 그 매장.',
+    sincerity:{score:62, label:'음악이 에너지 부스터'},
+    desc:'개인의 에너지를 충전하는 곳. 활기차지만 혼자 오는 공간. 오면 항상 뭔가 해내고 나오게 됩니다.' },
+  EWIM:{ emoji:'🥁', ko:'박자복종러',  ename:'BEAT',   chipColor:'#784010', cardBg:'#fff8ec', cardBorder:'#e0b860', tags:['활동','음악 주도','에너지','나만의 리듬'],
+    tagline:'안 움직이려 했는데 어느새 몸이 박자에 맞춰지고 있다. 음악 탓이다. 내 탓이 아니다. 그 매장.',
+    sincerity:{score:89, label:'음악이 몸을 이끈다고 믿음'},
+    desc:'음악이 동작을 이끄는 공간. 활기차고 따뜻한 분위기 속에서 음악이 손님의 리듬 자체가 됩니다.' },
+  ESCB:{ emoji:'📸', ko:'핫플장인',    ename:'SNAP',   chipColor:'#580888', cardBg:'#f8f0ff', cardBorder:'#c090e8', tags:['트렌디','SNS','세련됨','활기'],
+    tagline:'흘러나오는 노래도, 인테리어도 다 핫하다. 사진 안 찍고 나가면 왠지 손해 본 것 같아서 결국 카메라 앱을 켜게 되는 그 매장.',
+    sincerity:{score:53, label:'음악은 핫플의 구성요소'},
+    desc:'트렌디하고 활기찬 에너지. 사진 찍지 않으면 왠지 손해인 것 같고, SNS에 올리고 싶어지는 곳.' },
+  ESCM:{ emoji:'🌃', ko:'술탓BGM러',   ename:'NITE',   chipColor:'#A01060', cardBg:'#fff0f8', cardBorder:'#e870c0', tags:['파티','음악 주인공','세련된 에너지','바이브'],
+    tagline:'분위기에 취해서 한 잔이 세 잔이 됐다. 음악 탓이다. 내 의지 탓이 아니다. 그 매장.',
+    sincerity:{score:93, label:'음악이 이 공간의 정체성'},
+    desc:'음악이 분위기를 지배합니다. 활기차고 세련된 에너지 속에서 음악이 파티의 주인공이 돼요.' },
+  ESIB:{ emoji:'🏙️', ko:'도시감성러',  ename:'CITY',   chipColor:'#182898', cardBg:'#f0f0ff', cardBorder:'#8080d8', tags:['모던','개인','에너지','세련됨'],
+    tagline:'혼자 왔는데 BGM 한 곡에 집중력이 터지더니, 나갈 때는 오늘 뭔가 대단한 걸 한 사람이 된 느낌. 그 착각이 기분 좋은 그 매장.',
+    sincerity:{score:64, label:'음악이 도시 감성을 완성'},
+    desc:'세련되고 역동적인 개인 공간. 혼자 오지만 에너지가 충전되는 곳.' },
+  ESIM:{ emoji:'🎸', ko:'새벽까지러',  ename:'LATE',   chipColor:'#102080', cardBg:'#e8f0ff', cardBorder:'#6080c8', tags:['인디','음악 전면','세련된 에너지','발견'],
+    tagline:'여기서 처음 들은 노래 찾아보다 새벽 두 시가 됐다. 내일 출근인데도 후회 없는 그 매장.',
+    sincerity:{score:99, label:'음악이 인생을 바꿀 수 있다고 믿음'},
+    desc:'음악이 전부인 인디씬. 세련되고 활기차며, 혼자 와도 음악 안에 있으면 충분한 곳.' },
+};
+
+// ── 질문 데이터 (MZ 스타일 리뉴얼) ──
+// scores: [energy(-Q/+E), tone(-W/+S), relation(-C/+I), music(-B/+M)]
+const questions = [
+  { section:'SECTION 1', sectionName:'공간 분위기 & 감성',
+    text:'손님이 문 열고 들어오는 순간, 이런 공기 줬으면 해',
+    answers:[
+      {text:'"아 여기 또 오고 싶다" 그 느낌',    scores:[-2,-2,-1, 0]},
+      {text:'심장이 약간 두근거리는 설렘',        scores:[ 1, 1, 0, 1]},
+      {text:'자연스럽게 집중 모드 되는 분위기',   scores:[-1, 0, 2,-1]},
+      {text:'에너지가 올라오는 활기',             scores:[ 2, 0,-2, 0]},
+      {text:'나도 모르게 자세 바로 잡게 되는 곳', scores:[ 0, 3, 0, 0]},
+      {text:'영화 속에 들어온 것 같은 몽환함',    scores:[-1, 1, 1, 2]},
+    ]},
+  { section:'SECTION 1', sectionName:'공간 분위기 & 감성',
+    text:'내 매장 바이브를 계절로 고르면?',
+    answers:[
+      {text:'벚꽃 날리는 날 창문 열어둔 봄 햇살',  scores:[-1,-2,-1, 0]},
+      {text:'밤에 더 생기 있어지는 여름 밤',        scores:[ 1, 1, 0, 1]},
+      {text:'비 소리 들리면서 감성 충만한 가을 비',  scores:[-2, 0, 1, 2]},
+      {text:'새벽 4시 고요함 같은 겨울 새벽',       scores:[-1, 2, 1, 0]},
+    ]},
+  { section:'SECTION 1', sectionName:'공간 분위기 & 감성',
+    text:'내 매장이 제일 예쁜 시간대 골라봐',
+    answers:[
+      {text:'햇살 들어오는 오전',     scores:[-1,-2,-1, 0]},
+      {text:'손님 줄 서는 점심',      scores:[ 2, 0,-2, 0]},
+      {text:'나른하게 늘어지는 오후', scores:[-1, 0, 0, 0]},
+      {text:'분위기 살아나는 저녁',   scores:[ 0, 1, 0, 1]},
+      {text:'감성 터지는 심야',       scores:[-1, 2, 2, 0]},
+    ]},
+  { section:'SECTION 1', sectionName:'공간 분위기 & 감성',
+    text:'내 매장이 영화에 나온다면 어떤 장면?',
+    answers:[
+      {text:'숲 속 작은 카페에서 책 읽는 씬', scores:[-2,-2, 1,-1]},
+      {text:'뉴욕 도심 루프탑 라운지',        scores:[ 1, 2,-1, 0]},
+      {text:'홍대 골목 인디 바 심야 공연',     scores:[ 1,-1,-1, 2]},
+      {text:'일본 감성 영화 속 단골 카페',     scores:[-1, 1, 1, 2]},
+      {text:'유럽 재즈바 즉흥 연주 씬',        scores:[-1, 1,-1, 2]},
+      {text:'미술관처럼 조용한 전시 공간',     scores:[-1, 2, 2,-1]},
+    ]},
+  { section:'SECTION 1', sectionName:'공간 분위기 & 감성',
+    text:'내 매장 한 단어로 설명하면?',
+    answers:[
+      {text:'따뜻함',    scores:[ 0,-3,-1, 0]},
+      {text:'미니멀',    scores:[-1, 2, 1,-1]},
+      {text:'시티 감성', scores:[ 1, 2, 0, 0]},
+      {text:'빈티지',    scores:[-1,-1, 0, 1]},
+      {text:'감성 터짐', scores:[-1, 0, 0, 2]},
+      {text:'힙함',      scores:[ 2, 2, 0, 1]},
+    ]},
+  { section:'SECTION 2', sectionName:'손님 행동 & 공간 목적',
+    text:'우리 손님들 매장에서 뭐 주로 함?',
+    answers:[
+      {text:'수다 떨면서 먹는 게 메인',               scores:[ 0, 0,-3, 0]},
+      {text:'몸 쓰러 온 사람들 (운동·활동)',           scores:[ 3, 0, 1, 1]},
+      {text:'노트북 펴고 집중 모드',                  scores:[-1, 0, 2,-2]},
+      {text:'혼자 앉아서 멍 때리거나 사색',           scores:[-1, 0, 2, 0]},
+      {text:'모여서 한 잔 하는 사람들',               scores:[ 2, 0,-2, 0]},
+      {text:'오기 전부터 인스타 각도 생각한 사람들',  scores:[ 0, 2,-1, 1]},
+    ]},
+  { section:'SECTION 2', sectionName:'손님 행동 & 공간 목적',
+    text:'손님들 얼마나 있다 가요?',
+    answers:[
+      {text:'후다닥 왔다 감 (10~20분)',        scores:[ 2, 0, 0,-1]},
+      {text:'적당하게 있다 감 (30~60분)',       scores:[ 0, 0, 0, 0]},
+      {text:'자리 잡고 오래 있는 편 (1시간+)', scores:[-1, 0, 1, 0]},
+      {text:'나가기 싫어서 눌러앉는 스타일',   scores:[-2, 0, 1, 1]},
+    ]},
+  { section:'SECTION 2', sectionName:'손님 행동 & 공간 목적',
+    text:'내 매장에서 음악이 하는 역할은?',
+    answers:[
+      {text:'있는 듯 없는 듯 조용한 배경음',           scores:[ 0, 0, 0,-3]},
+      {text:'공간 분위기 잡아주는 보조 역할',          scores:[ 0, 0, 0,-1]},
+      {text:'이 공간 감성의 핵심 요소',                scores:[ 0, 1, 0, 2]},
+      {text:'"거기 음악 뭐였어요?" 기억에 남는 포인트',scores:[ 0, 0, 0, 3]},
+    ]},
+  { section:'SECTION 2', sectionName:'손님 행동 & 공간 목적',
+    text:'매장 피크 타임이 언제야?',
+    answers:[
+      {text:'오전', scores:[-1,-1,-1, 0]},
+      {text:'점심', scores:[ 1, 0,-1, 0]},
+      {text:'오후', scores:[ 0, 0, 0, 0]},
+      {text:'저녁', scores:[ 0, 0,-1, 1]},
+      {text:'심야', scores:[ 1, 2, 0, 1]},
+    ]},
+  { section:'SECTION 2', sectionName:'손님 행동 & 공간 목적',
+    text:'매장 운영에서 제일 신경 쓰는 게 뭐야?',
+    answers:[
+      {text:'손님이 편안한 게 최고',           scores:[-1,-2, 0, 0]},
+      {text:'회전율이 곧 매출',               scores:[ 2, 0,-2,-1]},
+      {text:'분위기가 전부임',                scores:[ 0, 1, 0, 1]},
+      {text:'브랜드 이미지 관리',             scores:[ 0, 2, 0, 1]},
+      {text:'SNS에 올리고 싶은 공간',         scores:[ 1, 2, 0, 2]},
+      {text:'한번 오면 빠져나오기 싫은 몰입감', scores:[-1, 0, 2, 2]},
+    ]},
+  { section:'SECTION 3', sectionName:'음악 취향 & 감각',
+    text:'어떤 음악 틀었을 때 제일 자연스러워?',
+    answers:[
+      {text:'피아노 / 클래식 (웅장하고 차분하게)',   scores:[-1,-2, 0,-2]},
+      {text:'재즈 (여유 있고 감성적으로)',           scores:[-1, 1, 0, 2]},
+      {text:'Lo-fi / 칠아웃 (집중 잘 되는 그 음악)', scores:[-2, 0, 1,-2]},
+      {text:'어쿠스틱 / 포크 (따뜻하고 가볍게)',    scores:[-1,-1, 0, 0]},
+      {text:'인디팝 / 인디 록 (개성 있고 신선하게)', scores:[ 1, 0, 0, 2]},
+      {text:'올드 K팝 / 추억 가요 (친근하게)',       scores:[ 0,-2,-1,-2]},
+      {text:'일렉트로닉 / 댄스 (에너지 넘치게)',     scores:[ 2, 1, 0, 2]},
+      {text:'잘 모르겠음, 아무거나 상관없어',        scores:[ 0, 0, 0, 0]},
+    ]},
+  { section:'SECTION 3', sectionName:'음악 취향 & 감각',
+    text:'보컬 있는 노래, 어디까지 괜찮아?',
+    answers:[
+      {text:'그냥 연주곡이 편함, 목소리 노 땡큐',   scores:[ 0, 0, 1,-2]},
+      {text:'있긴 한데 잘 안 들릴 정도면 OK',       scores:[ 0, 0, 0,-1]},
+      {text:'분위기만 안 깨면 뭐든 상관없음',       scores:[ 0, 0, 0, 0]},
+      {text:'가사가 꽂히는 노래가 좋음, 감정 전달', scores:[ 0, 0, 0, 2]},
+    ]},
+  { section:'SECTION 3', sectionName:'음악 취향 & 감각',
+    text:'이런 음악만큼은 절대 NO',
+    answers:[
+      {text:'귀가 아플 정도로 시끄러운 음악',    scores:[-2, 0, 0, 0]},
+      {text:'분위기 다운되는 우울한 음악',        scores:[ 1,-1, 0, 0]},
+      {text:'어디서나 들리는 너무 유명한 음악',   scores:[ 0, 2, 0, 1]},
+      {text:'같은 패턴만 반복되는 단조로운 음악', scores:[ 0, 0, 0, 1]},
+      {text:'심장 흔드는 강한 비트',             scores:[-1,-1, 0, 0]},
+    ]},
+  { section:'SECTION 3', sectionName:'음악 취향 & 감각',
+    text:'내 매장 분위기 한 문장으로 뭐야?',
+    answers:[
+      {text:'햇살 아래 여유로운 브런치 타임',   scores:[-1,-2,-2,-1]},
+      {text:'비 오는 날 창가 자리에 혼자 앉아', scores:[-2, 0, 1, 2]},
+      {text:'새벽 도시를 걷는 조용한 공기',     scores:[-1, 2, 2, 0]},
+      {text:'웃음 소리 섞인 활기찬 왁자지껄',  scores:[ 2,-1,-2, 0]},
+      {text:'이어폰 빼고 싶지 않은 몰입의 공간', scores:[-1, 0, 2, 2]},
+    ]},
+  { section:'SECTION 3', sectionName:'음악 취향 & 감각',
+    text:'음악에서 이게 없으면 안 됨',
+    answers:[
+      {text:'공간 분위기 딱 맞는 분위기감',      scores:[ 0, 1, 0, 1]},
+      {text:'듣고 있으면 스트레스 풀리는 편안함', scores:[ 0,-1, 0,-1]},
+      {text:'촌스럽지 않은 세련됨',             scores:[ 0, 2, 0, 0]},
+      {text:'가슴에 와닿는 감정 전달력',         scores:[ 0, 0, 0, 2]},
+      {text:'공간이랑 찰떡으로 맞는 조화',       scores:[-1, 0, 0,-1]},
+      {text:'우리 매장다운 브랜드 느낌',         scores:[ 0, 2, 0, 1]},
+    ]},
+  { section:'SECTION 4', sectionName:'공간 스타일 & 브랜드 취향',
+    text:'인테리어 스타일 뭐임?',
+    answers:[
+      {text:'우드 & 내추럴 (자연 소재, 따뜻한 톤)', scores:[-1,-2, 0, 0]},
+      {text:'화이트 미니멀 (깔끔하고 비워진 느낌)', scores:[-1, 2, 1,-1]},
+      {text:'빈티지 레트로 (오래된 것들의 감성)',   scores:[ 0,-1, 0, 1]},
+      {text:'블랙 모던 (세련되고 어두운 톤)',       scores:[ 1, 2, 0, 0]},
+      {text:'플랜테리어 (식물이 가득한 공간)',      scores:[-1,-1, 0, 0]},
+      {text:'콘크리트 감성 (날것 그대로의 무드)',   scores:[-1, 2, 1, 0]},
+    ]},
+  { section:'SECTION 4', sectionName:'공간 스타일 & 브랜드 취향',
+    text:'분위기가 비슷한 공간 골라봐',
+    answers:[
+      {text:'동네 단골 식당이나 포차',         scores:[ 0,-3,-2, 0]},
+      {text:'감성 카페 또는 독립 서점',         scores:[-1,-1, 1, 1]},
+      {text:'미니멀 갤러리 또는 브랜드 쇼룸',  scores:[-1, 2, 1,-1]},
+      {text:'스포츠 스튜디오 또는 클라이밍장', scores:[ 3, 0, 0, 1]},
+      {text:'루프탑 바 또는 트렌디 레스토랑',  scores:[ 1, 2,-1, 1]},
+      {text:'자연 속 공간 또는 가든 카페',     scores:[-1,-2,-1, 0]},
+    ]},
+  { section:'SECTION 4', sectionName:'공간 스타일 & 브랜드 취향',
+    text:'조명 분위기 어때?',
+    answers:[
+      {text:'쨍하게 밝고 산뜻함',       scores:[ 1,-1, 0, 0]},
+      {text:'노란빛 따뜻하고 아늑함',   scores:[-1,-2, 0, 0]},
+      {text:'어둑하고 무드 있음',       scores:[-1, 2, 0, 1]},
+      {text:'햇빛 그대로 자연광 중심',  scores:[-1,-1, 0, 0]},
+      {text:'심플하고 차분하게 절제됨', scores:[-1, 1, 0, 0]},
+    ]},
+  { section:'SECTION 4', sectionName:'공간 스타일 & 브랜드 취향',
+    text:'내 매장이 노래 장르라면 뭐임?',
+    answers:[
+      {text:'재즈 – 느긋하고 감성 넘치는',           scores:[-1, 1, 0, 2]},
+      {text:'Lo-fi – 집중되고 몽환적인',              scores:[-2, 0, 1,-2]},
+      {text:'어쿠스틱 – 따뜻하고 편안한',            scores:[-1,-1, 0,-2]},
+      {text:'인디팝 – 개성 있고 감성적인',           scores:[ 1, 0, 0, 2]},
+      {text:'R&B / 소울 – 부드럽고 세련된',          scores:[-1,-1, 0, 2]},
+      {text:'앰비언트 – 공간에 녹아드는 잔잔한 무드', scores:[-2, 0, 1,-2]},
+    ]},
+  { section:'SECTION 4', sectionName:'공간 스타일 & 브랜드 취향',
+    text:'손님들이 내 매장 이렇게 기억해줬으면 해',
+    answers:[
+      {text:'"거기 진짜 편해" 편안한 공간',                 scores:[-1,-2, 0, 0]},
+      {text:'"거기 감성 미쳤어" 감성적인 공간',             scores:[-1, 0, 0, 1]},
+      {text:'"거기 너무 세련됨" 힙한 공간',                 scores:[ 0, 3, 0, 0]},
+      {text:'"거기 시간 가는 줄 몰랐어" 오래 있고 싶은 공간', scores:[-1, 0, 1, 0]},
+      {text:'"거기 취향 진짜 독특해" 개성 있는 공간',       scores:[ 0, 1, 0, 2]},
+      {text:'"거기 음악이 뭔가 달랐어" 음악이 기억나는 공간', scores:[ 0, 0, 0, 3]},
+    ]},
+];
+
+// ─── 계산 헬퍼 ───────────────────────────────
+function absMaxPerQuestion(q) {
+  // 각 축의 최대 절댓값 반환
+  const m = [0,0,0,0];
+  q.answers.forEach(a => a.scores.forEach((s,i) => { if(Math.abs(s) > m[i]) m[i] = Math.abs(s); }));
+  return m;
+}
+function totalAbsMax() {
+  const t = [0,0,0,0];
+  questions.forEach(q => absMaxPerQuestion(q).forEach((s,i) => t[i] += s));
+  return t;
+}
+const allMax = totalAbsMax();
+const grandMax = Math.max(...allMax);
+
+// ─── 통계 카드 렌더 ───────────────────────────
+document.getElementById('stat-grid').innerHTML = [
+  {num:20, label:'총 문항 수'},
+  {num:4,  label:'섹션 수'},
+  {num:16, label:'결과 타입'},
+  {num: questions.reduce((a,q)=>a+q.answers.length,0), label:'총 선택지 수'},
+  {num: grandMax, label:'이론적 최대 축 영향도'},
+  {num: 4, label:'결과 결정 축 수 (4축 부호)'},
+].map(s => `
+  <div class="stat-card">
+    <div class="stat-num">${s.num}</div>
+    <div class="stat-label">${s.label}</div>
+  </div>`).join('');
+
+// ─── 타입 카드 렌더 ───────────────────────────
+document.getElementById('type-grid').innerHTML = TYPES.map(key => {
+  const d = TYPE_DATA[key];
+  return `
+  <div class="type-card" style="background:${d.cardBg}; border-color:${d.cardBorder};">
+    <div class="type-card-header">
+      <span class="type-emoji">${d.emoji}</span>
+      <div>
+        <div class="type-name" style="color:${d.chipColor};">${d.ko}</div>
+        <div class="type-ko" style="color:${d.chipColor}; opacity:0.6;">${key}</div>
+      </div>
+    </div>
+    <div class="type-tags">
+      ${(d.tags||[]).map(tag=>`<span class="type-tag" style="background:rgba(255,255,255,0.6);color:${d.chipColor};border:1px solid ${d.cardBorder};">${tag}</span>`).join('')}
+    </div>
+    <div class="type-desc">${d.desc}</div>
+    <p class="type-tagline">"${d.tagline}"</p>
+    <div class="type-sincerity">
+      <div class="type-sincerity-bar"><div class="type-sincerity-fill" style="width:${d.sincerity.score}%"></div></div>
+      <span class="type-sincerity-score">${d.sincerity.score}점</span>
+    </div>
+    <div class="type-desc" style="font-size:10px; margin-top:4px; color:var(--lg);">${d.sincerity.label}</div>
+    <div class="type-max" style="color:${d.chipColor}; margin-top:8px; font-size:12px; font-weight:600;">
+      ${d.ename}
+    </div>
+  </div>`;
+}).join('');
+
+// ─── 히트맵 렌더 (4축 기준) ──────────────────
+const cellClass = s => ['cell-0','cell-1','cell-2','cell-3'][Math.min(s,3)];
+const AXIS_LABELS = ['Energy<br>Q↔E','Tone<br>W↔S','Relation<br>C↔I','Music<br>B↔M'];
+const heatmap = document.getElementById('heatmap-table');
+let html = `<thead><tr>
+  <th>문항</th>
+  ${AXIS_LABELS.map(l=>`<th>${l}</th>`).join('')}
+</tr></thead><tbody>`;
+
+let lastSection = '';
+questions.forEach((q, qi) => {
+  if (q.section !== lastSection) {
+    lastSection = q.section;
+    html += `<tr><td colspan="5" style="background:#eef0ff;color:#233eff;font-size:10px;font-weight:700;letter-spacing:0.15em;text-align:left;padding:6px 10px;">${q.section} · ${q.sectionName}</td></tr>`;
+  }
+  const maxS = absMaxPerQuestion(q);
+  html += `<tr>
+    <td>Q${qi+1}. ${q.text.length>28 ? q.text.slice(0,28)+'…' : q.text}</td>
+    ${maxS.map(s=>`<td class="${cellClass(s)}">${s||'-'}</td>`).join('')}
+  </tr>`;
+});
+
+// 합계 행
+html += `<tr style="font-weight:800; background:#f8f9fb;">
+  <td style="font-weight:800; color:#1b1b1d;">이론적 최대 절댓값 합계</td>
+  ${allMax.map(s=>`<td style="color:#233eff; font-weight:900; background:#eef0ff;">${s}</td>`).join('')}
+</tr>`;
+html += '</tbody>';
+heatmap.innerHTML = html;
+
+// ─── 문항별 상세 렌더 ─────────────────────────
+const AXIS_SHORT = ['Energy(-Q/+E)','Tone(-W/+S)','Relation(-C/+I)','Music(-B/+M)'];
+const qList = document.getElementById('q-list');
+let lastSec2 = '';
+questions.forEach((q, qi) => {
+  if (q.section !== lastSec2) {
+    lastSec2 = q.section;
+    const el = document.createElement('div');
+    el.className = 'q-section-label';
+    el.textContent = `${q.section} · ${q.sectionName}`;
+    qList.appendChild(el);
+  }
+
+  const item = document.createElement('div');
+  item.className = 'q-item';
+
+  const colHeaders = AXIS_SHORT.map(a=>`<th>${a}</th>`).join('');
+  const rows = q.answers.map(a => {
+    const cells = a.scores.map(s=>{
+      const abs = Math.abs(s);
+      const cls = `s${Math.min(abs,3)}`;
+      const display = s === 0 ? '-' : (s > 0 ? '+'+s : s);
+      return `<td class="${cls}">${display}</td>`;
+    }).join('');
+    return `<tr><td>${a.text}</td>${cells}</tr>`;
+  }).join('');
+
+  item.innerHTML = `
+    <div class="q-header" onclick="toggleQ(this)">
+      <span class="q-num">Q${qi+1}</span>
+      <span class="q-text">${q.text}</span>
+      <span class="q-arrow">▼</span>
+    </div>
+    <div class="q-body">
+      <table class="answer-table">
+        <thead><tr><th>답변</th>${colHeaders}</tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <p style="font-size:11px; color:var(--lg); margin-top:8px;">
+        ★ 이 문항의 최대 축 영향도 — ${AXIS_SHORT.map((a,i)=>`<strong>${a.split('(')[0]}</strong>:${absMaxPerQuestion(q)[i]}`).join(' / ')}
+      </p>
+    </div>`;
+  qList.appendChild(item);
+});
+
+function toggleQ(header) {
+  const item = header.closest('.q-item');
+  item.classList.toggle('open');
+}
+</script>
+</body>
+</html>
