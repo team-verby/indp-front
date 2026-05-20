@@ -10,40 +10,73 @@ function parseJwtExp(token) {
 
 let _sessionWarnTimer = null;
 let _sessionExpireTimer = null;
+let _refreshPromise = null;
 
+// 만료 5분 전 자동 silent refresh — 실패해도 경고 없이 401 retry에 위임
 function scheduleSessionWarning(token) {
   clearTimeout(_sessionWarnTimer);
   clearTimeout(_sessionExpireTimer);
   const exp = parseJwtExp(token);
   if (!exp) return;
   const now = Date.now();
-  const warnAt  = exp - 5 * 60 * 1000; // 만료 5분 전
-  const expireAt = exp;
+  const refreshAt = exp - 5 * 60 * 1000;
 
-  if (warnAt > now) {
+  if (refreshAt > now) {
     _sessionWarnTimer = setTimeout(() => {
-      document.dispatchEvent(new CustomEvent('ownerSessionWarning', { detail: { expiresAt: exp } }));
-    }, warnAt - now);
+      refreshAccessToken(); // 성공 시 새 타이머 자동 등록, 실패 시 다음 API 호출의 401 retry가 처리
+    }, refreshAt - now);
+  } else if (exp > now) {
+    refreshAccessToken();
   }
-  if (expireAt > now) {
-    _sessionExpireTimer = setTimeout(() => {
-      clearOwnerToken();
-      document.dispatchEvent(new CustomEvent('ownerSessionExpired'));
-    }, expireAt - now);
-  }
+  // 강제 로그아웃 타이머 없음 — refreshToken 유효 기간(30일) 동안 세션 유지
+}
+
+// 동시 호출 방지를 위해 Promise 공유
+async function refreshAccessToken() {
+  if (_refreshPromise) return _refreshPromise;
+
+  _refreshPromise = (async () => {
+    const refreshToken = getRefreshToken();
+    if (!refreshToken) return false;
+    try {
+      const res = await fetch(BASE_URL + '/api/owner/refresh', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refreshToken }),
+      });
+      if (!res.ok) throw new Error('refresh failed');
+      const data = await res.json();
+      setOwnerToken(data.accessToken, data.refreshToken);
+      return true;
+    } catch {
+      return false;
+    } finally {
+      _refreshPromise = null;
+    }
+  })();
+
+  return _refreshPromise;
 }
 
 async function apiFetch(method, path, body, token) {
-  const headers = { 'Content-Type': 'application/json' };
-  if (token) headers['Authorization'] = `Bearer ${token}`;
-  const opts = { method, headers };
-  if (body !== undefined) opts.body = JSON.stringify(body);
-  const res = await fetch(BASE_URL + path, opts);
+  const doFetch = (t) => {
+    const headers = { 'Content-Type': 'application/json' };
+    if (t) headers['Authorization'] = `Bearer ${t}`;
+    const opts = { method, headers };
+    if (body !== undefined) opts.body = JSON.stringify(body);
+    return fetch(BASE_URL + path, opts);
+  };
+
+  let res = await doFetch(token);
+
+  // 401 → refresh 후 1회 재시도
+  if (res.status === 401) {
+    const refreshed = await refreshAccessToken();
+    if (!refreshed) throw new Error('세션이 만료되었습니다.');
+    res = await doFetch(getOwnerToken());
+  }
+
   if (!res.ok) {
-    if (res.status === 401) {
-      clearOwnerToken();
-      document.dispatchEvent(new CustomEvent('ownerSessionExpired'));
-    }
     let msg = `API 오류 (${res.status})`;
     try { const d = await res.json(); console.error('[API 에러 응답]', JSON.stringify(d)); msg = d.message || msg; } catch(e) {}
     throw new Error(msg);
@@ -54,13 +87,16 @@ async function apiFetch(method, path, body, token) {
   return JSON.parse(text);
 }
 
-function getOwnerToken() { return localStorage.getItem('ownerToken'); }
-function setOwnerToken(t) {
-  localStorage.setItem('ownerToken', t);
-  scheduleSessionWarning(t);
+function getOwnerToken()    { return localStorage.getItem('ownerToken'); }
+function getRefreshToken()  { return localStorage.getItem('ownerRefreshToken'); }
+function setOwnerToken(accessToken, refreshToken) {
+  localStorage.setItem('ownerToken', accessToken);
+  if (refreshToken) localStorage.setItem('ownerRefreshToken', refreshToken);
+  scheduleSessionWarning(accessToken);
 }
 function clearOwnerToken() {
   localStorage.removeItem('ownerToken');
+  localStorage.removeItem('ownerRefreshToken');
   clearTimeout(_sessionWarnTimer);
   clearTimeout(_sessionExpireTimer);
 }
@@ -138,6 +174,10 @@ function initMobileNav() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  // 새로고침 후에도 만료 타이머/자동 refresh 복원
+  const existingToken = getOwnerToken();
+  if (existingToken) scheduleSessionWarning(existingToken);
+
   updateNavAuth();
   initMobileNav();
 

@@ -229,7 +229,7 @@
       if (!loginId || !password) { alert('아이디와 비밀번호를 입력해 주세요.'); return; }
       try {
         const data = await apiFetch('POST', '/api/owner/login', { loginId, password });
-        setOwnerToken(data.accessToken);
+        setOwnerToken(data.accessToken, data.refreshToken);
         try {
           const storeList = await apiFetch('GET', '/api/owner/stores', undefined, data.accessToken);
           const storesArr = Array.isArray(storeList) ? storeList
