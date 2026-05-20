@@ -1658,7 +1658,8 @@
     let ytPlayer = null;
     let ytReady = false;
     let seekOnPlay = 0;
-    let pendingUnmute = false; // PLAYING 이벤트 때 unmute 처리 플래그
+    let pendingUnmute = false;  // PLAYING 이벤트 때 unmute 처리 플래그
+    let loadingNewSong = false; // loadVideoById 직후 spurious ENDED 무시 플래그
 
     // YouTube IFrame API 동적 로드 (콜백 정의 후 로드해야 타이밍 보장)
     (function() {
@@ -1682,6 +1683,7 @@
             if (!isMyStore) return;
             console.log('[YT state]', e.data, '/ isMuted:', isMuted, '/ pendingUnmute:', pendingUnmute, '/ headIdx:', headIdx);
             if (e.data === YT.PlayerState.PLAYING) {
+              loadingNewSong = false; // 실제 재생 시작 → spurious ENDED 방어 해제
               if (seekOnPlay > 0) {
                 ytPlayer.seekTo(seekOnPlay, true);
                 seekOnPlay = 0;
@@ -1702,6 +1704,10 @@
                 hideUnmuteTooltip();
               }
             } else if (e.data === YT.PlayerState.ENDED) {
+              if (loadingNewSong) {
+                console.log('[ENDED] spurious from loadVideoById → 무시');
+                return;
+              }
               console.log('[ENDED] headIdx before:', headIdx, '/ cur videoId:', allSongs[headIdx % allSongs.length]?.videoId);
               headIdx = (headIdx + 1) % allSongs.length;
               elapsed = 0;
@@ -1731,6 +1737,7 @@
       if (!cur.videoId) return;
       seekOnPlay = elapsed > 0 ? elapsed : 0;
       console.log('[playCurrentYT] videoId:', cur.videoId, '/ elapsed:', elapsed);
+      loadingNewSong = true; // loadVideoById 직후 spurious ENDED 방어
       ytPlayer.loadVideoById({ videoId: cur.videoId, startSeconds: elapsed });
       if (isMuted) showUnmuteTooltip();
     }
