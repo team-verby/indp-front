@@ -1685,7 +1685,7 @@
                 ytPlayer.setVolume(volumeLevel > 0 ? volumeLevel : 10);
                 pendingUnmute = false;
                 hideUnmuteTooltip();
-              } else {
+              } else if (isMuted) {
                 showUnmuteTooltip();
               }
             } else if (e.data === YT.PlayerState.ENDED) {
@@ -1718,7 +1718,7 @@
       seekOnPlay = elapsed > 0 ? elapsed : 0;
       console.log('[playCurrentYT] videoId:', cur.videoId, '/ elapsed:', elapsed);
       ytPlayer.loadVideoById({ videoId: cur.videoId, startSeconds: elapsed });
-      showUnmuteTooltip();
+      if (isMuted) showUnmuteTooltip();
     }
 
     function showUnmuteTooltip() {
