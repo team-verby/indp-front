@@ -1636,10 +1636,15 @@
     function tick() {
       if (allSongs.length === 0) return;
 
-      if (isMyStore && ytPlayer && ytPlayer.getPlayerState() === 1) {
+      if (isMyStore && ytPlayer && ytReady && ytPlayer.getPlayerState() === 1) {
         // 점주: YouTube 실제 재생 위치 사용, 곡 전환은 ENDED 이벤트가 담당
         elapsed = Math.floor(ytPlayer.getCurrentTime());
         updateProgress();
+        // YouTube 내부 음소거 상태와 isMuted 불일치 보정 (loadVideoById 리셋, 브라우저 정책 등)
+        if (!isMuted && ytPlayer.isMuted()) {
+          ytPlayer.unMute();
+          ytPlayer.setVolume(volumeLevel > 0 ? volumeLevel : 10);
+        }
         return;
       }
 
