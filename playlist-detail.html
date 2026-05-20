@@ -1679,6 +1679,16 @@
               playCurrentYT();
             }
           },
+          onError: (e) => {
+            // 영상 로드 실패(삭제·임베드 불가 등) → 다음 곡으로 건너뜀
+            console.log('[YT error]', e.data, '→ 다음 곡으로');
+            loadingNewSong = false;
+            headIdx = (headIdx + 1) % allSongs.length;
+            elapsed = 0;
+            songStartedAt = Date.now();
+            renderQueue();
+            playCurrentYT();
+          },
           onStateChange: (e) => {
             if (!isMyStore) return;
             console.log('[YT state]', e.data, '/ isMuted:', isMuted, '/ pendingUnmute:', pendingUnmute, '/ headIdx:', headIdx);
@@ -1805,8 +1815,8 @@
             pendingUnmute = false;
             hideUnmuteTooltip();
           } else if (state === -1 || state === 0 || state === 5) {
-            // 미시작/종료 → 로드하면 PLAYING 이벤트에서 unmute 처리
-            playCurrentYT();
+            // 미시작/종료이고 이미 로딩 중이 아닐 때만 재시작 (중복 loadVideoById 방지)
+            if (!loadingNewSong) playCurrentYT();
           } else {
             // 버퍼링/일시정지 → 재생 재개하면 PLAYING 이벤트에서 unmute 처리
             ytPlayer.playVideo();
