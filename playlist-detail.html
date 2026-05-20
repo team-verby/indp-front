@@ -1659,7 +1659,6 @@
     let ytReady = false;
     let seekOnPlay = 0;
     let pendingUnmute = false;  // PLAYING 이벤트 때 unmute 처리 플래그
-    let loadingNewSong = false; // loadVideoById 직후 spurious ENDED 무시 플래그
 
     // YouTube IFrame API 동적 로드 (콜백 정의 후 로드해야 타이밍 보장)
     (function() {
@@ -1681,7 +1680,6 @@
           },
           onError: () => {
             // 영상 로드 실패(삭제·임베드 불가 등) → 다음 곡으로 건너뜀
-            loadingNewSong = false;
             headIdx = (headIdx + 1) % allSongs.length;
             elapsed = 0;
             songStartedAt = Date.now();
@@ -1691,7 +1689,6 @@
           onStateChange: (e) => {
             if (!isMyStore) return;
             if (e.data === YT.PlayerState.PLAYING) {
-              loadingNewSong = false;
               if (seekOnPlay > 0) {
                 ytPlayer.seekTo(seekOnPlay, true);
                 seekOnPlay = 0;
@@ -1709,7 +1706,6 @@
                 hideUnmuteTooltip();
               }
             } else if (e.data === YT.PlayerState.ENDED) {
-              if (loadingNewSong) return; // spurious ENDED from loadVideoById
               headIdx = (headIdx + 1) % allSongs.length;
               elapsed = 0;
               songStartedAt = Date.now();
@@ -1737,8 +1733,6 @@
       const cur = allSongs[headIdx % allSongs.length];
       if (!cur.videoId) return;
       seekOnPlay = elapsed > 0 ? elapsed : 0;
-      console.log('[playCurrentYT] videoId:', cur.videoId, '/ elapsed:', elapsed);
-      loadingNewSong = true; // loadVideoById 직후 spurious ENDED 방어
       ytPlayer.loadVideoById({ videoId: cur.videoId, startSeconds: elapsed });
       if (isMuted) showUnmuteTooltip();
     }
@@ -1806,8 +1800,7 @@
             pendingUnmute = false;
             hideUnmuteTooltip();
           } else if (state === -1 || state === 0 || state === 5) {
-            // 미시작/종료이고 이미 로딩 중이 아닐 때만 재시작 (중복 loadVideoById 방지)
-            if (!loadingNewSong) playCurrentYT();
+            playCurrentYT();
           } else {
             // 버퍼링/일시정지 → 재생 재개하면 PLAYING 이벤트에서 unmute 처리
             ytPlayer.playVideo();
@@ -1818,6 +1811,7 @@
         isMuted = true;
         prevVolume = volumeLevel;
         volumeLevel = 0;
+        if (ytPlayer && ytReady) ytPlayer.mute();
       }
       applyVolume(volumeLevel);
     }
