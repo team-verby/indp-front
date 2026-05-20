@@ -1680,24 +1680,29 @@
           },
           onStateChange: (e) => {
             if (!isMyStore) return;
+            console.log('[YT state]', e.data, '/ isMuted:', isMuted, '/ pendingUnmute:', pendingUnmute, '/ headIdx:', headIdx);
             if (e.data === YT.PlayerState.PLAYING) {
               if (seekOnPlay > 0) {
                 ytPlayer.seekTo(seekOnPlay, true);
                 seekOnPlay = 0;
               }
               if (pendingUnmute) {
+                console.log('[PLAYING] pendingUnmute branch → unMute');
                 ytPlayer.unMute();
                 ytPlayer.setVolume(volumeLevel > 0 ? volumeLevel : 10);
                 pendingUnmute = false;
                 hideUnmuteTooltip();
               } else if (isMuted) {
+                console.log('[PLAYING] isMuted=true → showTooltip');
                 showUnmuteTooltip();
               } else {
-                // loadVideoById가 YouTube 내부 음소거 상태를 리셋할 수 있으므로 명시적으로 복원
+                console.log('[PLAYING] else → unMute, vol:', volumeLevel);
                 ytPlayer.unMute();
                 ytPlayer.setVolume(volumeLevel > 0 ? volumeLevel : 10);
+                hideUnmuteTooltip();
               }
             } else if (e.data === YT.PlayerState.ENDED) {
+              console.log('[ENDED] headIdx before:', headIdx, '/ cur videoId:', allSongs[headIdx % allSongs.length]?.videoId);
               headIdx = (headIdx + 1) % allSongs.length;
               elapsed = 0;
               songStartedAt = Date.now();
