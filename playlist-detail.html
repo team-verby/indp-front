@@ -1687,6 +1687,10 @@
                 hideUnmuteTooltip();
               } else if (isMuted) {
                 showUnmuteTooltip();
+              } else {
+                // loadVideoById가 YouTube 내부 음소거 상태를 리셋할 수 있으므로 명시적으로 복원
+                ytPlayer.unMute();
+                ytPlayer.setVolume(volumeLevel > 0 ? volumeLevel : 10);
               }
             } else if (e.data === YT.PlayerState.ENDED) {
               headIdx = (headIdx + 1) % allSongs.length;
