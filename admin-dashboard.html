@@ -1732,7 +1732,14 @@
             <option value="">전체 상태</option>
             <option value="active">이용 중</option>
             <option value="expired">만료</option>
+            <option value="pending_active">준비 중</option>
+            <option value="pending_payment">결제 대기</option>
             <option value="refunded">환불 완료</option>
+          </select>
+          <select class="filter-select" onchange="filterByPlan(this.value)">
+            <option value="">전체 요금제</option>
+            <option value="기본">기본 요금제</option>
+            <option value="프리미엄">프리미엄 요금제</option>
           </select>
         </div>
 
@@ -2155,7 +2162,7 @@
       `).join('');
 
       // 검색/필터 중엔 클라이언트 카운트, 아니면 서버 전체 카운트
-      const isFiltered = currentQuery || currentStatus;
+      const isFiltered = currentQuery || currentStatus || currentPlan;
       const totalElements = isFiltered ? filteredList.length : serverTotalElements;
       const totalPages    = isFiltered ? Math.max(1, Math.ceil(filteredList.length / PAGE_SIZE)) : serverTotalPages;
       document.getElementById('store-count').textContent = totalElements;
@@ -2187,7 +2194,7 @@
     }
 
     function goStorePage(p) {
-      const isFiltered = currentQuery || currentStatus;
+      const isFiltered = currentQuery || currentStatus || currentPlan;
       const totalPages = isFiltered
         ? Math.ceil(filteredList.length / PAGE_SIZE)
         : serverTotalPages;
@@ -2222,11 +2229,13 @@
     // ── 검색 / 필터 ──
     let currentStatus = '';
     let currentQuery  = '';
+    let currentPlan   = '';
 
     function applyFilters() {
       storePage = 0;
       let list = stores;
       if (currentStatus) list = list.filter(s => s.status === currentStatus);
+      if (currentPlan)   list = list.filter(s => s.plan === currentPlan);
       if (currentQuery)  list = list.filter(s =>
         [s.storeName, s.applicant, s.contact].some(v => v.includes(currentQuery))
       );
@@ -2235,6 +2244,7 @@
 
     function filterStores(q)  { currentQuery  = q.trim(); applyFilters(); }
     function filterByStatus(s){ currentStatus = s;        applyFilters(); }
+    function filterByPlan(p)  { currentPlan   = p;        applyFilters(); }
 
     // ── 상태 변경 ──
     function changeStatus(id, status) {

@@ -72,7 +72,7 @@ nav.scrolled .nav-inner {
 
 .nav-links {
   display: flex;
-  gap: 60px;
+  gap: 36px;
   list-style: none;
 }
 
@@ -1018,6 +1018,10 @@ select.form-select {
 
 @media (min-width: 769px) {
   .nav-hamburger { display: none !important; }
+}
+
+@media (max-width: 1024px) {
+  .nav-links { gap: 28px; }
 }
 
 @media (max-width: 768px) {
