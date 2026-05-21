@@ -270,10 +270,9 @@
       word-break: break-word;
     }
     .result-type-ko   { font-size: clamp(17px, 4.5vw, 22px); font-weight: 800; margin-bottom: 16px; }
-    .result-tagline   {
-      font-size: clamp(13px, 3.5vw, 15px); font-weight: 700;
-      line-height: 1.6; padding: 13px 16px;
-      background: rgba(255,255,255,0.65); border-radius: 10px;
+    .result-tagline {
+      font-size: clamp(14px, 3.8vw, 16px); font-weight: 800;
+      line-height: 1.5; margin-top: 10px;
       word-break: keep-all;
     }
     .result-tags {
@@ -391,39 +390,40 @@
 
     .result-divider { border-top: 1px solid var(--border); margin-top: 28px; }
 
-    /* 음악 진심 지수 */
-    .sincerity-box {
-      background: var(--dark); border-radius: 18px;
-      padding: 22px 20px; margin: 16px auto 0;
-      max-width: 680px; width: calc(100% - 40px);
+    /* 통합 진심 지수 (결과 카드 내부) */
+    .result-sincerity {
+      margin-top: 18px;
+      background: rgba(0,0,0,0.07);
+      border-radius: 12px;
+      padding: 14px 16px 16px;
+      text-align: left;
     }
-    .sincerity-header {
+    .result-sincerity-row {
       display: flex; align-items: center; justify-content: space-between;
-      margin-bottom: 14px;
+      margin-bottom: 10px;
     }
-    .sincerity-title {
-      font-size: 11px; font-weight: 800; letter-spacing: 0.08em;
-      color: rgba(255,255,255,0.45); text-transform: uppercase;
+    .result-sincerity-meta {
+      font-size: 10px; font-weight: 800; letter-spacing: 0.1em;
+      color: rgba(0,0,0,0.35); text-transform: uppercase;
     }
-    .sincerity-score {
-      font-size: 26px; font-weight: 900; color: #fff; line-height: 1;
+    .result-sincerity-score {
+      font-size: 22px; font-weight: 900; line-height: 1;
     }
-    .sincerity-score span { font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.4); margin-left: 1px; }
+    .result-sincerity-score span { font-size: 11px; font-weight: 600; opacity: 0.5; margin-left: 1px; }
     .sincerity-bar-track {
-      height: 6px; background: rgba(255,255,255,0.1); border-radius: 100px;
-      margin-bottom: 14px; overflow: hidden;
+      height: 6px; background: rgba(0,0,0,0.12); border-radius: 100px;
+      overflow: hidden;
     }
     .sincerity-bar-fill {
       height: 100%; border-radius: 100px;
       background: linear-gradient(90deg, #4f8cff, #a78bfa);
       transition: width 0.8s cubic-bezier(.4,0,.2,1);
     }
-    .sincerity-label {
-      font-size: 15px; font-weight: 800; color: #fff; margin-bottom: 6px;
-    }
-    .sincerity-desc {
-      font-size: 13px; color: rgba(255,255,255,0.55); line-height: 1.65;
-      font-weight: 500; word-break: keep-all;
+
+    .story-quote {
+      display: block; font-size: 14px; color: var(--gray);
+      font-weight: 600; line-height: 1.7;
+      margin-bottom: 14px; word-break: keep-all;
     }
 
     /* CTA */
@@ -547,29 +547,25 @@
 <!-- ════ RESULT ════ -->
 <div class="screen" id="screen-result">
 
-  <!-- 공유용 결과 카드 -->
+  <!-- 통합 결과 카드 -->
   <div class="result-share-card">
     <div class="result-card-inner" id="result-card-inner">
       <span class="result-card-emoji" id="result-emoji"></span>
       <div><span class="result-type-chip" id="result-type-chip"></span></div>
       <h2 class="result-type-name" id="result-type-name"></h2>
       <p class="result-type-ko"   id="result-type-ko"></p>
-      <p class="result-tagline"   id="result-tagline"></p>
-      <div class="result-tags"    id="result-tags"></div>
+      <div class="result-sincerity">
+        <div class="result-sincerity-row">
+          <span class="result-sincerity-meta">사장님 음악 진심 지수</span>
+          <span class="result-sincerity-score" id="sincerity-score">0<span>점</span></span>
+        </div>
+        <div class="sincerity-bar-track">
+          <div class="sincerity-bar-fill" id="sincerity-bar" style="width:0%"></div>
+        </div>
+        <p class="result-tagline" id="result-tagline"></p>
+      </div>
+      <div class="result-tags" id="result-tags"></div>
     </div>
-  </div>
-
-  <!-- 음악 진심 지수 -->
-  <div class="sincerity-box">
-    <div class="sincerity-header">
-      <span class="sincerity-title">사장님 음악 진심 지수</span>
-      <span class="sincerity-score" id="sincerity-score">0<span>점</span></span>
-    </div>
-    <div class="sincerity-bar-track">
-      <div class="sincerity-bar-fill" id="sincerity-bar" style="width:0%"></div>
-    </div>
-    <p class="sincerity-label" id="sincerity-label"></p>
-    <p class="sincerity-desc" id="sincerity-desc"></p>
   </div>
 
   <!-- 카카오톡 공유 버튼 -->
@@ -1264,19 +1260,20 @@ function showResult() {
   document.getElementById('result-type-name').style.color = r.chipColor;
   document.getElementById('result-type-ko').textContent   = r.ko;
   document.getElementById('result-type-ko').style.color   = r.tagColor;
-  document.getElementById('result-tagline').textContent   = r.tagline;
-  document.getElementById('result-tagline').style.color   = r.tagColor;
   document.getElementById('result-tags').innerHTML = r.tags.map(t =>
     `<span class="result-tag" style="color:${r.tagColor};border:1px solid ${r.cardBorder};">${t}</span>`
   ).join('');
   const s = r.sincerity;
   document.getElementById('sincerity-score').innerHTML = `${s.score}<span>점</span>`;
-  document.getElementById('sincerity-label').textContent = s.label;
-  document.getElementById('sincerity-desc').textContent = s.desc;
+  document.getElementById('sincerity-score').style.color = r.tagColor;
+  document.getElementById('result-tagline').textContent = s.label;
+  document.getElementById('result-tagline').style.color = r.tagColor;
   requestAnimationFrame(() => {
     document.getElementById('sincerity-bar').style.width = s.score + '%';
   });
-  document.getElementById('result-desc').innerHTML = r.desc.replace(/\n/g, '<br>');
+  document.getElementById('result-desc').innerHTML =
+    `<span class="story-quote">"${r.tagline}"</span>` +
+    r.desc.replace(/\n/g, '<br>');
   document.getElementById('result-analysis').innerHTML = r.analysis.map(a =>
     `<div class="analysis-item"><p class="analysis-label">${a.label}</p><p class="analysis-value">${a.value}</p></div>`
   ).join('');
