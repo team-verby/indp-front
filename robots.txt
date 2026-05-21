@@ -13,4 +13,4 @@ Disallow: /renew.html
 Disallow: /renew-complete.html
 Disallow: /refund-preview.html
 
-Sitemap: https://indpmusic.co.kr/sitemap.xml
+Sitemap: https://www.indpmusic.co.kr/sitemap.xml
