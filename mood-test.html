@@ -1266,7 +1266,7 @@ function showResult() {
   const s = r.sincerity;
   document.getElementById('sincerity-score').innerHTML = `${s.score}<span>점</span>`;
   document.getElementById('sincerity-score').style.color = r.tagColor;
-  document.getElementById('result-tagline').textContent = s.label;
+  document.getElementById('result-tagline').textContent = s.desc;
   document.getElementById('result-tagline').style.color = r.tagColor;
   requestAnimationFrame(() => {
     document.getElementById('sincerity-bar').style.width = s.score + '%';
