@@ -17,6 +17,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=SUIT:wght@100..900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="shared.css" />
+  <script src="api.js"></script>
   <style>
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -41,25 +43,6 @@
       -webkit-text-size-adjust: 100%;
     }
 
-    /* ── Nav ── */
-    nav {
-      position: sticky; top: 0; z-index: 100;
-      background: var(--bg);
-      border-bottom: 1px solid var(--border);
-    }
-    .nav-inner {
-      max-width: 760px; margin: 0 auto;
-      padding: 0 20px; height: 52px;
-      display: flex; align-items: center; justify-content: space-between;
-    }
-    .nav-logo { display: flex; align-items: center; text-decoration: none; }
-    .nav-logo img { height: 24px; width: auto; display: block; }
-    .nav-badge {
-      font-size: 11px; font-weight: 700;
-      color: var(--blue); background: var(--blue-light);
-      border: 1px solid var(--blue-mid); border-radius: 100px;
-      padding: 4px 11px; white-space: nowrap;
-    }
 
     /* ── Screens ── */
     .screen { display: none; }
@@ -506,7 +489,15 @@
 <nav>
   <div class="nav-inner">
     <a href="index.html" class="nav-logo"><img src="logo.png" alt="인디피 뮤직" /></a>
-    <span class="nav-badge">인디피 뮤직 · 공간 무드 분석</span>
+    <ul class="nav-links">
+      <li><a href="index.html">인디피 뮤직</a></li>
+      <li><a href="playlist.html">플레이리스트</a></li>
+      <li><a href="mood-test.html">음악 힙지수 테스트</a></li>
+    </ul>
+    <div class="nav-actions">
+      <a href="login.html" class="nav-login">로그인</a>
+      <a href="plan.html" class="nav-cta-blue">도입 문의</a>
+    </div>
   </div>
 </nav>
 
