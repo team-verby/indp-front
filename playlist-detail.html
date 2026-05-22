@@ -1829,7 +1829,9 @@
         isMuted = false;
         volumeLevel = prevVolume || 10;
         if (ytPlayer && ytReady) {
-          // 사용자 제스처 컨텍스트 안에서 즉시 unMute — PLAYING 콜백까지 기다리면 제스처 만료
+          // mute: 1 초기화 시 '자동재생-음소거' 상태 → unMute() 단독으로는 해제 안 됨
+          // mute() → unMute() 사이클로 '사용자-음소거' 상태를 거쳐야 정상 해제됨
+          ytPlayer.mute();
           ytPlayer.unMute();
           ytPlayer.setVolume(volumeLevel > 0 ? volumeLevel : 10);
           pendingUnmute = false;
