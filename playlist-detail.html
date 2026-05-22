@@ -1726,10 +1726,10 @@
     function preloadAndPlay() {
       if (allSongs.length === 0) return;
       if (!isMyStore) return;
+      showUnmuteTooltip();
       if (ytReady) {
         syncYTPlaylist();
       }
-      // 툴팁은 PLAYING 이벤트 후에만 표시 — 재생 준비 전에 탭하면 playVideo() 호출로 Chrome이 재음소거함
       // ytReady가 아직 false면 onReady 핸들러에서 재생 (isMyStore면 항상 시도)
     }
 
@@ -1747,7 +1747,7 @@
       ytPlaylistIds = ids;
       seekOnPlay = elapsed > 0 ? elapsed : 0;
       ytPlayer.loadPlaylist({ playlist: ids, index: 0 });
-      // 툴팁은 PLAYING 이벤트에서만 표시
+      if (isMuted) showUnmuteTooltip();
     }
 
     function playCurrentYT() {
@@ -1775,6 +1775,7 @@
       event.stopPropagation();
       const el = document.getElementById('unmute-tooltip');
       if (el.dataset.mode === 'recover') {
+        ytPlayer.mute();
         ytPlayer.unMute();
         ytPlayer.setVolume(volumeLevel > 0 ? volumeLevel : 10);
         hideUnmuteTooltip();
@@ -1829,13 +1830,21 @@
         isMuted = false;
         volumeLevel = prevVolume || 10;
         if (ytPlayer && ytReady) {
-          // PLAYING 상태에서만 탭되도록 보장됨 (툴팁이 PLAYING 후에만 표시)
-          // playVideo() 추가 호출 금지 — Chrome이 새 autoplay 요청으로 평가해 재음소거함
+          // 사용자 제스처 안에서 mute→unMute 사이클로 autoplay-muted 상태 해제
           ytPlayer.mute();
           ytPlayer.unMute();
           ytPlayer.setVolume(volumeLevel > 0 ? volumeLevel : 10);
           pendingUnmute = false;
           hideUnmuteTooltip();
+          // state 1이 아닐 때(아직 버퍼링/미시작)만 재생 트리거 — state 1이면 이미 재생 중
+          const state = ytPlayer.getPlayerState();
+          if (state !== 1 && state !== 3) {
+            if ((ytPlayer.getPlaylist() || []).length > 0) {
+              ytPlayer.playVideo();
+            } else {
+              syncYTPlaylist();
+            }
+          }
         } else {
           hideUnmuteTooltip();
         }
