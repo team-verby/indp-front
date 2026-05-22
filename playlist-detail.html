@@ -1829,26 +1829,24 @@
         isMuted = false;
         volumeLevel = prevVolume || 10;
         if (ytPlayer && ytReady) {
-          pendingUnmute = true;
+          // 사용자 제스처 컨텍스트 안에서 즉시 unMute — PLAYING 콜백까지 기다리면 제스처 만료
+          ytPlayer.unMute();
+          ytPlayer.setVolume(volumeLevel > 0 ? volumeLevel : 10);
+          pendingUnmute = false;
+          hideUnmuteTooltip();
           const state = ytPlayer.getPlayerState();
-          if (state === 1) {
-            // 이미 재생 중 → 바로 unmute
-            ytPlayer.unMute();
-            ytPlayer.setVolume(volumeLevel > 0 ? volumeLevel : 10);
-            pendingUnmute = false;
-            hideUnmuteTooltip();
-          } else if (state === -1 || state === 0 || state === 5) {
+          if (state === -1 || state === 0 || state === 5) {
             if ((ytPlayer.getPlaylist() || []).length > 0) {
               ytPlayer.playVideo();
             } else {
               syncYTPlaylist();
             }
-          } else {
-            // 버퍼링/일시정지 → 재생 재개하면 PLAYING 이벤트에서 unmute 처리
+          } else if (state !== 1 && state !== 3) {
             ytPlayer.playVideo();
           }
+        } else {
+          hideUnmuteTooltip();
         }
-        hideUnmuteTooltip();
       } else {
         isMuted = true;
         prevVolume = volumeLevel;
