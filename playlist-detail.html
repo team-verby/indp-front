@@ -1708,6 +1708,7 @@
             headIdx = (headIdx + 1) % allSongs.length;
             elapsed = 0;
             songStartedAt = Date.now();
+            pendingUnmute = !isMuted;
             renderQueue();
             playCurrentYT();
           }
@@ -1726,19 +1727,19 @@
     // ytReady가 아직 false면 onReady 핸들러에서 재생 (isMyStore면 항상 시도)
   }
 
+  // playCurrentYT() 수정
   function playCurrentYT() {
-    if (!isMyStore) return;
-    if (!ytReady || allSongs.length === 0) return;
+    if (!isMyStore || !ytReady || allSongs.length === 0) return;
     const cur = allSongs[headIdx % allSongs.length];
     if (!cur.videoId) return;
-    seekOnPlay = elapsed > 0 ? elapsed : 0;
-    if (isMuted) {
-      ytPlayer.mute();
-      ytPlayer.loadVideoById({ videoId: cur.videoId, startSeconds: elapsed });
-      showUnmuteTooltip();
-    } else {
-      ytPlayer.mute();
-      ytPlayer.loadVideoById({ videoId: cur.videoId, startSeconds: elapsed });
+
+    // 음소거 상태로 로드 (모바일 자동재생 허용 조건)
+    ytPlayer.mute();
+    ytPlayer.loadVideoById({ videoId: cur.videoId, startSeconds: elapsed });
+
+    // isMuted가 false면 → PLAYING 이벤트에서 unmute 처리되도록 플래그 설정
+    if (!isMuted) {
+      pendingUnmute = true;
     }
   }
 
