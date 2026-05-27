@@ -26,19 +26,27 @@
   <div class="log" id="log"></div>
 
   <script>
-    const songs = [
+    const base = [
       'Indigo Quarter.mp3',
       'Saffron Curtain.mp3',
       'Soft Reset Sunday.mp3',
       'Sweater Over Chair.mp3',
       'Willow Meter.mp3',
     ];
+    // 4번 반복 → 20곡
+    const songs = [...base, ...base, ...base, ...base];
 
     let idx = 0;
     const audio = new Audio();
 
     audio.addEventListener('ended', () => {
-      idx = (idx + 1) % songs.length;
+      idx++;
+      if (idx >= songs.length) {
+        document.getElementById('song-title').textContent = '20곡 완료 ✅';
+        document.getElementById('song-num').textContent = `${songs.length} / ${songs.length}`;
+        addLog('✅ 20곡 전체 재생 완료');
+        return;
+      }
       playSong(idx);
     });
 
@@ -51,7 +59,7 @@
       audio.play().then(() => {
         document.getElementById('song-num').textContent = `${i + 1} / ${songs.length}`;
         document.getElementById('song-title').textContent = songs[i].replace('.mp3', '');
-        addLog(`▶ ${i + 1}번 곡 재생: ${songs[i].replace('.mp3', '')}`);
+        addLog(`▶ ${i + 1}번 곡: ${songs[i].replace('.mp3', '')}`);
       }).catch(e => {
         addLog(`❌ play() 실패: ${e.message}`);
       });
