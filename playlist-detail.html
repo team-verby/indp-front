@@ -1732,7 +1732,8 @@
       const cur = allSongs[headIdx % allSongs.length];
       if (!cur.videoId) return;
       seekOnPlay = elapsed > 0 ? elapsed : 0;
-      ytPlayer.loadVideoById({ videoId: cur.videoId, startSeconds: elapsed });
+      ytPlayer.cueVideoById({ videoId: cur.videoId, startSeconds: elapsed });
+      ytPlayer.playVideo();
       if (isMuted) showUnmuteTooltip();
     }
 
