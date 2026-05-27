@@ -1712,16 +1712,8 @@
                 if (ytPlayer.isMuted()) {
                   ytPlayer.unMute();
                   ytPlayer.setVolume(volumeLevel > 0 ? volumeLevel : 10);
-                  // unMute()는 사용자 제스처 밖에서 iOS/Android가 무시할 수 있음.
-                  // 500ms 후에도 여전히 muted이면 툴팁으로 사용자 터치를 유도.
-                  setTimeout(() => {
-                    if (ytPlayer && typeof ytPlayer.isMuted === 'function' && ytPlayer.isMuted() && !isMuted) {
-                      showUnmuteTooltip();
-                    }
-                  }, 500);
-                } else {
-                  hideUnmuteTooltip();
                 }
+                hideUnmuteTooltip();
               }
             } else if (e.data === YT.PlayerState.ENDED) {
               // 플레이리스트 전체 종료 → 처음부터 다시 시작
@@ -1779,26 +1771,14 @@
       navigator.mediaSession.playbackState = 'playing';
     }
 
-    // Silent audio keepalive: 첫 언뮤트 후 AudioContext로 오디오 세션을 유지한다.
-    // iOS/Android는 사용자 제스처로 열린 AudioContext가 살아있는 동안
-    // 다음 곡 자동 전환 시에도 오디오 권한을 유지한다.
-    // (이전 방식인 빈 WAV <audio>는 PCM 데이터 0바이트라 실제 세션이 유지되지 않았음)
-    let _audioCtx = null;
+    // Silent audio keepalive: 첫 언뮤트 후 무음 루프로 브라우저 audio session 유지
+    let silentAudio = null;
     function startSilentAudio() {
-      if (_audioCtx) {
-        if (_audioCtx.state === 'suspended') _audioCtx.resume();
-        return;
-      }
-      const AC = window.AudioContext || window.webkitAudioContext;
-      if (!AC) return;
-      _audioCtx = new AC();
-      const osc = _audioCtx.createOscillator();
-      const gain = _audioCtx.createGain();
-      gain.gain.value = 0.0001; // 사실상 무음이지만 세션은 유지
-      osc.frequency.value = 1;  // 1Hz — 가청 범위 밖
-      osc.connect(gain);
-      gain.connect(_audioCtx.destination);
-      osc.start();
+      if (silentAudio) return;
+      silentAudio = new Audio('data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=');
+      silentAudio.loop = true;
+      silentAudio.volume = 0.001;
+      silentAudio.play().catch(() => {});
     }
 
     function showUnmuteTooltip() {
