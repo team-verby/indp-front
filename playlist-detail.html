@@ -1638,17 +1638,6 @@
       if (isMyStore && ytPlayer && ytReady && ytPlayer.getPlayerState() === 1) {
         elapsed = Math.floor(ytPlayer.getCurrentTime());
         updateProgress();
-        // PLAYING 상태에서 미리 전환: ENDED 후 loadVideoById는 Chrome이 새 autoplay로 평가함.
-        // PLAYING 중에 loadVideoById하면 "세션 유지"로 처리돼 autoplay-muted 재적용 방지.
-        const duration = ytPlayer.getDuration();
-        if (duration > 0 && (duration - elapsed) <= 1 && !transitionPending) {
-          transitionPending = true;
-          headIdx = (headIdx + 1) % allSongs.length;
-          elapsed = 0;
-          songStartedAt = Date.now();
-          renderQueue();
-          playCurrentYT();
-        }
         // 음소거 상태 불일치 보정
         if (!isMuted && ytPlayer.isMuted()) {
           ytPlayer.unMute();
@@ -1667,8 +1656,8 @@
     let ytPlayer = null;
     let ytReady = false;
     let seekOnPlay = 0;
-    let pendingUnmute = false;  // PLAYING 이벤트 때 unmute 처리 플래그
-    let transitionPending = false; // tick 조기 전환 중복 방지 플래그
+    let pendingUnmute = false;
+    let ytSongMap = []; // loadPlaylist 인덱스 → allSongs 인덱스 매핑
 
     // YouTube IFrame API 동적 로드 (콜백 정의 후 로드해야 타이밍 보장)
     (function() {
@@ -1685,20 +1674,28 @@
           onReady: () => {
             ytReady = true;
             if (allSongs.length > 0 && shouldPlay) {
-              playCurrentYT();
+              syncYTPlaylist();
             }
           },
           onError: () => {
-            // 영상 로드 실패(삭제·임베드 불가 등) → 다음 곡으로 건너뜀
-            headIdx = (headIdx + 1) % allSongs.length;
-            elapsed = 0;
-            songStartedAt = Date.now();
-            renderQueue();
-            playCurrentYT();
+            // 임베드 불가 영상 → 다음 곡으로 건너뜀 (플레이리스트 내 자동 이동)
+            ytPlayer.nextVideo();
           },
           onStateChange: (e) => {
             if (!isMyStore) return;
             if (e.data === YT.PlayerState.PLAYING) {
+              // YouTube 플레이리스트 인덱스로 headIdx 동기화
+              const ytIdx = ytPlayer.getPlaylistIndex();
+              if (ytIdx >= 0 && ytIdx < ytSongMap.length) {
+                const mapped = ytSongMap[ytIdx];
+                if (mapped !== headIdx) {
+                  headIdx = mapped;
+                  elapsed = 0;
+                  songStartedAt = Date.now();
+                  renderQueue();
+                  updateMediaSession();
+                }
+              }
               if (seekOnPlay > 0) {
                 ytPlayer.seekTo(seekOnPlay, true);
                 seekOnPlay = 0;
@@ -1711,20 +1708,20 @@
               } else if (isMuted) {
                 showUnmuteTooltip();
               } else {
-                ytPlayer.unMute();
-                ytPlayer.setVolume(volumeLevel > 0 ? volumeLevel : 10);
+                // 언뮤트 상태인데 YouTube가 muted인 경우 보정
+                if (ytPlayer.isMuted()) {
+                  ytPlayer.unMute();
+                  ytPlayer.setVolume(volumeLevel > 0 ? volumeLevel : 10);
+                }
                 hideUnmuteTooltip();
               }
             } else if (e.data === YT.PlayerState.ENDED) {
-              // tick 조기 전환이 안 됐을 경우(짧은 곡 등)에만 여기서 전환
-              if (!transitionPending) {
-                headIdx = (headIdx + 1) % allSongs.length;
-                elapsed = 0;
-                songStartedAt = Date.now();
-                renderQueue();
-                playCurrentYT();
-              }
-              transitionPending = false;
+              // 플레이리스트 전체 종료 → 처음부터 다시 시작
+              headIdx = 0;
+              elapsed = 0;
+              songStartedAt = Date.now();
+              renderQueue();
+              syncYTPlaylist();
             }
           }
         }
@@ -1736,28 +1733,42 @@
       if (!isMyStore) return;
       showUnmuteTooltip();
       if (ytReady) {
-        playCurrentYT();
+        syncYTPlaylist();
       }
-      // ytReady가 아직 false면 onReady 핸들러에서 재생 (isMyStore면 항상 시도)
     }
 
-    function playCurrentYT() {
-      if (!isMyStore) return;
-      if (!ytReady || allSongs.length === 0) return;
-      const cur = allSongs[headIdx % allSongs.length];
-      if (!cur.videoId) return;
-      seekOnPlay = elapsed > 0 ? elapsed : 0;
-      ytPlayer.loadVideoById({ videoId: cur.videoId, startSeconds: elapsed });
-      if (isMuted) showUnmuteTooltip();
-      // MediaSession: 브라우저/OS가 능동적 미디어 세션으로 인식 → audio suspend 방지
-      if ('mediaSession' in navigator) {
-        navigator.mediaSession.metadata = new MediaMetadata({
-          title: cur.title || 'Now Playing',
-          artist: cur.artist || 'Indp Music',
-          album: 'Indp Music',
-        });
-        navigator.mediaSession.playbackState = 'playing';
+    // loadPlaylist로 전체 플레이리스트 로드 — YouTube가 내부적으로 자동 전환
+    // Chrome이 loadVideoById(매 곡)처럼 autoplay 재평가를 하지 않아 언뮤트 상태 유지됨
+    function syncYTPlaylist() {
+      if (!isMyStore || !ytReady || allSongs.length === 0) return;
+      const ids = [];
+      ytSongMap = [];
+      for (let i = 0; i < allSongs.length; i++) {
+        if (allSongs[i].videoId) {
+          ids.push(allSongs[i].videoId);
+          ytSongMap.push(i);
+        }
       }
+      if (ids.length === 0) return;
+      let startPl = ytSongMap.indexOf(headIdx % allSongs.length);
+      if (startPl < 0) startPl = 0;
+      seekOnPlay = elapsed > 0 ? elapsed : 0;
+      ytPlayer.loadPlaylist({ playlist: ids, index: startPl, startSeconds: elapsed || 0 });
+      ytPlayer.setLoop(true);
+      if (isMuted) showUnmuteTooltip();
+      updateMediaSession();
+    }
+
+    function updateMediaSession() {
+      if (!('mediaSession' in navigator)) return;
+      const cur = allSongs[headIdx % allSongs.length];
+      if (!cur) return;
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: cur.title || 'Now Playing',
+        artist: cur.artist || 'Indp Music',
+        album: 'Indp Music',
+      });
+      navigator.mediaSession.playbackState = 'playing';
     }
 
     // Silent audio keepalive: 첫 언뮤트 후 무음 루프로 브라우저 audio session 유지
@@ -1825,22 +1836,25 @@
         volumeLevel = prevVolume || 10;
         startSilentAudio(); // 사용자 제스처 컨텍스트 안에서 silent loop 시작
         if (ytPlayer && ytReady) {
-          pendingUnmute = true;
           const state = ytPlayer.getPlayerState();
           if (state === 1) {
-            // 이미 재생 중 → 바로 unmute
+            // 재생 중 → 바로 언뮤트 (플레이리스트 재로드 금지 — Chrome autoplay 세션 유지)
             ytPlayer.unMute();
             ytPlayer.setVolume(volumeLevel > 0 ? volumeLevel : 10);
-            pendingUnmute = false;
             hideUnmuteTooltip();
-          } else if (state === -1 || state === 0 || state === 5) {
-            playCurrentYT();
-          } else {
-            // 버퍼링/일시정지 → 재생 재개하면 PLAYING 이벤트에서 unmute 처리
+          } else if (state === 2 || state === 3) {
+            // 일시정지/버퍼링 → 재생 재개, PLAYING 이벤트에서 언뮤트
+            pendingUnmute = true;
             ytPlayer.playVideo();
+            hideUnmuteTooltip();
+          } else {
+            // 미시작(-1, 0, 5) → 플레이리스트 로드
+            pendingUnmute = true;
+            syncYTPlaylist();
           }
+        } else {
+          hideUnmuteTooltip();
         }
-        hideUnmuteTooltip();
       } else {
         isMuted = true;
         prevVolume = volumeLevel;
@@ -1871,6 +1885,11 @@
         if (insertIdx <= headIdx) headIdx++;
         renderQueue();
         updateStats();
+        // 신규 추천곡을 YouTube 플레이리스트에 반영 (현재 재생 위치 유지)
+        if (isMyStore && ytReady) {
+          elapsed = Math.floor(ytPlayer.getCurrentTime() || 0);
+          syncYTPlaylist();
+        }
       });
       source.onerror = (e) => {
         console.warn('SSE 연결 오류:', e);
