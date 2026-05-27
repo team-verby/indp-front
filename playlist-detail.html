@@ -1636,10 +1636,20 @@
       if (allSongs.length === 0) return;
 
       if (isMyStore && ytPlayer && ytReady && ytPlayer.getPlayerState() === 1) {
-        // 점주: YouTube 실제 재생 위치 사용, 곡 전환은 ENDED 이벤트가 담당
         elapsed = Math.floor(ytPlayer.getCurrentTime());
         updateProgress();
-        // YouTube 내부 음소거 상태와 isMuted 불일치 보정 (loadVideoById 리셋, 브라우저 정책 등)
+        // PLAYING 상태에서 미리 전환: ENDED 후 loadVideoById는 Chrome이 새 autoplay로 평가함.
+        // PLAYING 중에 loadVideoById하면 "세션 유지"로 처리돼 autoplay-muted 재적용 방지.
+        const duration = ytPlayer.getDuration();
+        if (duration > 0 && (duration - elapsed) <= 1 && !transitionPending) {
+          transitionPending = true;
+          headIdx = (headIdx + 1) % allSongs.length;
+          elapsed = 0;
+          songStartedAt = Date.now();
+          renderQueue();
+          playCurrentYT();
+        }
+        // 음소거 상태 불일치 보정
         if (!isMuted && ytPlayer.isMuted()) {
           ytPlayer.unMute();
           ytPlayer.setVolume(volumeLevel > 0 ? volumeLevel : 10);
@@ -1658,6 +1668,7 @@
     let ytReady = false;
     let seekOnPlay = 0;
     let pendingUnmute = false;  // PLAYING 이벤트 때 unmute 처리 플래그
+    let transitionPending = false; // tick 조기 전환 중복 방지 플래그
 
     // YouTube IFrame API 동적 로드 (콜백 정의 후 로드해야 타이밍 보장)
     (function() {
@@ -1705,11 +1716,15 @@
                 hideUnmuteTooltip();
               }
             } else if (e.data === YT.PlayerState.ENDED) {
-              headIdx = (headIdx + 1) % allSongs.length;
-              elapsed = 0;
-              songStartedAt = Date.now();
-              renderQueue();
-              playCurrentYT();
+              // tick 조기 전환이 안 됐을 경우(짧은 곡 등)에만 여기서 전환
+              if (!transitionPending) {
+                headIdx = (headIdx + 1) % allSongs.length;
+                elapsed = 0;
+                songStartedAt = Date.now();
+                renderQueue();
+                playCurrentYT();
+              }
+              transitionPending = false;
             }
           }
         }
@@ -1734,6 +1749,25 @@
       seekOnPlay = elapsed > 0 ? elapsed : 0;
       ytPlayer.loadVideoById({ videoId: cur.videoId, startSeconds: elapsed });
       if (isMuted) showUnmuteTooltip();
+      // MediaSession: 브라우저/OS가 능동적 미디어 세션으로 인식 → audio suspend 방지
+      if ('mediaSession' in navigator) {
+        navigator.mediaSession.metadata = new MediaMetadata({
+          title: cur.title || 'Now Playing',
+          artist: cur.artist || 'Indp Music',
+          album: 'Indp Music',
+        });
+        navigator.mediaSession.playbackState = 'playing';
+      }
+    }
+
+    // Silent audio keepalive: 첫 언뮤트 후 무음 루프로 브라우저 audio session 유지
+    let silentAudio = null;
+    function startSilentAudio() {
+      if (silentAudio) return;
+      silentAudio = new Audio('data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=');
+      silentAudio.loop = true;
+      silentAudio.volume = 0.001;
+      silentAudio.play().catch(() => {});
     }
 
     function showUnmuteTooltip() {
@@ -1789,6 +1823,7 @@
       if (isMuted) {
         isMuted = false;
         volumeLevel = prevVolume || 10;
+        startSilentAudio(); // 사용자 제스처 컨텍스트 안에서 silent loop 시작
         if (ytPlayer && ytReady) {
           pendingUnmute = true;
           const state = ytPlayer.getPlayerState();
