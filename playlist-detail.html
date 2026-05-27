@@ -1732,14 +1732,14 @@
     const cur = allSongs[headIdx % allSongs.length];
     if (!cur.videoId) return;
     seekOnPlay = elapsed > 0 ? elapsed : 0;
-    ytPlayer.loadVideoById({ videoId: cur.videoId, startSeconds: elapsed });
     if (isMuted) {
       ytPlayer.mute();
+      ytPlayer.loadVideoById({ videoId: cur.videoId, startSeconds: elapsed });
+      showUnmuteTooltip();
     } else {
-      ytPlayer.unMute();
-      ytPlayer.setVolume(volumeLevel > 0 ? volumeLevel : 10);
+      ytPlayer.mute();
+      ytPlayer.loadVideoById({ videoId: cur.videoId, startSeconds: elapsed });
     }
-    if (isMuted) showUnmuteTooltip();
   }
 
   function showUnmuteTooltip() {
