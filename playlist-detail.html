@@ -1703,11 +1703,8 @@
               } else if (isMuted) {
                 showUnmuteTooltip();
               } else {
-                // 언뮤트 상태인데 YouTube가 muted인 경우 보정
-                if (ytPlayer.isMuted()) {
-                  ytPlayer.unMute();
-                  ytPlayer.setVolume(volumeLevel > 0 ? volumeLevel : 10);
-                }
+                ytPlayer.unMute();
+                ytPlayer.setVolume(volumeLevel > 0 ? volumeLevel : 10);
                 hideUnmuteTooltip();
               }
             } else if (e.data === YT.PlayerState.ENDED) {
@@ -1888,8 +1885,11 @@
         updateStats();
         // 신규 추천곡을 YouTube 플레이리스트에 반영 (현재 재생 위치 유지)
         if (isMyStore && ytReady) {
-          elapsed = Math.floor(ytPlayer.getCurrentTime() || 0);
-          syncYTPlaylist();
+          const state = ytPlayer.getPlayerState();
+          if (state !== 1) {
+            elapsed = Math.floor(ytPlayer.getCurrentTime() || 0);
+            syncYTPlaylist();
+          }
         }
       });
       source.onerror = (e) => {
