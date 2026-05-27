@@ -1638,11 +1638,6 @@
       if (isMyStore && ytPlayer && ytReady && ytPlayer.getPlayerState() === 1) {
         elapsed = Math.floor(ytPlayer.getCurrentTime());
         updateProgress();
-        // 음소거 상태 불일치 보정
-        if (!isMuted && ytPlayer.isMuted()) {
-          ytPlayer.unMute();
-          ytPlayer.setVolume(volumeLevel > 0 ? volumeLevel : 10);
-        }
         return;
       }
 
