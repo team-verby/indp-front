@@ -399,11 +399,13 @@
       transform-origin: center center;
     }
     .vinyl-img.live {
-      animation: vinyl-spin 6s linear infinite;
+      animation: vinyl-nudge 1s ease-in-out infinite;
     }
-    @keyframes vinyl-spin {
-      from { transform: rotate(0deg); }
-      to   { transform: rotate(360deg); }
+    @keyframes vinyl-nudge {
+      0%   { transform: rotate(0deg); }
+      15%  { transform: rotate(5deg); }
+      35%  { transform: rotate(0deg); }
+      100% { transform: rotate(0deg); }
     }
 
     /* ── Mobile ── */
