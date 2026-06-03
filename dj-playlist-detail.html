@@ -672,7 +672,7 @@
 
       /* ── 오른쪽 컬럼 ── */
       document.getElementById('dj-name').textContent   = pl.djName;
-      document.getElementById('pl-name').childNodes[0].textContent = pl.name + ' ';
+      document.getElementById('pl-name').innerHTML = `${pl.name} <span id="live-badge"></span>`;
       document.getElementById('dj-cover').textContent  = pl.emoji;
       document.getElementById('pl-genre').innerHTML    = pl.genre.split(' · ').map(g => `<span class="genre-chip">${g}</span>`).join('');
       document.getElementById('pl-track-count').textContent = `${pl.tracks.length}트랙`;
