@@ -331,7 +331,8 @@
       border: 1px solid #fcd34d;
       border-radius: 12px;
       padding: 10px 16px;
-      margin-bottom: 20px;
+      margin-top: 20px;
+      margin-bottom: 0;
       flex-wrap: wrap;
       gap: 8px;
     }
@@ -740,12 +741,12 @@
           : `<a href="login.html?mode=subscriber" class="btn-login-soft">로그인</a>
              <a href="plan.html" class="btn-subscribe">구독하기</a>`;
         npEl.innerHTML = `
+          <p class="now-playing-label live" id="np-label">● NOW PLAYING</p>
+          <div class="waveform-bar" id="waveform"></div>
           <div class="preview-bar">
             <span class="preview-bar-text">🎵 30초 미리 듣기</span>
             <span class="preview-countdown" id="preview-countdown">남은 시간 ${PREVIEW_SECS}초</span>
           </div>
-          <p class="now-playing-label live" id="np-label">● NOW PLAYING</p>
-          <div class="waveform-bar" id="waveform"></div>
           <div class="preview-notice">
             <p class="preview-notice-title">전체 재생하려면 구독이 필요합니다</p>
             <p class="preview-notice-desc">Plan A 라이트 구독 시 모든 DJ 플레이리스트를 무제한으로 들을 수 있습니다.<br>월 4,400원</p>
