@@ -322,8 +322,8 @@
 <div class="access-denied" id="access-denied" style="display:none">
   <div class="access-denied-icon">🔒</div>
   <div class="access-denied-title">접근 권한이 없습니다</div>
-  <div class="access-denied-desc">DJ 계정으로 로그인한 경우에만 접근할 수 있습니다.</div>
-  <a href="login.html" class="btn-primary" style="text-decoration:none;">로그인하기</a>
+  <div class="access-denied-desc">매장 관리자 또는 DJ 계정으로 로그인한 경우에만 접근할 수 있습니다.</div>
+  <a href="login.html?mode=owner" class="btn-primary" style="text-decoration:none;">로그인하기</a>
   <button onclick="enterDemo()" style="margin-top:8px;background:none;border:1px solid #e5e7eb;color:var(--text-gray);border-radius:100px;padding:10px 20px;font-size:13px;cursor:pointer;font-family:inherit;">데모로 보기</button>
 </div>
 
@@ -442,8 +442,8 @@ function logout() {
   location.href = 'index.html';
 }
 
-const djToken = localStorage.getItem('djToken');
-let djName    = localStorage.getItem('djName') || 'DJ';
+const djToken = localStorage.getItem('djToken') || getOwnerToken();
+let djName    = localStorage.getItem('djName') || localStorage.getItem('storeName') || 'DJ';
 let djGenre   = localStorage.getItem('djGenre') || '';
 
 function init() {
