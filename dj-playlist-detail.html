@@ -449,14 +449,7 @@
 
       <div id="np-section">
         <p class="now-playing-label" id="np-label">NOW PLAYING</p>
-        <h2 class="now-playing-title" id="np-title">—</h2>
-        <p class="now-playing-artist" id="np-artist">—</p>
-
-        <div class="audio-progress">
-          <span class="audio-time" id="np-cur">0:00</span>
-          <div class="waveform-bar" id="waveform"></div>
-          <span class="audio-time" id="np-total">0:00</span>
-        </div>
+        <div class="waveform-bar" id="waveform"></div>
       </div>
 
     </div>
@@ -703,7 +696,7 @@
             <div class="standby-desc">이 플레이리스트는 현재 방송 중이 아닙니다.<br>DJ가 채널을 시작하면 실시간으로 업데이트됩니다.</div>
           </div>`;
       } else if (previewMode) {
-        /* 비구독자 + 라이브: 프리뷰 배너 + NOW PLAYING */
+        /* 비구독자 + 라이브 */
         const t = pl.tracks[pl.currentIdx];
         const npEl = document.getElementById('np-section');
         npEl.innerHTML = `
@@ -712,23 +705,13 @@
             <span class="preview-countdown" id="preview-countdown">남은 시간 ${PREVIEW_SECS}초</span>
           </div>
           <p class="now-playing-label live" id="np-label">● NOW PLAYING</p>
-          <h2 class="now-playing-title" id="np-title">${t.title}</h2>
-          <p class="now-playing-artist" id="np-artist">${t.artist}</p>
-          <div class="audio-progress">
-            <span class="audio-time" id="np-cur">${fmtTime(elapsed)}</span>
-            <div class="waveform-bar" id="waveform"></div>
-            <span class="audio-time" id="np-total">${t.duration}</span>
-          </div>`;
+          <div class="waveform-bar" id="waveform"></div>`;
         buildWaveform(elapsed, t.secs);
       } else {
-        /* 구독자 + 라이브: 풀 재생 */
+        /* 구독자 + 라이브 */
         const t = pl.tracks[pl.currentIdx];
         document.getElementById('np-label').className = 'now-playing-label live';
         document.getElementById('np-label').textContent = '● NOW PLAYING';
-        document.getElementById('np-title').textContent  = t.title;
-        document.getElementById('np-artist').textContent = t.artist;
-        document.getElementById('np-cur').textContent    = fmtTime(elapsed);
-        document.getElementById('np-total').textContent  = t.duration;
         buildWaveform(elapsed, t.secs);
       }
 
@@ -776,9 +759,6 @@
           if (previewElapsed >= PREVIEW_SECS) { endPreview(); return; }
         }
 
-        /* waveform & time 업데이트 */
-        const curEl = document.getElementById('np-cur');
-        if (curEl) curEl.textContent = fmtTime(elapsed);
         buildWaveform(elapsed, t.secs);
 
       }, 1000);
