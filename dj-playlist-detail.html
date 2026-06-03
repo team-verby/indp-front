@@ -479,19 +479,7 @@
         <span id="live-badge"></span>
       </div>
 
-      <div class="store-info-row">
-        <span class="store-info-key">장르</span>
-        <span class="store-info-val" id="pl-genre">—</span>
-      </div>
-      <div class="store-info-row">
-        <span class="store-info-key">트랙 수</span>
-        <span class="store-info-val" id="pl-track-count">—</span>
-      </div>
-      <div class="store-info-row">
-        <span class="store-info-key">총 시간</span>
-        <span class="store-info-val" id="pl-total-dur">—</span>
-      </div>
-      <div class="store-info-row" id="pl-listeners-row" style="display:none">
+<div class="store-info-row" id="pl-listeners-row" style="display:none">
         <span class="store-info-key">청취 중</span>
         <span class="store-info-val" id="pl-listeners" style="color:#16a34a;font-weight:700">—</span>
       </div>
@@ -691,9 +679,6 @@
       document.getElementById('dj-name').textContent   = pl.djName;
       document.getElementById('pl-name').innerHTML = `${pl.name} <span id="live-badge"></span>`;
       document.getElementById('dj-cover').textContent  = pl.emoji;
-      document.getElementById('pl-genre').innerHTML    = pl.genre.split(' · ').map(g => `<span class="genre-chip">${g}</span>`).join('');
-      document.getElementById('pl-track-count').textContent = `${pl.tracks.length}트랙`;
-      document.getElementById('pl-total-dur').textContent   = fmtTotalDur(totalSecs(pl.tracks));
       if (pl.isLive && pl.listeners) {
         document.getElementById('pl-listeners').textContent = `${pl.listeners}명 청취 중`;
         document.getElementById('pl-listeners-row').style.display = '';
