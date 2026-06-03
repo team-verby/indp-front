@@ -738,7 +738,7 @@
         const isLoggedIn = !!getOwnerToken();
         const ctaBtns = isLoggedIn
           ? `<a href="plan.html" class="btn-subscribe">구독하기</a>`
-          : `<a href="login.html?mode=subscriber" class="btn-login-soft">로그인</a>
+          : `<a href="login.html" class="btn-login-soft">로그인</a>
              <a href="plan.html" class="btn-subscribe">구독하기</a>`;
         npEl.innerHTML = `
           <p class="now-playing-label live" id="np-label">● NOW PLAYING</p>
@@ -782,7 +782,7 @@
           </div>
           <div class="preview-ended-btns">
             <a href="plan.html" class="btn-subscribe">구독 시작하기</a>
-            <a href="login.html?mode=subscriber" class="btn-login-soft">이미 구독 중이신가요?</a>
+            <a href="login.html" class="btn-login-soft">이미 구독 중이신가요?</a>
           </div>
         </div>`;
     }

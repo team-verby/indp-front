@@ -182,18 +182,18 @@
 
         <!-- 로그인 탭 -->
         <div style="display:flex;background:#f3f4f6;border-radius:10px;padding:4px;margin-bottom:28px;">
-          <button id="tab-owner" onclick="switchTab('owner')"
-            style="flex:1;padding:9px;border:none;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer;background:#fff;color:var(--dark);box-shadow:0 1px 3px rgba(0,0,0,0.1);">
-            매장 관리자
-          </button>
           <button id="tab-subscriber" onclick="switchTab('subscriber')"
-            style="flex:1;padding:9px;border:none;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer;background:transparent;color:var(--text-gray);">
+            style="flex:1;padding:9px;border:none;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer;background:#fff;color:var(--dark);box-shadow:0 1px 3px rgba(0,0,0,0.1);">
             구독자 로그인
+          </button>
+          <button id="tab-owner" onclick="switchTab('owner')"
+            style="flex:1;padding:9px;border:none;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer;background:transparent;color:var(--text-gray);">
+            매장 관리자
           </button>
         </div>
 
         <!-- 매장 관리자 폼 -->
-        <div id="form-owner">
+        <div id="form-owner" style="display:none">
           <h1 class="login-title">매장 관리자 로그인</h1>
           <p class="login-subtitle">인디피 뮤직 매장 관리 시스템</p>
           <div class="form-group">
@@ -216,7 +216,7 @@
         </div>
 
         <!-- 구독자 폼 (Plan A) -->
-        <div id="form-subscriber" style="display:none">
+        <div id="form-subscriber">
           <h1 class="login-title">구독자 로그인</h1>
           <p class="login-subtitle">Plan A 라이트 구독자 전용</p>
           <div class="form-group">
@@ -245,10 +245,10 @@
 
   <script src="api.js"></script>
   <script>
-    // URL 파라미터로 탭 초기화 (?mode=subscriber)
+    // URL 파라미터로 탭 초기화 (?mode=owner)
     (function() {
       const mode = new URLSearchParams(location.search).get('mode');
-      if (mode === 'subscriber') switchTab('subscriber');
+      if (mode === 'owner') switchTab('owner');
     })();
 
     function switchTab(tab) {
