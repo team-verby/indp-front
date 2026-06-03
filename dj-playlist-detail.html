@@ -390,6 +390,22 @@
     .standby-title { font-size: 18px; font-weight: 800; color: var(--dark); }
     .standby-desc  { font-size: 14px; color: var(--text-gray); line-height: 1.6; }
 
+    /* ── Vinyl record image ── */
+    .vinyl-img {
+      width: 72%;
+      height: auto;
+      display: block;
+      margin: 0 auto 32px;
+      transform-origin: center center;
+    }
+    .vinyl-img.live {
+      animation: vinyl-spin 6s linear infinite;
+    }
+    @keyframes vinyl-spin {
+      from { transform: rotate(0deg); }
+      to   { transform: rotate(360deg); }
+    }
+
     /* ── Mobile ── */
     @media (max-width: 860px) {
       .detail-wrap {
@@ -400,6 +416,7 @@
       .detail-right { order: -1; }
       .pl-name-big  { font-size: 22px; }
       .dj-cover-art { display: none; }
+      .vinyl-img { width: 56%; }
     }
   </style>
 </head>
@@ -426,6 +443,8 @@
     <!-- ═══ LEFT COLUMN ═══ -->
     <div class="detail-left" id="detail-left">
 
+      <img src="vinyl-detail.png" alt="vinyl record" class="vinyl-img" id="vinyl-img" />
+
       <div id="np-section">
         <p class="now-playing-label" id="np-label">NOW PLAYING</p>
         <h2 class="now-playing-title" id="np-title">—</h2>
@@ -437,10 +456,6 @@
           <span class="audio-time" id="np-total">0:00</span>
         </div>
       </div>
-
-      <h3 class="playlist-section-title">플레이리스트</h3>
-      <div class="playlist-stats" id="pl-stats"></div>
-      <div class="song-list" id="song-list"></div>
 
     </div>
 
@@ -730,59 +745,9 @@
         buildWaveform(elapsed, t.secs);
       }
 
-      /* ── 트랙 통계 ── */
-      const listenersBlock = pl.isLive && pl.listeners
-        ? `<div class="playlist-stat-divider"></div>
-           <div class="playlist-stat-item">
-             <span class="playlist-stat-label">청취 중</span>
-             <span class="playlist-stat-value" style="color:#16a34a">${pl.listeners}명</span>
-           </div>`
-        : '';
-      document.getElementById('pl-stats').innerHTML = `
-        <div class="playlist-stat-item">
-          <span class="playlist-stat-label">트랙 수</span>
-          <span class="playlist-stat-value">${pl.tracks.length}</span>
-        </div>
-        <div class="playlist-stat-divider"></div>
-        <div class="playlist-stat-item">
-          <span class="playlist-stat-label">총 재생시간</span>
-          <span class="playlist-stat-value">${fmtTotalDur(totalSecs(pl.tracks))}</span>
-        </div>
-        <div class="playlist-stat-divider"></div>
-        <div class="playlist-stat-item">
-          <span class="playlist-stat-label">DJ</span>
-          <span class="playlist-stat-value">${pl.djName}</span>
-        </div>
-        ${listenersBlock}`;
-
-      /* ── 트랙 리스트 ── */
-      renderSongList();
-    }
-
-    function renderSongList() {
-      const list = document.getElementById('song-list');
-      list.innerHTML = pl.tracks.map((t, i) => {
-        const isCurrent = pl.isLive && i === pl.currentIdx;
-        const progressBar = isCurrent
-          ? `<div class="song-progress-bar"><div class="song-progress-fill" id="song-progress-fill" style="width:${Math.floor((elapsed/t.secs)*100)}%"></div></div>`
-          : '';
-        const tag   = isCurrent ? `<span class="song-tag">재생 중</span>` : '';
-        const artCh = isCurrent ? '▶' : '♪';
-        return `
-          <div class="song-item${isCurrent ? ' playing' : ''}">
-            <span class="song-num">${i + 1}</span>
-            <div class="song-art">${artCh}</div>
-            <div class="song-info">
-              <div class="song-title-row">
-                <span class="song-title">${t.title}</span>
-                ${tag}
-              </div>
-              <p class="song-artist">${t.artist}</p>
-              ${progressBar}
-            </div>
-            <span class="song-duration">${isCurrent ? fmtTime(elapsed) + ' / ' + t.duration : t.duration}</span>
-          </div>`;
-      }).join('');
+      /* ── 바이닐 애니메이션 ── */
+      const vinylEl = document.getElementById('vinyl-img');
+      if (vinylEl) vinylEl.classList.toggle('live', !!pl.isLive);
     }
 
     /* ── 프리뷰 종료 CTA ── */
@@ -804,9 +769,6 @@
             <a href="login.html?mode=subscriber" class="btn-login-soft">이미 구독 중이신가요?</a>
           </div>
         </div>`;
-      /* 트랙 리스트 블러 처리 */
-      const songList = document.getElementById('song-list');
-      if (songList) songList.style.cssText = 'filter:blur(3px);pointer-events:none;user-select:none;';
     }
 
     /* ── 진행 바 실시간 업데이트 (구독자 or 프리뷰 모드) ── */
@@ -832,13 +794,6 @@
         if (curEl) curEl.textContent = fmtTime(elapsed);
         buildWaveform(elapsed, t.secs);
 
-        /* 트랙 내 진행 바 */
-        const fillEl = document.getElementById('song-progress-fill');
-        if (fillEl) fillEl.style.width = Math.floor((elapsed / t.secs) * 100) + '%';
-
-        /* 곡 duration 표시 업데이트 */
-        const durEls = document.querySelectorAll('.song-item.playing .song-duration');
-        durEls.forEach(el => el.textContent = fmtTime(elapsed) + ' / ' + t.duration);
       }, 1000);
     }
 
