@@ -464,12 +464,12 @@
   <script src="api.js"></script>
   <script>
     const plan = localStorage.getItem('selectedPlan') || 'B';
-    const monthlyRate = parseInt(localStorage.getItem('selectedPlanMonthlyRate') || '0') || (plan === 'A' ? 8800 : 13200);
-    if (plan === 'B') {
+    const monthlyRate = parseInt(localStorage.getItem('selectedPlanMonthlyRate') || '0') || (plan === 'A' ? 4400 : plan === 'B' ? 8800 : 13200);
+    if (plan === 'C') {
       const qrNote = document.getElementById('qr-delivery-note');
       if (qrNote) qrNote.style.display = '';
     }
-    const PLAN_NAMES = { A: 'Plan A (기본)', B: 'Plan B (프리미엄)' };
+    const PLAN_NAMES = { A: 'Plan A (라이트 요금제)', B: 'Plan B (기본 요금제)', C: 'Plan C (프리미엄 요금제)' };
 
     const DURATIONS = [1, 3, 6, 12];
     const WEEKS_MAP = { 1: 4, 3: 12, 6: 24, 12: 48 };
@@ -518,10 +518,14 @@
       document.getElementById('summaryAmount').textContent =
         total.toLocaleString() + '원';
 
-      const ref = new Date();
-      ref.setHours(0, 0, 0, 0);
-      const serviceStart = nextTuesdayOnOrAfter(ref);
-      const serviceEnd = new Date(serviceStart.getTime() + weeks * 7 * 24 * 60 * 60 * 1000 - 24 * 60 * 60 * 1000);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const isLite = plan === 'A';
+      const serviceStart = isLite ? today : nextTuesdayOnOrAfter(today);
+      const serviceEnd = new Date(serviceStart.getTime() + (isLite ? months * 30 : weeks * 7) * 24 * 60 * 60 * 1000 - 24 * 60 * 60 * 1000);
+      const startNote = isLite
+        ? '결제 완료 즉시 서비스가 시작됩니다.'
+        : '인디피 뮤직은 매주 화요일 새로운 플레이리스트가 시작됩니다.';
 
       document.getElementById('periodPreview').innerHTML = `
         <div class="service-period-preview">
@@ -529,11 +533,11 @@
             <span>서비스 시작</span>
             <div style="text-align:right">
               <strong>${fmtWithDay(serviceStart)}</strong>
-              <div style="font-size:11px;color:var(--text-light-gray);margin-top:2px">인디피 뮤직은 매주 화요일 새로운 플레이리스트가 시작됩니다.</div>
+              <div style="font-size:11px;color:var(--text-light-gray);margin-top:2px">${startNote}</div>
             </div>
           </div>
           <div class="period-row"><span>서비스 종료</span><strong>${fmtWithDay(serviceEnd)}</strong></div>
-          <div class="period-row"><span>이용 기간</span><strong>${months}개월 (${weeks}주)</strong></div>
+          <div class="period-row"><span>이용 기간</span><strong>${months}개월${isLite ? '' : ` (${weeks}주)`}</strong></div>
         </div>`;
     }
 
@@ -649,6 +653,12 @@
           inquiryContent: '',
           planId: parseInt(localStorage.getItem('selectedPlanId') || '1'),
           usagePeriod: selectedMonths,
+          serviceStartDate: (() => {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const d = plan === 'A' ? today : nextTuesdayOnOrAfter(today);
+            return d.toISOString().slice(0, 10);
+          })(),
           name: localStorage.getItem('storeName') || '',
           industry: localStorage.getItem('storeType') || '',
           address: localStorage.getItem('storeAddress') || '',

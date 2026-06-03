@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DJ 플레이리스트 - 인디피 뮤직</title>
+  <meta name="robots" content="noindex, follow" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="인디피 뮤직" />
+  <link rel="shortcut icon" href="https://www.indpmusic.co.kr/favicon-32.png" />
+  <link rel="icon" type="image/png" sizes="32x32" href="https://www.indpmusic.co.kr/favicon-32.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=SUIT:wght@100..900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="shared.css" />
+  <script src="api.js"></script>
+  <style>
+    body { background: var(--light-bg); }
+
+    /* ── 2-column layout ── */
+    .detail-wrap {
+      display: grid;
+      grid-template-columns: 60fr 40fr;
+      gap: 48px;
+      padding: 60px 40px 100px;
+      max-width: 1300px;
+      margin: 0 auto;
+    }
+
+    /* ── Left Column ── */
+    .now-playing-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--blue);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    .now-playing-label.live { color: #16a34a; }
+    .now-playing-label.standby { color: var(--text-gray); }
+
+    .now-playing-title {
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--dark);
+      margin-bottom: 2px;
+      line-height: 1.25;
+    }
+    .now-playing-artist {
+      font-size: 16px;
+      color: var(--text-gray);
+      margin-bottom: 20px;
+    }
+
+    /* Waveform / progress */
+    .audio-progress {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 36px;
+    }
+    .audio-time {
+      font-size: 13px;
+      color: var(--text-gray);
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+    .waveform-bar {
+      flex: 1;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      overflow: hidden;
+    }
+    .waveform-bar span {
+      flex: 1;
+      border-radius: 2px;
+      background: #e5e7eb;
+      min-width: 2px;
+      transition: background 0.2s;
+    }
+    .waveform-bar span.played { background: var(--blue); }
+
+    /* Track list */
+    .playlist-section-title {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--dark);
+      margin-bottom: 6px;
+    }
+    .playlist-stats {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    .playlist-stat-item { display: flex; flex-direction: column; gap: 3px; }
+    .playlist-stat-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-light-gray);
+      letter-spacing: 0.05em;
+    }
+    .playlist-stat-value {
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--dark);
+    }
+    .playlist-stat-divider {
+      width: 1px;
+      background: #e5e7eb;
+      margin: 4px 0;
+    }
+
+    .song-list { display: flex; flex-direction: column; gap: 4px; }
+    .song-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      cursor: default;
+      transition: background 0.15s;
+    }
+    .song-item:hover { background: #f5f7ff; }
+    .song-item.playing { background: #eef0ff; }
+
+    .song-num {
+      font-size: 13px;
+      color: var(--text-light-gray);
+      width: 20px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+    .song-item.playing .song-num { color: var(--blue); }
+
+    .song-art {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      background: #e8eaf0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      flex-shrink: 0;
+      color: var(--text-gray);
+    }
+    .song-item.playing .song-art { background: var(--blue); color: white; }
+
+    .song-info { flex: 1; min-width: 0; }
+    .song-title-row {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      flex-wrap: wrap;
+    }
+    .song-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--dark);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .song-item.playing .song-title { color: var(--blue); }
+    .song-tag {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--blue);
+      background: #eef0ff;
+      padding: 2px 8px;
+      border-radius: 100px;
+      white-space: nowrap;
+    }
+    .song-artist {
+      font-size: 12px;
+      color: var(--text-gray);
+      margin-top: 2px;
+    }
+    .song-duration {
+      font-size: 12px;
+      color: var(--text-light-gray);
+      flex-shrink: 0;
+    }
+    .song-item.playing .song-duration { color: var(--blue); font-weight: 700; }
+    .song-progress-bar {
+      height: 2px;
+      background: #e5e7eb;
+      border-radius: 2px;
+      margin-top: 5px;
+      overflow: hidden;
+    }
+    .song-progress-fill {
+      height: 100%;
+      background: var(--blue);
+      border-radius: 2px;
+      transition: width 1s linear;
+    }
+
+    /* ── Right Column ── */
+    .dj-profile-block {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+    .dj-detail-avatar {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #3b5bff, #7c3aed);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      flex-shrink: 0;
+    }
+    .dj-detail-name {
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--dark);
+    }
+    .dj-detail-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: #eef0ff;
+      color: var(--blue);
+      font-size: 12px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 100px;
+      margin-top: 4px;
+    }
+
+    .pl-name-big {
+      font-size: 30px;
+      font-weight: 800;
+      color: var(--dark);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      line-height: 1.25;
+    }
+    .live-status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 4px 12px;
+      border-radius: 100px;
+    }
+    .live-status-badge.on {
+      background: #dcfce7;
+      color: #16a34a;
+    }
+    .live-status-badge.off {
+      background: #f3f4f6;
+      color: var(--text-gray);
+    }
+    .live-dot-green {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: #16a34a;
+      animation: pulse-green 1.5s infinite;
+    }
+    @keyframes pulse-green {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(22,163,74,0.4); }
+      50%       { box-shadow: 0 0 0 5px rgba(22,163,74,0); }
+    }
+
+    .store-info-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+      align-items: flex-start;
+    }
+    .store-info-key {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-gray);
+      flex-shrink: 0;
+      min-width: 60px;
+    }
+    .store-info-val {
+      font-size: 14px;
+      color: var(--text-sub);
+      line-height: 1.5;
+    }
+    .genre-chip {
+      display: inline-block;
+      border: 1px solid #e5e7eb;
+      border-radius: 100px;
+      padding: 2px 10px;
+      font-size: 13px;
+      margin-right: 4px;
+    }
+
+    /* Cover art */
+    .dj-cover-art {
+      width: 100%;
+      aspect-ratio: 1 / 0.82;
+      border-radius: 24px;
+      margin-top: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 100px;
+      background: linear-gradient(135deg, #1a1a2e 0%, #0f3460 100%);
+      position: relative;
+      overflow: hidden;
+    }
+    .dj-cover-art::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, transparent 40%, rgba(0,0,0,0.4) 100%);
+    }
+
+    /* ── Preview bar ── */
+    .preview-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      background: linear-gradient(90deg, #fef9ec, #fffbf0);
+      border: 1px solid #fcd34d;
+      border-radius: 12px;
+      padding: 10px 16px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .preview-bar-text {
+      font-size: 13px;
+      font-weight: 700;
+      color: #92400e;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .preview-countdown {
+      font-size: 13px;
+      font-weight: 800;
+      color: #d97706;
+      min-width: 56px;
+    }
+
+    /* ── Preview ended CTA ── */
+    .preview-ended-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 12px;
+      padding: 40px 24px;
+      background: linear-gradient(135deg, #f5f3ff, #eff6ff);
+      border: 1.5px solid #c4b5fd;
+      border-radius: 20px;
+      margin-bottom: 36px;
+    }
+    .preview-ended-icon { font-size: 36px; }
+    .preview-ended-title { font-size: 18px; font-weight: 800; color: var(--dark); }
+    .preview-ended-desc  { font-size: 14px; color: var(--text-gray); line-height: 1.6; }
+    .preview-ended-btns  { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-top: 4px; }
+    .preview-ended-btns a {
+      padding: 11px 24px; border-radius: 10px;
+      font-size: 14px; font-weight: 700; text-decoration: none;
+    }
+    .btn-subscribe { background: var(--blue); color: #fff; }
+    .btn-login-soft { background: #f3f4f6; color: var(--dark); }
+
+    /* ── Standby state ── */
+    .standby-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 12px;
+      padding: 48px 24px;
+      background: #f8f9fb;
+      border-radius: 20px;
+      margin-bottom: 36px;
+    }
+    .standby-icon { font-size: 40px; opacity: .45; }
+    .standby-title { font-size: 18px; font-weight: 800; color: var(--dark); }
+    .standby-desc  { font-size: 14px; color: var(--text-gray); line-height: 1.6; }
+
+    /* ── Mobile ── */
+    @media (max-width: 860px) {
+      .detail-wrap {
+        grid-template-columns: 1fr;
+        padding: 32px 20px 80px;
+        gap: 32px;
+      }
+      .detail-right { order: -1; }
+      .pl-name-big  { font-size: 22px; }
+      .dj-cover-art { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <div class="nav-inner">
+      <a href="index.html" class="nav-logo"><img src="logo.png" alt="인디피 뮤직" /></a>
+      <ul class="nav-links">
+        <li><a href="index.html">인디피 뮤직</a></li>
+        <li><a href="playlist.html">플레이리스트</a></li>
+        <li><a href="mood-test.html">음악 힙지수 테스트</a></li>
+      </ul>
+      <div class="nav-actions">
+        <a href="login.html" class="nav-login">로그인</a>
+        <a href="plan.html" class="nav-cta-blue">도입 문의</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="detail-wrap">
+
+    <!-- ═══ LEFT COLUMN ═══ -->
+    <div class="detail-left" id="detail-left">
+
+      <div id="np-section">
+        <p class="now-playing-label" id="np-label">NOW PLAYING</p>
+        <h2 class="now-playing-title" id="np-title">—</h2>
+        <p class="now-playing-artist" id="np-artist">—</p>
+
+        <div class="audio-progress">
+          <span class="audio-time" id="np-cur">0:00</span>
+          <div class="waveform-bar" id="waveform"></div>
+          <span class="audio-time" id="np-total">0:00</span>
+        </div>
+      </div>
+
+      <h3 class="playlist-section-title">플레이리스트</h3>
+      <div class="playlist-stats" id="pl-stats"></div>
+      <div class="song-list" id="song-list"></div>
+
+    </div>
+
+    <!-- ═══ RIGHT COLUMN ═══ -->
+    <div class="detail-right">
+
+      <!-- DJ Profile -->
+      <div class="dj-profile-block">
+        <div class="dj-detail-avatar" id="dj-avatar">🎧</div>
+        <div>
+          <div class="dj-detail-name" id="dj-name">—</div>
+          <div class="dj-detail-badge">DJ</div>
+        </div>
+      </div>
+
+      <!-- Playlist name + status -->
+      <div class="pl-name-big" id="pl-name">
+        —
+        <span id="live-badge"></span>
+      </div>
+
+      <div class="store-info-row">
+        <span class="store-info-key">장르</span>
+        <span class="store-info-val" id="pl-genre">—</span>
+      </div>
+      <div class="store-info-row">
+        <span class="store-info-key">트랙 수</span>
+        <span class="store-info-val" id="pl-track-count">—</span>
+      </div>
+      <div class="store-info-row">
+        <span class="store-info-key">총 시간</span>
+        <span class="store-info-val" id="pl-total-dur">—</span>
+      </div>
+      <div class="store-info-row" id="pl-listeners-row" style="display:none">
+        <span class="store-info-key">청취 중</span>
+        <span class="store-info-val" id="pl-listeners" style="color:#16a34a;font-weight:700">—</span>
+      </div>
+
+      <!-- Cover art -->
+      <div class="dj-cover-art" id="dj-cover">☕</div>
+
+    </div>
+
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div class="footer-info">
+        <p>대표이사: 박완</p>
+        <p>사업자 등록번호: 666-20-01980</p>
+        <p>통신판매업 번호: 2026-서울서대문-0358</p>
+        <p>주소 03628 서울특별시 서대문구 통일로 484 서대문구창업지원센터 321호 버비컴퍼니</p>
+        <p class="contact">고객 문의: verbykorea@gmail.com</p>
+        <div class="footer-policy-links">
+          <a href="terms.html">서비스 이용약관</a>
+          <span>|</span>
+          <a href="privacy.html">개인정보 처리방침</a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-title-big">INDP MUSIC</div>
+  </footer>
+  <div class="copyright">Copyright 2026. VERBY Co. all rights reserved.</div>
+
+  <script>
+    /* ── 샘플 데이터 ── */
+    const DJ_PLAYLISTS = {
+      1: {
+        id: 1, name: '선선한 오후 카페', djName: 'DJ Parkwan',
+        genre: '인디 · 어쿠스틱', emoji: '☕', isLive: true, currentIdx: 1, listeners: 47,
+        tracks: [
+          { id:1, title:'Morning Haze',     artist:'DJ Parkwan', duration:'3:42', secs:222 },
+          { id:2, title:'Slow Burn',        artist:'DJ Parkwan', duration:'4:15', secs:255 },
+          { id:3, title:'Coastal Drive',    artist:'DJ Parkwan', duration:'3:58', secs:238 },
+          { id:4, title:'Late Night Outro', artist:'DJ Parkwan', duration:'5:01', secs:301 },
+          { id:5, title:'Velvet Morning',   artist:'DJ Parkwan', duration:'4:02', secs:242 },
+          { id:6, title:'Soft Landing',     artist:'DJ Parkwan', duration:'3:30', secs:210 },
+          { id:7, title:'Glass Half Full',  artist:'DJ Parkwan', duration:'4:44', secs:284 },
+          { id:8, title:'Quiet Hours',      artist:'DJ Parkwan', duration:'3:15', secs:195 },
+          { id:9, title:'Amber Light',      artist:'DJ Parkwan', duration:'4:28', secs:268 },
+          { id:10, title:'Sunday Lull',     artist:'DJ Parkwan', duration:'3:55', secs:235 },
+          { id:11, title:'Paper Planes',    artist:'DJ Parkwan', duration:'4:10', secs:250 },
+          { id:12, title:'Drifting In',     artist:'DJ Parkwan', duration:'5:20', secs:320 },
+        ]
+      },
+      2: {
+        id: 2, name: '모던 바 나이트', djName: 'DJ Parkwan',
+        genre: '재즈 · 소울', emoji: '🌃', isLive: true, currentIdx: 0, listeners: 23,
+        tracks: [
+          { id:1, title:'Velvet Haze',   artist:'DJ Parkwan', duration:'4:33', secs:273 },
+          { id:2, title:'City Lights',   artist:'DJ Parkwan', duration:'3:50', secs:230 },
+          { id:3, title:'Night Shift',   artist:'DJ Parkwan', duration:'5:12', secs:312 },
+          { id:4, title:'Deep Blue',     artist:'DJ Parkwan', duration:'4:05', secs:245 },
+          { id:5, title:'Last Call',     artist:'DJ Parkwan', duration:'3:48', secs:228 },
+          { id:6, title:'Slow Jazz',     artist:'DJ Parkwan', duration:'6:01', secs:361 },
+          { id:7, title:'Moonrise',      artist:'DJ Parkwan', duration:'4:20', secs:260 },
+          { id:8, title:'After Hours',   artist:'DJ Parkwan', duration:'5:05', secs:305 },
+        ]
+      },
+      3: {
+        id: 3, name: '활기찬 브런치', djName: 'DJ Parkwan',
+        genre: '팝 · 댄스', emoji: '🌞', isLive: false, currentIdx: 0,
+        tracks: [
+          { id:1, title:'Rise & Shine',    artist:'DJ Parkwan', duration:'3:22', secs:202 },
+          { id:2, title:'Morning Run',     artist:'DJ Parkwan', duration:'3:55', secs:235 },
+          { id:3, title:'Golden Hour',     artist:'DJ Parkwan', duration:'4:10', secs:250 },
+          { id:4, title:'Weekend Vibes',   artist:'DJ Parkwan', duration:'3:40', secs:220 },
+          { id:5, title:'Brunch Beat',     artist:'DJ Parkwan', duration:'3:15', secs:195 },
+        ]
+      },
+      4: {
+        id: 4, name: '딥 포커스 워크', djName: 'DJ Parkwan',
+        genre: '일렉 · 앰비언트', emoji: '🎯', isLive: false, currentIdx: 0,
+        tracks: [
+          { id:1, title:'Flow State',      artist:'DJ Parkwan', duration:'6:00', secs:360 },
+          { id:2, title:'Deep Work',       artist:'DJ Parkwan', duration:'5:30', secs:330 },
+          { id:3, title:'In The Zone',     artist:'DJ Parkwan', duration:'7:15', secs:435 },
+          { id:4, title:'Signal',          artist:'DJ Parkwan', duration:'4:50', secs:290 },
+          { id:5, title:'Altitude',        artist:'DJ Parkwan', duration:'5:45', secs:345 },
+        ]
+      },
+    };
+
+    /* ── 구독 인증 확인 ── */
+    const canPlay = !!(getUserToken() || localStorage.getItem('djToken'));
+
+    /* ── URL 파라미터로 플레이리스트 로드 ── */
+    const plId = parseInt(new URLSearchParams(location.search).get('id')) || 1;
+    const pl   = DJ_PLAYLISTS[plId];
+
+    /* 시뮬레이션 상태 */
+    let elapsed = pl ? Math.floor(pl.tracks[pl.currentIdx]?.secs * 0.37) : 0;
+    let timer   = null;
+
+    /* 프리뷰 상태 (비구독자 + 라이브 채널) */
+    const PREVIEW_SECS   = 30;
+    const previewMode    = !canPlay && !!(pl?.isLive);
+    let   previewElapsed = 0;
+    let   previewEnded   = false;
+
+    function fmtTime(s) {
+      return `${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,'0')}`;
+    }
+
+    function totalSecs(tracks) {
+      return tracks.reduce((a, t) => a + t.secs, 0);
+    }
+
+    function fmtTotalDur(secs) {
+      const h = Math.floor(secs / 3600);
+      const m = Math.floor((secs % 3600) / 60);
+      return h > 0 ? `${h}시간 ${m}분` : `${m}분`;
+    }
+
+    /* ── 파형 바 생성 ── */
+    const WAVE_HEIGHTS = [8,14,22,10,28,6,20,12,26,8,18,24,10,28,14,24,6,20,16,26,9,22,8,26,14,20,10,24,6,18,22,9,28,12,22,7,16,26,11,20,6,27,14,23,18];
+    function buildWaveform(currentSecs, totalSecs) {
+      const bar = document.getElementById('waveform');
+      if (!bar) return;
+      const pct = totalSecs > 0 ? currentSecs / totalSecs : 0;
+      bar.innerHTML = WAVE_HEIGHTS.map((h, i) => {
+        const played = i / WAVE_HEIGHTS.length < pct;
+        return `<span style="height:${h}px" class="${played ? 'played' : ''}"></span>`;
+      }).join('');
+    }
+
+    /* ── 메인 렌더 ── */
+    function render() {
+      if (!pl) {
+        document.title = '플레이리스트를 찾을 수 없습니다 - 인디피 뮤직';
+        document.getElementById('detail-left').innerHTML = `
+          <div style="padding:60px 0;text-align:center;color:var(--text-gray)">
+            <p style="font-size:40px;margin-bottom:16px">🎵</p>
+            <p style="font-size:18px;font-weight:800;color:var(--dark);margin-bottom:8px">플레이리스트를 찾을 수 없습니다</p>
+            <p style="font-size:14px">존재하지 않거나 삭제된 플레이리스트입니다.</p>
+            <a href="playlist.html" style="display:inline-block;margin-top:20px;color:var(--blue);font-weight:700;text-decoration:none;">← 목록으로 돌아가기</a>
+          </div>`;
+        return;
+      }
+
+      document.title = `${pl.name} - 인디피 뮤직`;
+
+      /* ── 오른쪽 컬럼 ── */
+      document.getElementById('dj-name').textContent   = pl.djName;
+      document.getElementById('pl-name').childNodes[0].textContent = pl.name + ' ';
+      document.getElementById('dj-cover').textContent  = pl.emoji;
+      document.getElementById('pl-genre').innerHTML    = pl.genre.split(' · ').map(g => `<span class="genre-chip">${g}</span>`).join('');
+      document.getElementById('pl-track-count').textContent = `${pl.tracks.length}트랙`;
+      document.getElementById('pl-total-dur').textContent   = fmtTotalDur(totalSecs(pl.tracks));
+      if (pl.isLive && pl.listeners) {
+        document.getElementById('pl-listeners').textContent = `${pl.listeners}명 청취 중`;
+        document.getElementById('pl-listeners-row').style.display = '';
+      }
+
+      const liveBadge = document.getElementById('live-badge');
+      if (pl.isLive) {
+        liveBadge.className = 'live-status-badge on';
+        liveBadge.innerHTML = `<span class="live-dot-green"></span>지금 재생 중`;
+      } else {
+        liveBadge.className = 'live-status-badge off';
+        liveBadge.textContent = '대기 중';
+      }
+
+      /* ── 왼쪽: NOW PLAYING / 대기 / 프리뷰 ── */
+      if (!pl.isLive) {
+        /* 대기 중 (구독 여부 무관) */
+        document.getElementById('np-section').innerHTML = `
+          <div class="standby-wrap">
+            <div class="standby-icon">📻</div>
+            <div class="standby-title">현재 재생 중이 아닙니다</div>
+            <div class="standby-desc">이 플레이리스트는 현재 방송 중이 아닙니다.<br>DJ가 채널을 시작하면 실시간으로 업데이트됩니다.</div>
+          </div>`;
+      } else if (previewMode) {
+        /* 비구독자 + 라이브: 프리뷰 배너 + NOW PLAYING */
+        const t = pl.tracks[pl.currentIdx];
+        const npEl = document.getElementById('np-section');
+        npEl.innerHTML = `
+          <div class="preview-bar">
+            <span class="preview-bar-text">🎵 30초 미리 듣기</span>
+            <span class="preview-countdown" id="preview-countdown">남은 시간 ${PREVIEW_SECS}초</span>
+          </div>
+          <p class="now-playing-label live" id="np-label">● NOW PLAYING</p>
+          <h2 class="now-playing-title" id="np-title">${t.title}</h2>
+          <p class="now-playing-artist" id="np-artist">${t.artist}</p>
+          <div class="audio-progress">
+            <span class="audio-time" id="np-cur">${fmtTime(elapsed)}</span>
+            <div class="waveform-bar" id="waveform"></div>
+            <span class="audio-time" id="np-total">${t.duration}</span>
+          </div>`;
+        buildWaveform(elapsed, t.secs);
+      } else {
+        /* 구독자 + 라이브: 풀 재생 */
+        const t = pl.tracks[pl.currentIdx];
+        document.getElementById('np-label').className = 'now-playing-label live';
+        document.getElementById('np-label').textContent = '● NOW PLAYING';
+        document.getElementById('np-title').textContent  = t.title;
+        document.getElementById('np-artist').textContent = t.artist;
+        document.getElementById('np-cur').textContent    = fmtTime(elapsed);
+        document.getElementById('np-total').textContent  = t.duration;
+        buildWaveform(elapsed, t.secs);
+      }
+
+      /* ── 트랙 통계 ── */
+      const listenersBlock = pl.isLive && pl.listeners
+        ? `<div class="playlist-stat-divider"></div>
+           <div class="playlist-stat-item">
+             <span class="playlist-stat-label">청취 중</span>
+             <span class="playlist-stat-value" style="color:#16a34a">${pl.listeners}명</span>
+           </div>`
+        : '';
+      document.getElementById('pl-stats').innerHTML = `
+        <div class="playlist-stat-item">
+          <span class="playlist-stat-label">트랙 수</span>
+          <span class="playlist-stat-value">${pl.tracks.length}</span>
+        </div>
+        <div class="playlist-stat-divider"></div>
+        <div class="playlist-stat-item">
+          <span class="playlist-stat-label">총 재생시간</span>
+          <span class="playlist-stat-value">${fmtTotalDur(totalSecs(pl.tracks))}</span>
+        </div>
+        <div class="playlist-stat-divider"></div>
+        <div class="playlist-stat-item">
+          <span class="playlist-stat-label">DJ</span>
+          <span class="playlist-stat-value">${pl.djName}</span>
+        </div>
+        ${listenersBlock}`;
+
+      /* ── 트랙 리스트 ── */
+      renderSongList();
+    }
+
+    function renderSongList() {
+      const list = document.getElementById('song-list');
+      list.innerHTML = pl.tracks.map((t, i) => {
+        const isCurrent = pl.isLive && i === pl.currentIdx;
+        const progressBar = isCurrent
+          ? `<div class="song-progress-bar"><div class="song-progress-fill" id="song-progress-fill" style="width:${Math.floor((elapsed/t.secs)*100)}%"></div></div>`
+          : '';
+        const tag   = isCurrent ? `<span class="song-tag">재생 중</span>` : '';
+        const artCh = isCurrent ? '▶' : '♪';
+        return `
+          <div class="song-item${isCurrent ? ' playing' : ''}">
+            <span class="song-num">${i + 1}</span>
+            <div class="song-art">${artCh}</div>
+            <div class="song-info">
+              <div class="song-title-row">
+                <span class="song-title">${t.title}</span>
+                ${tag}
+              </div>
+              <p class="song-artist">${t.artist}</p>
+              ${progressBar}
+            </div>
+            <span class="song-duration">${isCurrent ? fmtTime(elapsed) + ' / ' + t.duration : t.duration}</span>
+          </div>`;
+      }).join('');
+    }
+
+    /* ── 프리뷰 종료 CTA ── */
+    function endPreview() {
+      clearInterval(timer);
+      previewEnded = true;
+      const npEl = document.getElementById('np-section');
+      if (!npEl) return;
+      npEl.innerHTML = `
+        <div class="preview-ended-wrap">
+          <div class="preview-ended-icon">🎵</div>
+          <div class="preview-ended-title">30초 미리 듣기가 끝났습니다</div>
+          <div class="preview-ended-desc">
+            전체 재생을 원하신다면 Plan A 라이트 요금제를 구독해 주세요.<br>
+            월 4,400원으로 모든 DJ 플레이리스트를 무제한으로 들을 수 있습니다.
+          </div>
+          <div class="preview-ended-btns">
+            <a href="plan.html" class="btn-subscribe">구독 시작하기</a>
+            <a href="login.html?mode=subscriber" class="btn-login-soft">이미 구독 중이신가요?</a>
+          </div>
+        </div>`;
+      /* 트랙 리스트 블러 처리 */
+      const songList = document.getElementById('song-list');
+      if (songList) songList.style.cssText = 'filter:blur(3px);pointer-events:none;user-select:none;';
+    }
+
+    /* ── 진행 바 실시간 업데이트 (구독자 or 프리뷰 모드) ── */
+    function startTimer() {
+      if (!pl || !pl.isLive) return;
+      if (!canPlay && !previewMode) return;
+      const t = pl.tracks[pl.currentIdx];
+      timer = setInterval(() => {
+        elapsed++;
+        if (elapsed > t.secs) elapsed = 0;
+
+        /* 프리뷰 카운트다운 */
+        if (previewMode && !previewEnded) {
+          previewElapsed++;
+          const remain = PREVIEW_SECS - previewElapsed;
+          const countEl = document.getElementById('preview-countdown');
+          if (countEl) countEl.textContent = remain > 0 ? `남은 시간 ${remain}초` : '0초';
+          if (previewElapsed >= PREVIEW_SECS) { endPreview(); return; }
+        }
+
+        /* waveform & time 업데이트 */
+        const curEl = document.getElementById('np-cur');
+        if (curEl) curEl.textContent = fmtTime(elapsed);
+        buildWaveform(elapsed, t.secs);
+
+        /* 트랙 내 진행 바 */
+        const fillEl = document.getElementById('song-progress-fill');
+        if (fillEl) fillEl.style.width = Math.floor((elapsed / t.secs) * 100) + '%';
+
+        /* 곡 duration 표시 업데이트 */
+        const durEls = document.querySelectorAll('.song-item.playing .song-duration');
+        durEls.forEach(el => el.textContent = fmtTime(elapsed) + ' / ' + t.duration);
+      }, 1000);
+    }
+
+    render();
+    startTimer();
+  </script>
+</body>
+</html>

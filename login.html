@@ -180,28 +180,63 @@
 
         <img src="vinyl.png" alt="인디피 뮤직" class="login-vinyl" />
 
-        <h1 class="login-title">매장 관리자 로그인</h1>
-        <p class="login-subtitle">인디피 뮤직 매장 관리 시스템</p>
-
-        <div class="form-group">
-          <label class="form-label" for="username">아이디</label>
-          <input type="text" id="username" class="form-input" placeholder="아이디를 입력해 주세요" />
+        <!-- 로그인 탭 -->
+        <div style="display:flex;background:#f3f4f6;border-radius:10px;padding:4px;margin-bottom:28px;">
+          <button id="tab-owner" onclick="switchTab('owner')"
+            style="flex:1;padding:9px;border:none;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer;background:#fff;color:var(--dark);box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+            매장 관리자
+          </button>
+          <button id="tab-subscriber" onclick="switchTab('subscriber')"
+            style="flex:1;padding:9px;border:none;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer;background:transparent;color:var(--text-gray);">
+            구독자 로그인
+          </button>
         </div>
 
-        <div class="form-group">
-          <label class="form-label" for="password">비밀번호</label>
-          <div class="pw-wrap">
-            <input type="password" id="password" class="form-input" placeholder="비밀번호를 입력해 주세요" />
-            <button class="pw-toggle" type="button" onclick="togglePw()" aria-label="비밀번호 표시/숨기기">
-              <svg id="eye-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                <circle cx="12" cy="12" r="3"/>
-              </svg>
-            </button>
+        <!-- 매장 관리자 폼 -->
+        <div id="form-owner">
+          <h1 class="login-title">매장 관리자 로그인</h1>
+          <p class="login-subtitle">인디피 뮤직 매장 관리 시스템</p>
+          <div class="form-group">
+            <label class="form-label" for="username">아이디</label>
+            <input type="text" id="username" class="form-input" placeholder="아이디를 입력해 주세요" />
           </div>
+          <div class="form-group">
+            <label class="form-label" for="password">비밀번호</label>
+            <div class="pw-wrap">
+              <input type="password" id="password" class="form-input" placeholder="비밀번호를 입력해 주세요" />
+              <button class="pw-toggle" type="button" onclick="togglePw('password','eye-icon')" aria-label="비밀번호 표시/숨기기">
+                <svg id="eye-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+          <button class="btn-login" onclick="handleOwnerLogin()">로그인</button>
         </div>
 
-        <button class="btn-login" onclick="handleLogin()">로그인</button>
+        <!-- 구독자 폼 (Plan A) -->
+        <div id="form-subscriber" style="display:none">
+          <h1 class="login-title">구독자 로그인</h1>
+          <p class="login-subtitle">Plan A 라이트 구독자 전용</p>
+          <div class="form-group">
+            <label class="form-label" for="sub-email">이메일</label>
+            <input type="email" id="sub-email" class="form-input" placeholder="가입 시 등록한 이메일" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="sub-password">비밀번호</label>
+            <div class="pw-wrap">
+              <input type="password" id="sub-password" class="form-input" placeholder="비밀번호를 입력해 주세요" />
+              <button class="pw-toggle" type="button" onclick="togglePw('sub-password','eye-icon-sub')" aria-label="비밀번호 표시/숨기기">
+                <svg id="eye-icon-sub" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+          <button class="btn-login" onclick="handleSubscriberLogin()">로그인</button>
+        </div>
 
       </div>
     </div>
@@ -210,9 +245,25 @@
 
   <script src="api.js"></script>
   <script>
-    function togglePw() {
-      const pw = document.getElementById('password');
-      const icon = document.getElementById('eye-icon');
+    // URL 파라미터로 탭 초기화 (?mode=subscriber)
+    (function() {
+      const mode = new URLSearchParams(location.search).get('mode');
+      if (mode === 'subscriber') switchTab('subscriber');
+    })();
+
+    function switchTab(tab) {
+      const isOwner = tab === 'owner';
+      document.getElementById('form-owner').style.display      = isOwner ? '' : 'none';
+      document.getElementById('form-subscriber').style.display = isOwner ? 'none' : '';
+      const activeStyle   = 'flex:1;padding:9px;border:none;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer;background:#fff;color:var(--dark);box-shadow:0 1px 3px rgba(0,0,0,0.1);';
+      const inactiveStyle = 'flex:1;padding:9px;border:none;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer;background:transparent;color:var(--text-gray);';
+      document.getElementById('tab-owner').style.cssText      = isOwner ? activeStyle : inactiveStyle;
+      document.getElementById('tab-subscriber').style.cssText = isOwner ? inactiveStyle : activeStyle;
+    }
+
+    function togglePw(inputId, iconId) {
+      const pw = document.getElementById(inputId);
+      const icon = document.getElementById(iconId);
       if (pw.type === 'password') {
         pw.type = 'text';
         icon.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
@@ -222,7 +273,7 @@
       }
     }
 
-    async function handleLogin() {
+    async function handleOwnerLogin() {
       const loginId = document.getElementById('username').value.trim();
       const password = document.getElementById('password').value;
       if (!loginId || !password) { alert('아이디와 비밀번호를 입력해 주세요.'); return; }
@@ -241,6 +292,19 @@
         window.location.href = 'playlist.html';
       } catch(e) {
         alert('로그인에 실패했습니다. 아이디와 비밀번호를 확인해 주세요.');
+      }
+    }
+
+    async function handleSubscriberLogin() {
+      const email    = document.getElementById('sub-email').value.trim();
+      const password = document.getElementById('sub-password').value;
+      if (!email || !password) { alert('이메일과 비밀번호를 입력해 주세요.'); return; }
+      try {
+        const data = await apiFetch('POST', '/api/user/login', { email, password });
+        setUserToken(data.accessToken, data.refreshToken);
+        window.location.href = 'playlist.html?tab=dj';
+      } catch(e) {
+        alert('로그인에 실패했습니다. 이메일과 비밀번호를 확인해 주세요.');
       }
     }
   </script>

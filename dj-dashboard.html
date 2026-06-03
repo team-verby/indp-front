@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DJ 대시보드 - 인디피 뮤직</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="shortcut icon" href="https://www.indpmusic.co.kr/favicon-32.png" />
+  <link rel="icon" type="image/png" sizes="32x32" href="https://www.indpmusic.co.kr/favicon-32.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=SUIT:wght@100..900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="shared.css" />
+  <script src="api.js"></script>
+  <style>
+    body { background: var(--light-bg); }
+
+    .dj-wrap {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 48px 24px 100px;
+    }
+
+    /* 프로필 행 */
+    .dj-profile-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+    .dj-avatar-circle {
+      width: 52px; height: 52px;
+      border-radius: 50%;
+      background: var(--dark);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; flex-shrink: 0;
+    }
+    .dj-profile-info { flex: 1; }
+    .dj-profile-name { font-size: 20px; font-weight: 800; color: var(--dark); }
+    .dj-profile-genre { font-size: 13px; color: var(--text-gray); margin-top: 2px; }
+    .dj-profile-stat { font-size: 13px; color: var(--text-gray); margin-top: 4px; }
+    .dj-profile-stat strong { color: var(--dark); font-weight: 700; }
+    .btn-edit-sm {
+      background: #f3f4f6;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-sub);
+      cursor: pointer;
+      font-family: inherit;
+      white-space: nowrap;
+    }
+    .btn-edit-sm:hover { background: #e5e7eb; }
+
+    /* 라이브 채널 카드 */
+    .live-card {
+      background: white;
+      border: 1.5px solid #e5e7eb;
+      border-radius: 20px;
+      overflow: hidden;
+      margin-bottom: 28px;
+    }
+    .live-card.on-air {
+      border-color: #bbf7d0;
+      box-shadow: 0 0 0 4px rgba(34,197,94,0.06);
+    }
+    .live-card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 24px 0;
+    }
+    .air-indicator {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+    .air-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #d1d5db;
+    }
+    .air-dot.live {
+      background: #16a34a;
+      animation: pulse-dot 2s infinite;
+    }
+    @keyframes pulse-dot {
+      0%  { box-shadow: 0 0 0 0 rgba(22,163,74,0.4); }
+      70% { box-shadow: 0 0 0 6px rgba(22,163,74,0); }
+      100%{ box-shadow: 0 0 0 0 rgba(22,163,74,0); }
+    }
+    .air-label {
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      color: #9ca3af;
+    }
+    .air-label.live { color: #16a34a; }
+    .track-count-badge {
+      font-size: 12px;
+      color: var(--text-gray);
+    }
+    .track-count-badge strong { color: #16a34a; font-weight: 700; }
+
+    /* OFF 상태 */
+    .live-off-body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      padding: 36px 24px 32px;
+      gap: 6px;
+    }
+    .live-off-icon { font-size: 32px; opacity: .35; margin-bottom: 6px; }
+    .live-off-title { font-size: 15px; font-weight: 700; color: var(--dark); }
+    .live-off-desc  { font-size: 13px; color: var(--text-gray); margin-bottom: 14px; }
+    .btn-start-live {
+      background: var(--dark);
+      color: white;
+      border: none;
+      border-radius: 100px;
+      padding: 12px 28px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      transition: opacity 0.15s;
+    }
+    .btn-start-live:hover { opacity: 0.85; }
+    .btn-start-live:disabled { opacity: 0.35; cursor: not-allowed; }
+
+    /* ON 상태 */
+    .live-on-body {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      padding: 24px;
+    }
+    .live-on-icon {
+      width: 60px; height: 60px;
+      border-radius: 16px;
+      background: #f0fdf4;
+      border: 1.5px solid #bbf7d0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 26px;
+      flex-shrink: 0;
+    }
+    .live-on-info { flex: 1; }
+    .live-on-title { font-size: 16px; font-weight: 800; color: #16a34a; margin-bottom: 3px; }
+    .live-on-desc  { font-size: 13px; color: var(--text-gray); margin-bottom: 12px; }
+    .btn-stop-live {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #fff1f2;
+      color: #e11d48;
+      border: 1.5px solid #fecdd3;
+      border-radius: 8px;
+      padding: 7px 16px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .btn-stop-live:hover { background: #ffe4e6; }
+
+    /* 업로드 영역 */
+    .upload-zone {
+      border: 2px dashed #d1d5db;
+      border-radius: 16px;
+      padding: 28px 20px;
+      text-align: center;
+      cursor: pointer;
+      margin-bottom: 20px;
+      background: white;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .upload-zone:hover, .upload-zone.dragover {
+      border-color: var(--blue);
+      background: #f5f7ff;
+    }
+    .upload-zone-icon  { font-size: 26px; margin-bottom: 8px; }
+    .upload-zone-title { font-size: 14px; font-weight: 700; color: var(--dark); margin-bottom: 4px; }
+    .upload-zone-sub   { font-size: 12px; color: var(--text-gray); margin-bottom: 12px; }
+    .upload-zone-btn {
+      display: inline-block;
+      background: var(--dark);
+      color: white;
+      border: none;
+      border-radius: 100px;
+      padding: 9px 20px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    #file-input { display: none; }
+
+    /* 트랙 목록 */
+    .section-hd {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .section-title { font-size: 15px; font-weight: 700; color: var(--dark); }
+    .section-count { font-size: 13px; color: var(--text-gray); }
+
+    .track-list { display: flex; flex-direction: column; gap: 6px; }
+    .track-item {
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 12px 16px;
+      display: grid;
+      grid-template-columns: 28px 1fr 64px 88px 48px;
+      gap: 0 12px;
+      align-items: center;
+    }
+    .track-item:hover { border-color: #c7d2fe; }
+    .track-num   { font-size: 12px; color: var(--text-light-gray); text-align: center; }
+    .track-name  { font-size: 14px; font-weight: 600; color: var(--dark); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+    .track-dur   { font-size: 13px; color: var(--text-gray); }
+    .t-badge {
+      font-size: 11px; font-weight: 700;
+      padding: 3px 10px; border-radius: 100px;
+      white-space: nowrap; width: fit-content;
+    }
+    .t-badge.ready     { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
+    .t-badge.uploading { background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; }
+    .t-badge.review    { background: #fffbeb; color: #d97706; border: 1px solid #fde68a; }
+    .btn-tr-del {
+      width: 32px; height: 32px;
+      background: none; border: none;
+      border-radius: 8px; cursor: pointer;
+      color: var(--text-light-gray);
+      font-size: 14px; display: flex;
+      align-items: center; justify-content: center;
+    }
+    .btn-tr-del:hover { background: #fee2e2; color: #e11d48; }
+    .upload-progress    { height: 3px; background: #e5e7eb; border-radius: 2px; margin-top: 5px; }
+    .upload-progress-fill { height: 100%; border-radius: 2px; background: var(--blue); transition: width .3s; }
+
+    /* 빈 상태 */
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+    }
+    .empty-state-icon  { font-size: 28px; margin-bottom: 8px; }
+    .empty-state-title { font-size: 14px; font-weight: 700; color: var(--dark); margin-bottom: 4px; }
+    .empty-state-desc  { font-size: 13px; color: var(--text-gray); }
+
+    /* 접근 거부 */
+    .access-denied {
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      min-height: 60vh; text-align: center; padding: 24px;
+      gap: 8px;
+    }
+    .access-denied-icon  { font-size: 40px; margin-bottom: 8px; }
+    .access-denied-title { font-size: 22px; font-weight: 800; color: var(--dark); }
+    .access-denied-desc  { font-size: 15px; color: var(--text-gray); margin-bottom: 16px; }
+
+    /* 모달 */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.45); z-index: 200;
+      align-items: center; justify-content: center;
+      padding: 24px;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: white;
+      border-radius: 20px;
+      padding: 28px;
+      width: 100%; max-width: 400px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+    }
+    .modal-hd { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+    .modal-title { font-size: 17px; font-weight: 800; color: var(--dark); }
+    .modal-close { background: none; border: none; font-size: 18px; cursor: pointer; color: var(--text-gray); line-height: 1; }
+    .modal-close:hover { color: var(--dark); }
+    .modal-footer { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
+    .btn-modal-cancel  { background: #f3f4f6; color: var(--text-sub); border: none; border-radius: 10px; padding: 10px 18px; font-size: 14px; cursor: pointer; font-family: inherit; }
+    .btn-modal-confirm { background: var(--dark); color: white; border: none; border-radius: 10px; padding: 10px 18px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; }
+    .btn-modal-cancel:hover  { background: #e5e7eb; }
+    .btn-modal-confirm:hover { opacity: 0.85; }
+
+    @media (max-width: 560px) {
+      .track-item { grid-template-columns: 28px 1fr 64px 48px; }
+      .t-badge { display: none; }
+      .live-on-body { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">
+      <img src="logo.png" alt="인디피 뮤직" />
+    </a>
+    <ul class="nav-links">
+      <li><a href="index.html">인디피 뮤직</a></li>
+      <li><a href="playlist.html">플레이리스트</a></li>
+      <li><a href="mood-test.html">음악 힙지수 테스트</a></li>
+    </ul>
+    <div class="nav-actions" id="nav-actions">
+      <a href="login.html" class="nav-login">로그인</a>
+      <a href="plan.html" class="nav-cta-blue">도입 문의</a>
+    </div>
+  </div>
+</nav>
+
+<!-- 접근 권한 없음 -->
+<div class="access-denied" id="access-denied" style="display:none">
+  <div class="access-denied-icon">🔒</div>
+  <div class="access-denied-title">접근 권한이 없습니다</div>
+  <div class="access-denied-desc">DJ 계정으로 로그인한 경우에만 접근할 수 있습니다.</div>
+  <a href="login.html" class="btn-primary" style="text-decoration:none;">로그인하기</a>
+  <button onclick="enterDemo()" style="margin-top:8px;background:none;border:1px solid #e5e7eb;color:var(--text-gray);border-radius:100px;padding:10px 20px;font-size:13px;cursor:pointer;font-family:inherit;">데모로 보기</button>
+</div>
+
+<!-- 메인 -->
+<div class="dj-wrap" id="dj-main" style="display:none">
+
+  <!-- 프로필 -->
+  <div class="dj-profile-row">
+    <div class="dj-avatar-circle">🎧</div>
+    <div class="dj-profile-info">
+      <div class="dj-profile-name" id="dj-name">DJ 이름</div>
+      <div class="dj-profile-genre" id="dj-genre"></div>
+      <div class="dj-profile-stat"><strong id="stat-tr">0</strong>개 트랙 업로드됨</div>
+    </div>
+    <button class="btn-edit-sm" onclick="openProfileModal()">프로필 수정</button>
+  </div>
+
+  <!-- 라이브 채널 카드 -->
+  <div class="live-card" id="live-card">
+    <div class="live-card-top">
+      <div class="air-indicator">
+        <span class="air-dot" id="air-dot"></span>
+        <span class="air-label" id="air-label">OFF AIR</span>
+      </div>
+      <span class="track-count-badge" id="track-count-badge"></span>
+    </div>
+
+    <div class="live-off-body" id="live-off">
+      <div class="live-off-icon">📻</div>
+      <div class="live-off-title">채널이 꺼져 있습니다</div>
+      <div class="live-off-desc">업로드된 트랙으로 라이브를 시작하세요.</div>
+      <button class="btn-start-live" id="btn-start-live" onclick="startLive()">▶ 라이브 시작</button>
+    </div>
+
+    <div class="live-on-body" id="live-on" style="display:none">
+      <div class="live-on-icon">📡</div>
+      <div class="live-on-info">
+        <div class="live-on-title">라이브 방송 중</div>
+        <div class="live-on-desc" id="live-on-desc">—</div>
+        <button class="btn-stop-live" onclick="stopLive()">■ 방송 종료</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 트랙 업로드 & 목록 -->
+  <div class="upload-zone" id="upload-zone"
+    ondragover="handleDragOver(event)" ondragleave="handleDragLeave()"
+    ondrop="handleDrop(event)" onclick="document.getElementById('file-input').click()">
+    <div class="upload-zone-icon">🎵</div>
+    <div class="upload-zone-title">MP3 파일을 드래그하거나 클릭해서 업로드</div>
+    <div class="upload-zone-sub">MP3 · WAV 지원 · 파일당 최대 50MB · 본인 소유 저작권 음악만</div>
+    <button class="upload-zone-btn" onclick="event.stopPropagation(); document.getElementById('file-input').click()">파일 선택</button>
+  </div>
+  <input type="file" id="file-input" multiple accept=".mp3,.wav" onchange="handleFileSelect(event)" />
+
+  <div class="section-hd">
+    <span class="section-title">업로드된 트랙</span>
+    <span class="section-count" id="track-count"></span>
+  </div>
+  <div class="track-list" id="track-list"></div>
+
+</div>
+
+<!-- FOOTER -->
+<footer class="site-footer">
+  <div class="footer-inner">
+    <div class="footer-info">
+      <p>대표이사: 박완</p>
+      <p>사업자 등록번호: 666-20-01980</p>
+      <p>통신판매업 번호: 2026-서울서대문-0358</p>
+      <p>주소 03628 서울특별시 서대문구 통일로 484 서대문구창업지원센터 321호 버비컴퍼니</p>
+      <p class="contact">고객 문의: verbykorea@gmail.com</p>
+      <div class="footer-policy-links">
+        <a href="terms.html">서비스 이용약관</a>
+        <span>|</span>
+        <a href="privacy.html">개인정보 처리방침</a>
+      </div>
+    </div>
+  </div>
+  <div class="footer-title-big">INDP MUSIC</div>
+</footer>
+<div class="copyright">Copyright 2026. VERBY Co. all rights reserved.</div>
+
+<!-- MODAL: 프로필 수정 -->
+<div class="modal-overlay" id="profile-modal">
+  <div class="modal">
+    <div class="modal-hd">
+      <div class="modal-title">DJ 프로필 수정</div>
+      <button class="modal-close" onclick="closeProfileModal()">✕</button>
+    </div>
+    <div class="form-group" style="margin-bottom:16px">
+      <label class="form-label">DJ 이름</label>
+      <input class="form-input" id="edit-dj-name" type="text" />
+    </div>
+    <div class="form-group" style="margin-bottom:0">
+      <label class="form-label">장르 / 소개</label>
+      <input class="form-input" id="edit-dj-genre" type="text" placeholder="예: Indie · Jazz · Chill" />
+    </div>
+    <div class="modal-footer">
+      <button class="btn-modal-cancel" onclick="closeProfileModal()">취소</button>
+      <button class="btn-modal-confirm" onclick="saveProfile()">저장</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ── 인증 ── */
+function enterDemo() {
+  localStorage.setItem('djToken', 'demo');
+  localStorage.setItem('djName', 'DJ Parkwan');
+  localStorage.setItem('djGenre', 'Indie · Jazz · Chill');
+  location.reload();
+}
+function logout() {
+  ['djToken', 'djName', 'djGenre'].forEach(k => localStorage.removeItem(k));
+  location.href = 'index.html';
+}
+
+const djToken = localStorage.getItem('djToken');
+let djName    = localStorage.getItem('djName') || 'DJ';
+let djGenre   = localStorage.getItem('djGenre') || '';
+
+function init() {
+  // GNB 스크롤 플로팅
+  const nav = document.querySelector('nav');
+  if (nav) {
+    const update = () => nav.classList.toggle('scrolled', window.scrollY > 10);
+    window.addEventListener('scroll', update, { passive: true });
+    update();
+  }
+
+  if (!djToken) {
+    document.getElementById('access-denied').style.display = 'flex';
+    updateNavAuth();
+    return;
+  }
+
+  // DJ 로그인 상태 → 네브에 로그아웃 노출
+  document.getElementById('nav-actions').innerHTML = `
+    <button onclick="logout()" class="nav-login" style="background:none;border:none;cursor:pointer;font-family:inherit;">로그아웃</button>
+    <span class="nav-cta-dark" style="pointer-events:none;">DJ 대시보드</span>
+  `;
+
+  document.getElementById('dj-main').style.display = 'block';
+  document.getElementById('dj-name').textContent   = djName;
+  document.getElementById('dj-genre').textContent  = djGenre || '';
+
+  renderTracks();
+  renderChannel();
+}
+
+/* ── 트랙 데이터 ── */
+let tracks = [
+  { id:1, filename:'morning_haze.mp3',     duration:'3:42', secs:222, status:'ready' },
+  { id:2, filename:'slow_burn.mp3',        duration:'4:15', secs:255, status:'ready' },
+  { id:3, filename:'coastal_drive.mp3',    duration:'3:58', secs:238, status:'ready' },
+  { id:4, filename:'late_night_outro.mp3', duration:'5:01', secs:301, status:'ready' },
+  { id:5, filename:'velvet_haze.mp3',      duration:'4:33', secs:273, status:'review' },
+  { id:6, filename:'city_lights.mp3',      duration:'3:50', secs:230, status:'ready' },
+];
+
+/* ── 채널 상태 ── */
+let isLive = false;
+
+function startLive() {
+  const readyCount = tracks.filter(t => t.status === 'ready').length;
+  if (!readyCount) { alert('준비 완료 상태의 트랙이 없습니다. 먼저 트랙을 업로드해 주세요.'); return; }
+  isLive = true;
+  setDjLive(true);
+  renderChannel();
+}
+
+function stopLive() {
+  if (!confirm('방송을 종료할까요?')) return;
+  isLive = false;
+  setDjLive(false);
+  renderChannel();
+}
+
+function renderChannel() {
+  const card   = document.getElementById('live-card');
+  const dot    = document.getElementById('air-dot');
+  const label  = document.getElementById('air-label');
+  const badge  = document.getElementById('track-count-badge');
+  const offEl  = document.getElementById('live-off');
+  const onEl   = document.getElementById('live-on');
+
+  const readyCount = tracks.filter(t => t.status === 'ready').length;
+
+  if (!isLive) {
+    card.classList.remove('on-air');
+    dot.classList.remove('live');
+    label.classList.remove('live');
+    label.textContent = 'OFF AIR';
+    badge.innerHTML = '';
+    offEl.style.display = '';
+    onEl.style.display  = 'none';
+
+    const btn = document.getElementById('btn-start-live');
+    btn.disabled    = readyCount === 0;
+    btn.textContent = readyCount > 0 ? `▶ 라이브 시작 (${readyCount}개 트랙)` : '▶ 라이브 시작';
+  } else {
+    card.classList.add('on-air');
+    dot.classList.add('live');
+    label.classList.add('live');
+    label.textContent = 'ON AIR';
+    badge.innerHTML = `<strong>${readyCount}</strong>개 트랙 방송 중`;
+    offEl.style.display = 'none';
+    onEl.style.display  = 'flex';
+    document.getElementById('live-on-desc').textContent =
+      `${readyCount}개 트랙이 구독자에게 스트리밍되고 있습니다.`;
+  }
+}
+
+/* ── 트랙 목록 렌더 ── */
+const T_LABEL = { ready:'준비 완료', uploading:'업로드 중', review:'검토 중' };
+function renderTracks() {
+  const list       = document.getElementById('track-list');
+  const readyCount = tracks.filter(t => t.status === 'ready').length;
+  document.getElementById('track-count').textContent  = `${tracks.length}개 (준비 완료 ${readyCount}개)`;
+  document.getElementById('stat-tr').textContent      = tracks.length;
+
+  if (!tracks.length) {
+    list.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state-icon">🎵</div>
+        <div class="empty-state-title">업로드된 트랙이 없습니다</div>
+        <div class="empty-state-desc">위 영역에 MP3 파일을 드래그하거나 클릭해서 추가하세요.</div>
+      </div>`;
+    return;
+  }
+
+  list.innerHTML = tracks.map((t, i) => `
+    <div class="track-item">
+      <span class="track-num">${i + 1}</span>
+      <div class="track-name">
+        ${t.filename}
+        ${t.progress != null ? `<div class="upload-progress"><div class="upload-progress-fill" style="width:${t.progress}%"></div></div>` : ''}
+      </div>
+      <span class="track-dur">${t.duration}</span>
+      <span class="t-badge ${t.status}">${T_LABEL[t.status] || t.status}</span>
+      <button class="btn-tr-del" onclick="removeTrack(${t.id})" title="삭제">✕</button>
+    </div>`).join('');
+}
+
+/* ── 파일 업로드 ── */
+function handleDragOver(e) { e.preventDefault(); document.getElementById('upload-zone').classList.add('dragover'); }
+function handleDragLeave()  { document.getElementById('upload-zone').classList.remove('dragover'); }
+function handleDrop(e)      { e.preventDefault(); document.getElementById('upload-zone').classList.remove('dragover'); processFiles([...e.dataTransfer.files]); }
+function handleFileSelect(e){ processFiles([...e.target.files]); e.target.value = ''; }
+
+function processFiles(files) {
+  files.filter(f => f.type.startsWith('audio/')).forEach(file => {
+    const id = Date.now() + Math.random();
+    tracks.push({ id, filename: file.name, duration: '-', secs: 0, status: 'uploading', progress: 0 });
+    renderTracks();
+    renderChannel();
+    simulateUpload(id);
+  });
+}
+
+function simulateUpload(id) {
+  let p = 0;
+  const iv = setInterval(() => {
+    p += Math.random() * 18;
+    if (p >= 100) { p = 100; clearInterval(iv); }
+    const t = tracks.find(t => t.id === id);
+    if (t) {
+      t.progress = Math.round(p);
+      if (p >= 100) { t.status = 'review'; delete t.progress; }
+      renderTracks();
+      renderChannel();
+    }
+  }, 280);
+}
+
+function removeTrack(id) {
+  if (!confirm('트랙을 삭제할까요?')) return;
+  tracks = tracks.filter(t => t.id !== id);
+  renderTracks();
+  renderChannel();
+}
+
+/* ── 트랙 수정 모달 ── */
+let editingTrackId = null;
+function openTrackEditModal(id) {
+  const t = tracks.find(t => t.id === id);
+  if (!t) return;
+  editingTrackId = id;
+  document.getElementById('edit-track-title').value  = t.title;
+  document.getElementById('edit-track-artist').value = t.artist;
+  document.getElementById('track-edit-modal').classList.add('open');
+  setTimeout(() => document.getElementById('edit-track-title').focus(), 50);
+}
+function closeTrackEditModal() { document.getElementById('track-edit-modal').classList.remove('open'); }
+function saveTrackEdit() {
+  const title  = document.getElementById('edit-track-title').value.trim();
+  const artist = document.getElementById('edit-track-artist').value.trim();
+  if (!title) { document.getElementById('edit-track-title').focus(); return; }
+  const t = tracks.find(t => t.id === editingTrackId);
+  if (t) { t.title = title; t.artist = artist; }
+  renderTracks();
+  closeTrackEditModal();
+}
+
+/* ── 프로필 수정 ── */
+function openProfileModal() {
+  document.getElementById('edit-dj-name').value  = djName;
+  document.getElementById('edit-dj-genre').value = djGenre;
+  document.getElementById('profile-modal').classList.add('open');
+  setTimeout(() => document.getElementById('edit-dj-name').focus(), 50);
+}
+function closeProfileModal() { document.getElementById('profile-modal').classList.remove('open'); }
+function saveProfile() {
+  const name  = document.getElementById('edit-dj-name').value.trim();
+  const genre = document.getElementById('edit-dj-genre').value.trim();
+  if (!name) { document.getElementById('edit-dj-name').focus(); return; }
+  djName = name; djGenre = genre;
+  localStorage.setItem('djName', djName);
+  localStorage.setItem('djGenre', djGenre);
+  document.getElementById('dj-name').textContent  = djName;
+  document.getElementById('dj-genre').textContent = djGenre || '';
+  closeProfileModal();
+}
+
+/* ── 모달 외부 클릭 닫기 ── */
+['track-edit-modal', 'profile-modal'].forEach(id => {
+  document.getElementById(id).addEventListener('click', e => {
+    if (e.target === e.currentTarget) e.currentTarget.classList.remove('open');
+  });
+});
+
+init();
+</script>
+</body>
+</html>

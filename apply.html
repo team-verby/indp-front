@@ -38,8 +38,8 @@
   <!-- PAGE -->
   <div class="page-wrap">
 
-    <h1 class="page-title">매장/플레이리스트 정보 입력</h1>
-    <p class="page-subtitle">매장과 재생할 플레이리스트 정보를 입력해 주세요</p>
+    <h1 class="page-title" id="page-title">매장/플레이리스트 정보 입력</h1>
+    <p class="page-subtitle" id="page-subtitle">매장과 재생할 플레이리스트 정보를 입력해 주세요</p>
 
     <!-- Stepper -->
     <div class="stepper">
@@ -72,8 +72,8 @@
       </div>
     </div>
 
-    <!-- Sub-stepper -->
-    <div class="sub-stepper">
+    <!-- Sub-stepper: 라이트 외 요금제 전용 -->
+    <div class="sub-stepper" id="sub-stepper">
       <div class="sub-step active">
         <div class="sub-step-num">1</div>
         <div class="sub-step-label">신청 정보</div>
@@ -90,8 +90,8 @@
       </div>
     </div>
 
-    <!-- Form Card: 신청 정보 -->
-    <div class="form-card">
+    <!-- Form Card: 기본/프리미엄 -->
+    <div class="form-card" id="form-standard">
       <h2 class="form-card-title">신청 정보</h2>
 
       <div class="form-group">
@@ -105,8 +105,35 @@
         <input type="tel" id="applicant-phone" class="form-input" placeholder="회신을 위해 연락 가능한 휴대폰번호를 작성해 주세요" />
         <p class="field-error" id="err-phone">연락처를 입력해 주세요.</p>
       </div>
+    </div>
 
+    <!-- Form Card: 라이트 전용 -->
+    <div class="form-card" id="form-lite" style="display:none">
+      <h2 class="form-card-title">계정 생성</h2>
 
+      <div class="form-group">
+        <label class="form-label" for="lite-name">성함 <span class="required">*</span></label>
+        <input type="text" id="lite-name" class="form-input" placeholder="성함을 입력해 주세요" />
+        <p class="field-error" id="err-lite-name">성함을 입력해 주세요.</p>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="lite-email">이메일 (아이디) <span class="required">*</span></label>
+        <input type="email" id="lite-email" class="form-input" placeholder="로그인에 사용할 이메일을 입력해 주세요" />
+        <p class="field-error" id="err-lite-email">올바른 이메일을 입력해 주세요.</p>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="lite-pw">비밀번호 <span class="required">*</span></label>
+        <input type="password" id="lite-pw" class="form-input" placeholder="8자 이상 입력해 주세요" />
+        <p class="field-error" id="err-lite-pw">비밀번호는 8자 이상이어야 합니다.</p>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="lite-pw2">비밀번호 확인 <span class="required">*</span></label>
+        <input type="password" id="lite-pw2" class="form-input" placeholder="비밀번호를 한 번 더 입력해 주세요" />
+        <p class="field-error" id="err-lite-pw2">비밀번호가 일치하지 않습니다.</p>
+      </div>
     </div>
 
     <!-- Actions -->
@@ -140,10 +167,22 @@
 
   <script>
     // 페이지 진입 시 URL 파라미터 → 즉시 localStorage 저장
-    (function() {
-      const p = new URLSearchParams(location.search).get('plan');
+    const plan = (function() {
+      const p = new URLSearchParams(location.search).get('plan') || localStorage.getItem('selectedPlan') || 'B';
       if (p) localStorage.setItem('selectedPlan', p);
+      return p;
     })();
+
+    const isLite = plan === 'A';
+
+    // 라이트 플랜이면 UI 전환
+    if (isLite) {
+      document.getElementById('page-title').textContent = '계정 생성';
+      document.getElementById('page-subtitle').textContent = '서비스 이용을 위한 계정 정보를 입력해 주세요';
+      document.getElementById('sub-stepper').style.display = 'none';
+      document.getElementById('form-standard').style.display = 'none';
+      document.getElementById('form-lite').style.display = 'block';
+    }
 
     function setError(inputId, errId, show) {
       document.getElementById(inputId).classList.toggle('error', show);
@@ -151,7 +190,15 @@
     }
 
     function goNext() {
-      const name = document.getElementById('applicant-name').value.trim();
+      if (isLite) {
+        goNextLite();
+      } else {
+        goNextStandard();
+      }
+    }
+
+    function goNextStandard() {
+      const name  = document.getElementById('applicant-name').value.trim();
       const phone = document.getElementById('applicant-phone').value.trim();
       let valid = true;
 
@@ -163,8 +210,32 @@
       if (valid) {
         localStorage.setItem('applicantName', name);
         localStorage.setItem('applicantPhone', phone);
-        const plan = new URLSearchParams(location.search).get('plan') || localStorage.getItem('selectedPlan') || 'B';
         window.location.href = 'apply-store.html?plan=' + plan;
+      }
+    }
+
+    function goNextLite() {
+      const name  = document.getElementById('lite-name').value.trim();
+      const email = document.getElementById('lite-email').value.trim();
+      const pw    = document.getElementById('lite-pw').value;
+      const pw2   = document.getElementById('lite-pw2').value;
+      let valid = true;
+
+      const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+      setError('lite-name',  'err-lite-name',  !name);
+      setError('lite-email', 'err-lite-email', !emailOk);
+      setError('lite-pw',    'err-lite-pw',    pw.length < 8);
+      setError('lite-pw2',   'err-lite-pw2',   pw !== pw2);
+      if (!name || !emailOk || pw.length < 8 || pw !== pw2) valid = false;
+
+      document.getElementById('submit-error').classList.toggle('show', !valid);
+      if (valid) {
+        localStorage.setItem('applicantName', name);
+        localStorage.setItem('applicantEmail', email);
+        // 비밀번호는 결제 완료 후 서버 전송 — 임시 세션 저장
+        sessionStorage.setItem('applicantPw', pw);
+        window.location.href = 'payment.html?plan=' + plan;
       }
     }
   </script>

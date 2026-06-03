@@ -702,7 +702,7 @@
 
         localStorage.setItem('tempo', JSON.stringify([...document.querySelectorAll('#chip-tempo .chip.selected')].map(c => c.textContent)));
 
-        // 플랜 B 전용 필드
+        // Plan C 전용 필드
         const GENRE_ENUM = { '발라드':'BALLAD', '힙합':'HIPHOP', '인디':'INDIE', '락':'ROCK', '댄스':'DANCE', '클래식':'CLASSIC', '동요':'CHILDREN' };
         if (parseInt(localStorage.getItem('selectedPlanId') || '0') === 2) {
           const rejectGenres = [...document.querySelectorAll('#section-block-genre .chip.selected')].map(c => GENRE_ENUM[c.textContent] || c.textContent);
@@ -730,9 +730,9 @@
       el.classList.add('selected');
     }
 
-    // 플랜 B 전용 섹션 표시 여부
-    // Plan B일 때만 해당 섹션 노출 (기본 hidden)
-    // planId: 1 = Plan A, 2 = Plan B
+    // Plan C 전용 섹션 표시 여부
+    // Plan C일 때만 해당 섹션 노출 (기본 hidden)
+    // planId: 1 = Plan B 기본, 2 = Plan C 프리미엄, 3 = Plan A 라이트
     const planId = parseInt(localStorage.getItem('selectedPlanId') || '0');
     if (planId === 2) {
       document.getElementById('section-block-genre').style.display = '';

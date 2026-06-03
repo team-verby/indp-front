@@ -1737,8 +1737,9 @@
           </select>
           <select class="filter-select" onchange="filterByPlan(this.value)">
             <option value="">전체 요금제</option>
-            <option value="기본">기본 요금제</option>
-            <option value="프리미엄">프리미엄 요금제</option>
+            <option value="Plan A 라이트">Plan A 라이트 요금제</option>
+            <option value="Plan B 기본">Plan B 기본 요금제</option>
+            <option value="Plan C 프리미엄">Plan C 프리미엄 요금제</option>
           </select>
         </div>
 
@@ -1911,7 +1912,7 @@
     const TEMPO_MAP    = { SLOW:'느림', CALM:'잔잔한', NORMAL:'보통', LIVELY:'활기찬', UPBEAT:'경쾌한' };
     const PLAYLIST_MAP = { MUSIC_RECOMMENDED:'추천 음악', TIME_BASED:'시간대별 무드', CONSISTENT_MOOD:'일관 무드' };
     const GENRE_MAP    = { BALLAD:'발라드', POP:'팝', ROCK:'락', JAZZ:'재즈', CLASSIC:'클래식', R_AND_B:'R&B', HIP_HOP:'힙합', HIPHOP:'힙합', DANCE:'댄스', INDIE:'인디', FOLK:'포크', ELECTRONIC:'일렉트로닉', TROT:'트로트', CHILDREN:'동요', OTHER:'기타' };
-    const PLAN_MAP     = { PLAN_A:'기본', PLAN_B:'프리미엄', STANDARD:'스탠다드' };
+    const PLAN_MAP     = { PLAN_A:'Plan B 기본', PLAN_B:'Plan C 프리미엄', PLAN_LITE:'Plan A 라이트', STANDARD:'스탠다드' };
     const DAY_NAMES    = {1:'월', 2:'화', 3:'수', 4:'목', 5:'금', 6:'토', 7:'일'};
 
     const WEEKS_TO_MONTHS = { 4: 1, 12: 3, 24: 6, 48: 12 };
@@ -2359,7 +2360,7 @@
       const wrap = document.getElementById('adm-payment-history');
       if (!wrap) return;
 
-      const PLAN_NAMES = { PLAN_A:'Plan A 기본 요금제', PLAN_B:'Plan B 프리미엄 요금제', A:'Plan A 기본 요금제', B:'Plan B 프리미엄 요금제', STANDARD:'스탠다드 요금제' };
+      const PLAN_NAMES = { PLAN_A:'Plan B 기본 요금제', PLAN_B:'Plan C 프리미엄 요금제', A:'Plan B 기본 요금제', B:'Plan C 프리미엄 요금제', STANDARD:'스탠다드 요금제' };
 
       function fmtPayItem(p) {
         const raw = p.paidAt || p.createdAt || p.paymentDate;

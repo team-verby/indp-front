@@ -1101,7 +1101,8 @@
 
       // 요금제
       const PLAN_NAMES_SUM = {
-        PLAN_A: '기본 요금제', PLAN_B: '프리미엄 요금제', A: '기본 요금제', B: '프리미엄 요금제', STANDARD: '스탠다드'
+        PLAN_A: 'Plan B 기본 요금제', PLAN_B: 'Plan C 프리미엄 요금제',
+        A: 'Plan A 라이트 요금제', B: 'Plan B 기본 요금제', C: 'Plan C 프리미엄 요금제', STANDARD: '스탠다드'
       };
       if (sumPlan && currentPlan) sumPlan.textContent = PLAN_NAMES_SUM[currentPlan] || currentPlan;
 
@@ -1191,7 +1192,7 @@
       const view = document.getElementById('music-view-mode');
       if (!view) return;
       const mi = currentMusicInfo || {};
-      const isPlanA = currentPlan === 'PLAN_A' || currentPlan === 'A';
+      const isPlanA = currentPlan !== 'PLAN_B'; // Plan C(PLAN_B)만 비선호 장르 표시
 
       const MOOD_KO  = { CALM:'차분한', MODERN:'모던한', ELEGANT:'우아한', DARK:'다크한', NATURAL:'내추럴한', OTHER:'기타' };
       const VIBE_KO2 = { CALM:'차분한', MODERN:'모던한', ELEGANT:'우아한', DARK:'다크한', NATURAL:'내추럴한', OTHER:'기타' };
@@ -1251,7 +1252,7 @@
     }
 
     function applyPlanRestrictions(plan) {
-      const isPlanA = plan === 'PLAN_A' || plan === 'A';
+      const isPlanA = plan !== 'PLAN_B'; // Plan C(PLAN_B)만 비선호 장르 표시
       ['fg-prefer-genres','fg-reject-genres','fg-rejected-note'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.style.display = isPlanA ? 'none' : '';
@@ -1671,8 +1672,8 @@
 
     async function loadSubscription(storeId, token) {
       const PLAN_NAMES = {
-        PLAN_A: 'Plan A 기본 요금제', PLAN_B: 'Plan B 프리미엄 요금제',
-        A: 'Plan A 기본 요금제', B: 'Plan B 프리미엄 요금제',
+        PLAN_A: 'Plan B 기본 요금제', PLAN_B: 'Plan C 프리미엄 요금제',
+        A: 'Plan A 라이트 요금제', B: 'Plan B 기본 요금제', C: 'Plan C 프리미엄 요금제',
         STANDARD: '스탠다드 요금제'
       };
       const lsPlan = localStorage.getItem('selectedPlan') || '';

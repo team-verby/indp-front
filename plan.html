@@ -31,24 +31,33 @@
   <style>
     body { background: var(--light-bg); }
 
+    /* 3카드 대응: Subgrid로 각 섹션 높이 일치 */
+    .plan-select-card {
+      padding: 22px 20px;
+      grid-row: span 7;
+      display: grid;
+      grid-template-rows: subgrid;
+    }
+
     .plan-cards-row {
-      display: flex;
-      gap: 24px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      column-gap: 14px;
       margin-top: 24px;
     }
 
     .plan-card-name {
-      font-size: 18px;
+      font-size: 15px;
       font-weight: 700;
       color: var(--dark);
-      margin-bottom: 6px;
+      margin-bottom: 3px;
     }
 
     .plan-card-subdesc {
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 400;
       color: var(--text-gray);
-      margin-bottom: 20px;
+      margin-bottom: 8px;
       line-height: 1.5;
       display: flex;
       align-items: center;
@@ -97,7 +106,7 @@
       line-height: 1.6;
       padding: 12px 14px;
       border-radius: 10px;
-      width: 220px;
+      width: 200px;
       white-space: normal;
       z-index: 10;
       pointer-events: none;
@@ -119,7 +128,7 @@
     }
 
     .plan-original {
-      font-size: 15px;
+      font-size: 13px;
       color: var(--text-light-gray);
       text-decoration: line-through;
       margin-bottom: 4px;
@@ -129,24 +138,25 @@
       display: flex;
       align-items: baseline;
       gap: 4px;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
+      flex-wrap: wrap;
     }
 
     .plan-price-main {
-      font-size: 40px;
+      font-size: 28px;
       font-weight: 900;
       color: var(--dark);
       line-height: 1;
     }
 
     .plan-price-unit {
-      font-size: 14px;
+      font-size: 12px;
       color: var(--text-gray);
       font-weight: 400;
     }
 
     .plan-discount {
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 700;
       color: var(--blue);
       margin-bottom: 0;
@@ -155,28 +165,28 @@
     .plan-divider {
       height: 1px;
       background: #e5e7eb;
-      margin: 20px 0;
+      margin: 16px 0;
     }
 
     .plan-feat-list {
       list-style: none;
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 10px;
     }
 
     .plan-feat-list li {
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 500;
       color: var(--text-sub);
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
     }
 
     .feat-check {
       color: var(--text-gray);
-      font-size: 14px;
+      font-size: 13px;
       flex-shrink: 0;
     }
 
@@ -200,9 +210,69 @@
       font-size: 17px;
     }
 
+    .plan-notices {
+      margin-top: 28px;
+      background: #f8f9fb;
+      border: 1px solid #e5e7eb;
+      border-radius: 14px;
+      padding: 22px 24px;
+    }
+
+    .plan-notices-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--dark);
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .plan-notices-group {
+      margin-bottom: 14px;
+    }
+
+    .plan-notices-group:last-child {
+      margin-bottom: 0;
+    }
+
+    .plan-notices-group-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--blue);
+      margin-bottom: 6px;
+    }
+
+    .plan-notices-group ul {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .plan-notices-group ul li {
+      font-size: 12px;
+      color: #6b7280;
+      line-height: 1.6;
+      padding-left: 12px;
+      position: relative;
+    }
+
+    .plan-notices-group ul li::before {
+      content: '·';
+      position: absolute;
+      left: 0;
+      color: #9ca3af;
+      font-weight: 700;
+    }
+
     @media (max-width: 768px) {
-      .plan-cards-row { flex-direction: column; gap: 16px; }
+      .plan-cards-row { grid-template-columns: 1fr; row-gap: 16px; }
+      .plan-select-card { padding: 24px; grid-row: auto; display: block; }
       .plan-price-main { font-size: 32px; }
+      .plan-card-name { font-size: 17px; }
+      .plan-card-subdesc { font-size: 14px; }
+      .plan-feat-list li { font-size: 14px; }
       .plan-center-action .btn-primary { width: 100%; text-align: center; display: block; }
     }
 
@@ -210,6 +280,68 @@
       .plan-price-main { font-size: 26px; }
       .plan-feat-list li { font-size: 13px; }
     }
+
+    /* ── QR 스티커 팝업 ── */
+    .qr-sticker-trigger {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: #eef0ff;
+      border: 1.5px solid #233eff;
+      border-radius: 100px;
+      padding: 2px 9px;
+      color: #233eff;
+      font-weight: 700;
+      font-size: 0.9em;
+      line-height: 1.4;
+      cursor: pointer;
+      white-space: nowrap;
+      vertical-align: middle;
+      transition: background 0.18s;
+    }
+    .qr-sticker-trigger:hover { background: #dde0ff; }
+    .qr-sticker-trigger .trigger-icon { font-size: 11px; line-height: 1; flex-shrink: 0; }
+
+    .qr-sticker-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      z-index: 9000;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(4px);
+    }
+    .qr-sticker-overlay.open { display: flex; }
+
+    .qr-sticker-modal {
+      background: #fff;
+      border-radius: 24px;
+      padding: 36px 32px 28px;
+      max-width: 380px;
+      width: 90%;
+      max-height: 90vh;
+      overflow-y: auto;
+      position: relative;
+      text-align: center;
+      animation: modalIn 0.22s ease;
+    }
+    @keyframes modalIn {
+      from { opacity: 0; transform: scale(0.93) translateY(8px); }
+      to   { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    .qr-sticker-close {
+      position: absolute; top: 14px; right: 18px;
+      background: none; border: none; font-size: 22px; color: #aaa; cursor: pointer; line-height: 1;
+    }
+    .qr-sticker-close:hover { color: #333; }
+    .qr-sticker-modal-title { font-size: 17px; font-weight: 800; color: #111; margin-bottom: 6px; }
+    .qr-sticker-modal-desc { font-size: 13px; color: #888; margin-bottom: 24px; line-height: 1.6; }
+    .qr-sticker-imgs { display: flex; flex-direction: column; align-items: center; gap: 16px; margin-bottom: 20px; }
+    .qr-sticker-img-wrap { display: flex; flex-direction: column; align-items: center; gap: 8px; width: 100%; }
+    .qr-sticker-img-wrap img { width: 100%; max-width: 300px; border-radius: 14px; border: 1px solid #eee; object-fit: contain; }
+    .qr-sticker-img-wrap span { font-size: 12px; color: #aaa; font-weight: 500; }
+    .qr-sticker-modal-note { font-size: 12px; color: #bbb; line-height: 1.6; }
   </style>
 </head>
 <body>
@@ -272,40 +404,58 @@
     <!-- Plan Cards -->
     <div class="plan-cards-row" id="plan-cards-row">
 
-      <!-- Plan A -->
-      <div class="plan-select-card" id="planA" onclick="selectPlan('A', 1, 8800)">
-        <p class="plan-card-name">Plan A 기본 요금제</p>
+      <!-- Plan A 라이트 -->
+      <div class="plan-select-card" id="planA" onclick="selectPlan('A', 3, 4400)">
+        <p class="plan-card-name">Plan A 라이트 요금제</p>
+        <p class="plan-card-subdesc">DJ 플레이리스트 전용 플랜</p>
+        <p class="plan-original"></p>
+        <div class="plan-price-row">
+          <span class="plan-price-main">4,400원</span>
+          <span class="plan-price-unit">/월 (VAT 10% 포함)</span>
+        </div>
+        <p class="plan-discount"></p>
+        <div class="plan-divider"></div>
+        <ul class="plan-feat-list">
+          <li><span class="feat-check">✓</span> 24시간 원하는 DJ의 음악 선택 가능</li>
+          <li><span class="feat-check">✓</span> 개인 카페 추천 플랜</li>
+        </ul>
+      </div>
+
+      <!-- Plan B -->
+      <div class="plan-select-card selected" id="planB" onclick="selectPlan('B', 1, 8800)">
+        <span class="popular-badge">인기</span>
+        <p class="plan-card-name">Plan B 기본 요금제</p>
         <p class="plan-card-subdesc">플레이리스트 큐레이션 전용 플랜</p>
         <p class="plan-original">22,000원</p>
         <div class="plan-price-row">
           <span class="plan-price-main">8,800원</span>
           <span class="plan-price-unit">/월 (VAT 10% 포함)</span>
         </div>
-        <p class="plan-discount">신규 오픈 기념 60% 할인</p>
+        <p class="plan-discount">신규 오픈 기념 6월 30일까지 할인</p>
         <div class="plan-divider"></div>
         <ul class="plan-feat-list">
-          <li><span class="feat-check">✓</span> 매장 맞춤형 플레이리스트 제공</li>
-          <li><span class="feat-check">✓</span> 월 4회 업데이트(매주 월요일)</li>
-          <li><span class="feat-check">✓</span> 플레이리스트 결과 보고서 제공</li>
+          <li><span class="feat-check">✓</span> 매장 맞춤형 브랜딩 플레이리스트 제공</li>
+          <li><span class="feat-check">✓</span> 매주 플레이리스트 업데이트</li>
+          <li><span class="feat-check">✓</span> 프렌차이즈, 브랜드 매장 추천 플랜</li>
         </ul>
       </div>
 
-      <!-- Plan B -->
-      <div class="plan-select-card selected" id="planB" onclick="selectPlan('B', 2, 13200)">
-        <span class="popular-badge">인기</span>
-        <p class="plan-card-name">Plan B 프리미엄 요금제</p>
-        <p class="plan-card-subdesc">플레이리스트 큐레이션 + <span class="subdesc-highlight">추천곡 전용 플랜</span><span class="subdesc-tooltip-wrap"><button class="subdesc-tooltip-btn" onclick="event.stopPropagation()">?</button><span class="subdesc-tooltip-box">손님이 매장 QR을 스캔해 원하는 노래를 직접 신청할 수 있는 기능입니다. 신청된 곡은 플레이리스트에 반영됩니다.<br><br>📦 해당 플랜 신청 시 QR 스티커가 매장으로 무료 발송됩니다.</span></span></p>
+      <!-- Plan C -->
+      <div class="plan-select-card" id="planC" onclick="selectPlan('C', 2, 13200)">
+        <p class="plan-card-name">Plan C 프리미엄 요금제</p>
+        <p class="plan-card-subdesc">QR 추천 플레이리스트 큐레이션 전용 플랜</p>
         <p class="plan-original">33,000원</p>
         <div class="plan-price-row">
           <span class="plan-price-main">13,200원</span>
           <span class="plan-price-unit">/월 (VAT 10% 포함)</span>
         </div>
-        <p class="plan-discount">신규 오픈 기념 60% 할인</p>
+        <p class="plan-discount">신규 오픈 기념 6월 30일까지 할인</p>
         <div class="plan-divider"></div>
         <ul class="plan-feat-list">
-          <li><span class="feat-check">✓</span> 매장 맞춤형 플레이리스트 제공</li>
-          <li><span class="feat-check">✓</span> 월 4회 업데이트(매주 월요일)</li>
-          <li><span class="feat-check">✓</span> 플레이리스트 결과 보고서 제공</li>
+          <li><span class="feat-check">✓</span> 매장 맞춤형 브랜딩 플레이리스트 제공</li>
+          <li><span class="feat-check">✓</span> 매주 플레이리스트 업데이트</li>
+          <li><span class="feat-check">✓</span> QR 음악 추천 기능 추가</li>
+          <li><span class="feat-check">✓</span> <span class="qr-sticker-trigger">QR 리플렛 제공<span class="trigger-icon">🖼</span></span></li>
         </ul>
       </div>
 
@@ -313,6 +463,39 @@
 
     <div class="plan-center-action">
       <a href="apply.html" class="btn-primary" id="btn-go-apply" onclick="event.preventDefault(); window.name='selectedPlan:'+selectedPlan; localStorage.setItem('selectedPlan',selectedPlan); window.location.href='apply.html?plan='+selectedPlan;">도입 문의하기</a>
+    </div>
+
+    <!-- 유의사항 -->
+    <div class="plan-notices">
+      <p class="plan-notices-title">📋 유의사항</p>
+
+      <div class="plan-notices-group">
+        <p class="plan-notices-group-title">저작권 · 공연권</p>
+        <ul>
+          <li>모든 요금제에 저작권료 및 공연권료가 포함되어 있어 매장에서 합법적으로 음악을 재생하실 수 있습니다.</li>
+          <li>별도의 저작권 신고 없이 서비스 신청 즉시 이용 가능합니다.</li>
+          <li>유튜브, 멜론, 스포티파이 등 개인용 스트리밍 서비스는 매장 영업 목적 재생 시 저작권법 위반이 될 수 있습니다.</li>
+        </ul>
+      </div>
+
+      <div class="plan-notices-group">
+        <p class="plan-notices-group-title">서비스 이용</p>
+        <ul>
+          <li>본 서비스는 카페, 음식점, 소매점 등 상업 공간의 BGM 전용입니다. 개인 감상 목적으로는 사용할 수 없습니다.</li>
+          <li>Plan B · C의 플레이리스트는 매주 업데이트됩니다.</li>
+          <li>Plan A 라이트는 DJ가 큐레이션한 플레이리스트 중 원하는 플레이리스트를 직접 선택하여 24시간 재생하는 플랜입니다.</li>
+          <li>하나의 구독은 하나의 매장에 적용됩니다. 복수 매장 운영 시 매장별로 별도 구독이 필요합니다.</li>
+        </ul>
+      </div>
+
+      <div class="plan-notices-group">
+        <p class="plan-notices-group-title">QR 리플렛 (Plan C 전용)</p>
+        <ul>
+          <li>Plan C 신청 완료 후 영업일 기준 3~5일 이내 매장으로 배송됩니다.</li>
+          <li>손님이 QR을 스캔하면 매장 플레이리스트 확인 및 노래 신청이 가능합니다.</li>
+          <li>리플렛 재발급이 필요한 경우 마이페이지에서 신청 가능합니다.</li>
+        </ul>
+      </div>
     </div>
 
   </div>
@@ -337,6 +520,26 @@
   </section>
   <div class="copyright">Copyright 2026. VERBY Co. all rights reserved.</div>
 
+  <!-- QR 스티커 팝업 -->
+  <div class="qr-sticker-overlay" id="qrStickerOverlay">
+    <div class="qr-sticker-modal">
+      <button class="qr-sticker-close" id="qrStickerClose">✕</button>
+      <p class="qr-sticker-modal-title">QR 리플렛 미리보기</p>
+      <p class="qr-sticker-modal-desc">Plan C 신청 완료 후 아래와 같은<br>리플렛이 매장으로 배송됩니다.</p>
+      <div class="qr-sticker-imgs">
+        <div class="qr-sticker-img-wrap">
+          <img src="QR_front.png" alt="QR 리플렛 앞면" />
+          <span>앞면</span>
+        </div>
+        <div class="qr-sticker-img-wrap">
+          <img src="QR_back.png" alt="QR 리플렛 뒷면" />
+          <span>뒷면</span>
+        </div>
+      </div>
+      <p class="qr-sticker-modal-note">리플렛을 매장 테이블·카운터에 비치하면<br>손님이 QR을 스캔해 플레이리스트 확인 및 노래 신청이 가능합니다.</p>
+    </div>
+  </div>
+
   <script src="api.js"></script>
   <script>
     let selectedPlan = 'B';
@@ -346,30 +549,55 @@
 
     // 페이지 로드 시 기본값(Plan B) 즉시 저장
     localStorage.setItem('selectedPlan', 'B');
-    localStorage.setItem('selectedPlanId', '2');
+    localStorage.setItem('selectedPlanId', '1');
 
     // Fallback hardcoded plans
-
+    // API 플랜 코드(PLAN_A, PLAN_B)는 각각 Plan B, Plan C로 표시
     const PLAN_INFO = {
       'PLAN_A': {
         shortName: '기본 요금제',
         subdesc: '플레이리스트 큐레이션 전용 플랜',
-        features: ['매장 맞춤형 플레이리스트 제공', '월 4회 업데이트(매주 월요일)', '플레이리스트 결과 보고서 제공']
+        features: ['매장 맞춤형 브랜딩 플레이리스트 제공', '매주 플레이리스트 업데이트', '프렌차이즈, 브랜드 매장 추천 플랜']
       },
       'PLAN_B': {
         shortName: '프리미엄 요금제',
-        subdesc: '플레이리스트 큐레이션 + <span class="subdesc-highlight">추천곡 전용 플랜</span><span class="subdesc-tooltip-wrap"><button class="subdesc-tooltip-btn" onclick="event.stopPropagation()">?</button><span class="subdesc-tooltip-box">손님이 매장 QR을 스캔해 원하는 노래를 직접 신청할 수 있는 기능입니다. 신청된 곡은 플레이리스트에 반영됩니다.<br><br>📦 해당 플랜 신청 시 QR 스티커가 매장으로 무료 발송됩니다.</span></span>',
-        features: ['매장 맞춤형 플레이리스트 제공', '월 4회 업데이트(매주 월요일)', '플레이리스트 결과 보고서 제공']
+        subdesc: 'QR 추천 플레이리스트 큐레이션 전용 플랜',
+        features: ['매장 맞춤형 브랜딩 플레이리스트 제공', '매주 플레이리스트 업데이트', 'QR 음악 추천 기능 추가', '<span class="qr-sticker-trigger">QR 리플렛 제공<span class="trigger-icon">🖼</span></span>']
       }
     };
+
+    // API 플랜 순서(PLAN_A → B, PLAN_B → C)에 대응하는 표시 코드
+    const API_CODE_MAP = ['B', 'C'];
 
     function renderPlans(plans) {
       const row = document.getElementById('plan-cards-row');
       row.innerHTML = '';
+
+      // Plan A 라이트 (백엔드 미적용, 항상 하드코딩으로 앞에 표시)
+      const liteCard = document.createElement('div');
+      liteCard.className = 'plan-select-card';
+      liteCard.id = 'planA';
+      liteCard.onclick = () => selectPlan('A', 3, 4400);
+      liteCard.innerHTML = `
+        <p class="plan-card-name">Plan A 라이트 요금제</p>
+        <p class="plan-card-subdesc">DJ 플레이리스트 전용 플랜</p>
+        <p class="plan-original"></p>
+        <div class="plan-price-row">
+          <span class="plan-price-main">4,400원</span>
+          <span class="plan-price-unit">/월 (VAT 10% 포함)</span>
+        </div>
+        <p class="plan-discount"></p>
+        <div class="plan-divider"></div>
+        <ul class="plan-feat-list">
+          <li><span class="feat-check">✓</span> 24시간 원하는 DJ의 음악 선택 가능</li>
+          <li><span class="feat-check">✓</span> 개인 카페 추천 플랜</li>
+        </ul>`;
+      row.appendChild(liteCard);
+
       plans.forEach((plan, idx) => {
         const planType = plan.type || plan.code || '';
-        const codeShort = idx === 0 ? 'A' : 'B';
-        const defaultSelected = idx === plans.length - 1 || plans.length === 1;
+        const codeShort = API_CODE_MAP[idx] || String.fromCharCode(67 + idx);
+        const defaultSelected = idx === 0;
 
         const info = PLAN_INFO[planType] || {};
         const planShortName = info.shortName || planType;
@@ -384,12 +612,12 @@
         const originalHtml = discountRate > 0
           ? `<p class="plan-original">${monthlyPrice.toLocaleString()}원</p>` : '';
         const discountHtml = discountRate > 0
-          ? `<p class="plan-discount">신규 오픈 기념 ${discountRate}% 할인</p>` : '';
+          ? `<p class="plan-discount">신규 오픈 기념 6월 30일까지 할인</p>` : '';
         const featuresHtml = featuresList.map((f, fi) => {
           const isHighlight = fi === (featuresList.length - 1) && idx > 0;
           return `<li${isHighlight ? ' class="feat-highlight-row"' : ''}><span class="feat-check">✓</span> ${f}</li>`;
         }).join('');
-        const popularBadge = (plans.length > 1 && idx === plans.length - 1) ? '<span class="popular-badge">인기</span>' : '';
+        const popularBadge = idx === 0 ? '<span class="popular-badge">인기</span>' : '';
 
         const card = document.createElement('div');
         card.className = 'plan-select-card' + (defaultSelected ? ' selected' : '');
@@ -411,7 +639,6 @@
         row.appendChild(card);
 
         if (defaultSelected) {
-          // 사용자가 이미 명시적으로 선택한 플랜이 있으면 그걸 유지
           const alreadyChosen = localStorage.getItem('selectedPlan');
           if (!alreadyChosen) {
             selectedPlan = codeShort;
@@ -455,6 +682,18 @@
       const update = () => nav.classList.toggle('scrolled', window.scrollY > 10);
       window.addEventListener('scroll', update, { passive: true });
       update();
+    })();
+
+    // QR 스티커 팝업
+    (function() {
+      const overlay = document.getElementById('qrStickerOverlay');
+      const close   = document.getElementById('qrStickerClose');
+      document.addEventListener('click', (e) => {
+        if (e.target.closest('.qr-sticker-trigger')) overlay.classList.add('open');
+      });
+      close.addEventListener('click', () => overlay.classList.remove('open'));
+      overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.classList.remove('open'); });
+      document.addEventListener('keydown', (e) => { if (e.key === 'Escape') overlay.classList.remove('open'); });
     })();
   </script>
 

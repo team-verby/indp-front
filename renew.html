@@ -451,10 +451,10 @@
   <div class="copyright">Copyright 2026. VERBY Co. all rights reserved.</div>
 
   <script>
-    const PLAN_RATES = { A: 8800, B: 13200, PLAN_A: 8800, PLAN_B: 13200 };
+    const PLAN_RATES = { A: 4400, B: 8800, C: 13200, PLAN_A: 8800, PLAN_B: 13200 };
     const PLAN_NAMES = {
-      A: 'Plan A (기본 요금제)', B: 'Plan B (프리미엄 요금제)',
-      PLAN_A: 'Plan A (기본 요금제)', PLAN_B: 'Plan B (프리미엄 요금제)'
+      A: 'Plan A (라이트 요금제)', B: 'Plan B (기본 요금제)', C: 'Plan C (프리미엄 요금제)',
+      PLAN_A: 'Plan B (기본 요금제)', PLAN_B: 'Plan C (프리미엄 요금제)'
     };
 
     const fmt = d => `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`;
@@ -512,7 +512,7 @@
         // 플랜 정보
         const planRaw = primary.planType || primary.plan || plan;
         plan = planRaw;
-        const planName = PLAN_NAMES[planRaw] || 'Plan B (프리미엄 요금제)';
+        const planName = PLAN_NAMES[planRaw] || 'Plan C (프리미엄 요금제)';
         monthlyRate = PLAN_RATES[planRaw] || monthlyRate;
 
         document.getElementById('currentPlanName').textContent = planName;
@@ -610,7 +610,7 @@
 
     function updateSummary(months, total) {
       const weeks = WEEKS_MAP[months] || months * 4;
-      const planName = PLAN_NAMES[plan] || 'Plan B (프리미엄 요금제)';
+      const planName = PLAN_NAMES[plan] || 'Plan C (프리미엄 요금제)';
       document.getElementById('summaryLabel').textContent =
         `${planName} · 월 ${monthlyRate.toLocaleString()}원 × ${months}개월`;
       document.getElementById('summaryAmount').textContent = total.toLocaleString() + '원';
