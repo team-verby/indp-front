@@ -112,6 +112,7 @@ function setUserToken(accessToken, refreshToken) {
 function clearUserToken() {
   localStorage.removeItem('userToken');
   localStorage.removeItem('userRefreshToken');
+  localStorage.removeItem('userEmail');
 }
 
 // 모든 페이지 네비게이션 로그인 상태 동기화
@@ -126,7 +127,7 @@ function updateNavAuth() {
   } else if (getUserToken()) {
     navActions.innerHTML = `
       <a href="index.html" class="nav-login" onclick="clearUserToken()">로그아웃</a>
-      <a href="playlist.html" class="nav-cta-dark">플레이리스트</a>
+      <a href="mypage.html" class="nav-cta-dark">마이페이지</a>
     `;
   } else {
     navActions.innerHTML = `

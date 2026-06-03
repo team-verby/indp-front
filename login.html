@@ -302,6 +302,7 @@
       try {
         const data = await apiFetch('POST', '/api/user/login', { email, password });
         setUserToken(data.accessToken, data.refreshToken);
+        localStorage.setItem('userEmail', email);
         window.location.href = 'playlist.html?tab=dj';
       } catch(e) {
         alert('로그인에 실패했습니다. 이메일과 비밀번호를 확인해 주세요.');

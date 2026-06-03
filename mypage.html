@@ -757,8 +757,137 @@
 
   <div class="mypage-wrap">
 
-    <h1 class="page-title">마이페이지</h1>
-    <p class="page-subtitle">지금 내 매장 플레이리스트를 관리해 보세요</p>
+    <h1 class="page-title" id="page-main-title">마이페이지</h1>
+    <p class="page-subtitle" id="page-main-subtitle">지금 내 매장 플레이리스트를 관리해 보세요</p>
+
+    <!-- ══════════ 구독자(Plan A) 전용 섹션 ══════════ -->
+    <div id="subscriber-section" style="display:none">
+
+      <!-- 구독자 요약 카드 -->
+      <div class="summary-card" id="sub-summary-card">
+        <div class="summary-avatar" style="background:#f0fdf4">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
+          </svg>
+        </div>
+        <div class="summary-main">
+          <div class="summary-store-name" id="sub-email-display">—</div>
+          <div class="summary-meta">
+            <span>구독자 계정</span>
+          </div>
+        </div>
+        <div class="summary-right">
+          <div class="summary-info-row">
+            <span class="summary-info-label">요금제</span>
+            <div class="summary-plan-badge" id="sub-plan-name">Plan A 라이트</div>
+          </div>
+          <div class="summary-info-row">
+            <span class="summary-info-label">이용 상태</span>
+            <div class="summary-status-badge active" id="sub-status">이용 중</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 탭 바 -->
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:24px;">
+        <div class="tab-bar" style="margin-bottom:0">
+          <button class="tab-btn active" onclick="switchSubTab('subscription', this)">구독 정보</button>
+          <button class="tab-btn" onclick="switchSubTab('history', this)">결제 내역</button>
+        </div>
+      </div>
+
+      <!-- 구독 정보 탭 -->
+      <div id="sub-tab-subscription" class="tab-panel active">
+
+        <!-- 현재 구독 -->
+        <div class="form-card">
+          <h2 class="form-card-title">현재 구독</h2>
+          <div class="pay-info-row">
+            <span class="pay-info-label">요금제</span>
+            <span class="pay-info-value">Plan A 라이트 요금제</span>
+          </div>
+          <div class="pay-info-row">
+            <span class="pay-info-label">월 구독료</span>
+            <span class="pay-info-value accent">4,400원 / 월</span>
+          </div>
+          <div class="pay-info-row">
+            <span class="pay-info-label">서비스 이용 기간</span>
+            <span class="pay-info-value" id="sub-period">—</span>
+          </div>
+          <div class="pay-info-row">
+            <span class="pay-info-label">다음 갱신일</span>
+            <span class="pay-info-value" id="sub-renew-date">—</span>
+          </div>
+        </div>
+
+        <!-- DJ 플레이리스트 바로가기 -->
+        <div class="form-card" style="margin-top:16px">
+          <h2 class="form-card-title">DJ 플레이리스트</h2>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap">
+            <div>
+              <p style="font-size:14px;color:var(--text-sub);line-height:1.6;margin-bottom:0">
+                지금 라이브 중인 DJ 채널을 실시간으로 청취할 수 있습니다.<br>
+                Plan A 라이트 구독으로 모든 DJ 플레이리스트를 무제한으로 즐기세요.
+              </p>
+            </div>
+            <a href="playlist.html?tab=dj" class="btn-primary" style="white-space:nowrap;flex-shrink:0;text-decoration:none">DJ 플레이리스트 보러 가기</a>
+          </div>
+        </div>
+
+        <!-- 포함된 혜택 -->
+        <div class="form-card" style="margin-top:16px">
+          <h2 class="form-card-title">Plan A 라이트 혜택</h2>
+          <div class="policy-box">
+            <ul class="policy-list">
+              <li>현재 라이브 중인 모든 DJ 채널 <strong style="display:inline;font-weight:700;color:var(--dark)">무제한 청취</strong></li>
+              <li>DJ가 큐레이션한 고품질 플레이리스트를 실시간으로 감상</li>
+              <li>30초 미리 듣기 제한 없이 전체 트랙 청취 가능</li>
+              <li>월 <strong style="display:inline;font-weight:700;color:var(--dark)">4,400원</strong> (VAT 포함)</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- 구독 관리 -->
+        <div class="form-card" style="margin-top:16px">
+          <h2 class="form-card-title">구독 관리</h2>
+          <div class="renew-box">
+            <div class="renew-box-text">
+              <strong>구독을 계속 유지하시겠어요?</strong>
+              구독 갱신은 만료일 이전에 진행하면 이어서 적용됩니다.
+            </div>
+            <a href="plan.html" class="btn-primary" style="white-space:nowrap;flex-shrink:0">구독 갱신</a>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- 결제 내역 탭 -->
+      <div id="sub-tab-history" class="tab-panel">
+        <div class="form-card">
+          <h2 class="form-card-title">결제 내역</h2>
+          <div id="sub-payment-list">
+            <p style="font-size:14px;color:var(--text-gray);text-align:center;padding:24px 0">결제 내역을 불러오는 중...</p>
+          </div>
+        </div>
+
+        <!-- 환불 정책 -->
+        <div class="form-card" style="margin-top:16px">
+          <h2 class="form-card-title">환불 정책</h2>
+          <div class="policy-box">
+            <ul class="policy-list">
+              <li>구독 시작일로부터 <strong style="display:inline;font-weight:700;color:var(--dark)">7일 이내</strong>이며, 서비스 미이용 시 전액 환불 가능합니다.</li>
+              <li>이용 후 환불 시 이용 기간을 기준으로 환불 금액이 산정됩니다.</li>
+              <li>환불 문의: <strong style="display:inline;font-weight:700;color:var(--dark)">verbykorea@gmail.com</strong></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <!-- /구독자 섹션 끝 -->
+
+    <!-- ══════════ 오너 전용 섹션 ══════════ -->
+    <div id="owner-section" style="display:none">
 
     <!-- 요약 카드 -->
     <div class="summary-card" id="summary-card">
@@ -1027,6 +1156,9 @@
       <p class="qr-reorder-banner-text">매장 <strong>QR 코드 리플렛</strong>을 모두 사용하셨나요? 추가 주문을 진행해주세요.</p>
       <button class="qr-reorder-btn" id="qrReorderOpenBtn">추가 주문하기</button>
     </div>
+
+    </div>
+    <!-- /오너 섹션 끝 -->
 
   </div>
 
@@ -1981,7 +2113,67 @@
       updateSummary();
     }
 
-    load();
+    /* ── 구독자(Plan A) 탭 전환 ── */
+    function switchSubTab(name, btn) {
+      document.querySelectorAll('#subscriber-section .tab-panel').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('#subscriber-section .tab-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('sub-tab-' + name).classList.add('active');
+      if (btn) btn.classList.add('active');
+    }
+
+    /* ── 구독자 마이페이지 초기화 ── */
+    async function initSubscriberMypage() {
+      document.getElementById('page-main-title').textContent = '마이페이지';
+      document.getElementById('page-main-subtitle').textContent = 'Plan A 라이트 구독 정보를 확인하세요';
+
+      const email = localStorage.getItem('userEmail') || '—';
+      document.getElementById('sub-email-display').textContent = email;
+
+      // 구독 기간: 백엔드 API 연동 전 localStorage or 샘플 표시
+      const fmtD = d => {
+        const dt = new Date(d);
+        return `${dt.getFullYear()}.${String(dt.getMonth()+1).padStart(2,'0')}.${String(dt.getDate()).padStart(2,'0')}`;
+      };
+      const today = new Date();
+      const nextMonth = new Date(today);
+      nextMonth.setMonth(nextMonth.getMonth() + 1);
+      document.getElementById('sub-period').textContent = `${fmtD(today)} ~ ${fmtD(nextMonth)}`;
+      document.getElementById('sub-renew-date').textContent = fmtD(nextMonth);
+
+      // 결제 내역 (백엔드 API 연동 전 안내 문구)
+      document.getElementById('sub-payment-list').innerHTML = `
+        <div style="text-align:center;padding:24px 16px;color:var(--text-gray)">
+          <p style="font-size:28px;margin-bottom:10px">📋</p>
+          <p style="font-size:14px;font-weight:600;color:var(--dark);margin-bottom:6px">결제 내역 준비 중</p>
+          <p style="font-size:13px">결제 내역 조회 기능은 곧 제공될 예정입니다.</p>
+        </div>`;
+
+      // Plan A 구독자는 nav를 구독자 로그아웃으로 표시
+      const navActions = document.querySelector('.nav-actions');
+      if (navActions) {
+        navActions.innerHTML = `
+          <a href="index.html" class="nav-login" onclick="clearUserToken()">로그아웃</a>
+          <a href="mypage.html" class="nav-cta-dark">마이페이지</a>`;
+      }
+    }
+
+    /* ── 진입점: 토큰 유형에 따라 분기 ── */
+    function initMypage() {
+      const ownerToken = getOwnerToken();
+      const userToken  = getUserToken();
+
+      if (ownerToken) {
+        document.getElementById('owner-section').style.display = '';
+        load();
+      } else if (userToken) {
+        document.getElementById('subscriber-section').style.display = '';
+        initSubscriberMypage();
+      } else {
+        window.location.href = 'login.html';
+      }
+    }
+
+    initMypage();
   </script>
 
   <!-- QR 리플렛 주문 팝업 -->
