@@ -4531,6 +4531,7 @@
 
             // 단일 아코디언 카드
             const totalSongs = schedulePlaylists.reduce((s, pl) => s + pl.songs.length, 0);
+            const totalSec   = schedulePlaylists.reduce((s, pl) => s + pl.songs.reduce((a, t) => a + (t.playTime || 0), 0), 0);
             const item = document.createElement('div');
             item.className = 'pl-store-item';
 
@@ -4545,7 +4546,7 @@
 
             const badge = document.createElement('span');
             badge.style.cssText = 'font-size:12px;color:rgba(255,255,255,0.4);flex-shrink:0;margin-left:auto;';
-            badge.textContent = `총 ${totalSongs}곡`;
+            badge.textContent = `총 ${totalSongs}곡 · ${fmtDuration(totalSec)}`;
 
             const chevron = document.createElement('span');
             chevron.className = 'pl-store-chevron';
@@ -4557,6 +4558,7 @@
 
             const expand = document.createElement('div');
             expand.className = 'pl-store-expand';
+            expand.style.cssText = 'max-height:400px;overflow-y:auto;';
 
             schedulePlaylists.forEach((pl, si) => {
               const h = new Date(pl.scheduledAt).getHours();
@@ -4583,7 +4585,6 @@
               // 곡 목록
               const colBody = document.createElement('div');
               colBody.className = 'pl-compare-col-body';
-              colBody.style.maxHeight = '160px';
               pl.songs.forEach((song, idx) => {
                 const row = document.createElement('div');
                 row.className = 'pl-compare-row';
