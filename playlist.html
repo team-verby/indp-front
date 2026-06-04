@@ -518,13 +518,13 @@
 
     <!-- DJ 탭 전용 섹션 -->
     <div id="dj-section" style="display:block;margin-top:40px">
-      <!-- DJ 대시보드 배너 (djToken 보유 시에만 노출) -->
-      <div id="dj-dashboard-banner" class="dj-dashboard-banner" style="display:none;">
+      <!-- DJ 대시보드 배너 (항상 노출, 미로그인 시 입장 클릭 → 로그인으로 이동) -->
+      <div id="dj-dashboard-banner" class="dj-dashboard-banner">
         <div class="dj-banner-text">
           <h3>DJ 플레이리스트 관리</h3>
           <p>플레이리스트 업로드, 트랙 관리, 매장 배포 현황을<br>DJ 대시보드에서 확인하세요.</p>
         </div>
-        <a href="dj-dashboard.html" class="dj-dashboard-btn">
+        <a href="#" class="dj-dashboard-btn" onclick="enterDjDashboard(event)">
           🎧 DJ 대시보드 입장
         </a>
       </div>
@@ -628,6 +628,15 @@
       buildSoundwaves();
     }
 
+    function enterDjDashboard(e) {
+      e.preventDefault();
+      if (localStorage.getItem('djToken') || localStorage.getItem('ownerToken')) {
+        location.href = 'dj-dashboard.html';
+      } else {
+        location.href = 'login.html?mode=owner';
+      }
+    }
+
     let brandRendered = false;
     function switchPlTab(name, btn) {
       document.querySelectorAll('.pl-tab-btn').forEach(b => b.classList.remove('active'));
@@ -640,8 +649,6 @@
       if (isBrand) {
         if (!brandRendered) { brandRendered = true; renderDynamicStores(); }
       } else {
-        const isDj = !!localStorage.getItem('djToken');
-        document.getElementById('dj-dashboard-banner').style.display = isDj ? 'flex' : 'none';
         renderDjPlaylists();
       }
     }
