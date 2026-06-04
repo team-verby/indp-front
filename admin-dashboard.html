@@ -4449,12 +4449,24 @@
         dateInp.type = 'date';
         dateInp.className = 'pl-schedule-input date-input';
         dateInp.value = todayStr;
-        dateInp.style.cssText = 'height:38px;flex:1';
+        dateInp.style.cssText = 'height:38px;flex:1.4';
+
+        const timeInp = document.createElement('select');
+        timeInp.className = 'pl-schedule-input time-input';
+        timeInp.style.cssText = 'height:38px;flex:1';
+        timeInp.innerHTML = Array.from({length: 48}, (_, i) => {
+          const h = String(Math.floor(i/2)).padStart(2,'0');
+          const m = i%2 === 0 ? '00' : '30';
+          const val = `${h}:${m}`;
+          return `<option value="${val}">${val}</option>`;
+        }).join('');
+
         const genBtn = document.createElement('button');
         genBtn.className = 'ap-gen-btn';
         genBtn.textContent = '전체 시간대 플리 생성';
         if (!mappedCount) genBtn.disabled = true;
         controls.appendChild(dateInp);
+        controls.appendChild(timeInp);
         controls.appendChild(genBtn);
         card.appendChild(controls);
 
@@ -4467,6 +4479,7 @@
           const slots = Array.from({length:24}, (_,h) => h).filter(h => sm2[String(h)]);
           if (!slots.length) { plToast(`"${s.storeName}" 에 무드 매핑이 없습니다. 매장 상세 > 음원 매핑에서 먼저 설정해 주세요.`, 'error'); return; }
 
+          const scheduledAt = new Date(`${dateInp.value}T${timeInp.value}:00`).toISOString();
           const schedulePlaylists = [];
           const skipped = [];
           for (const h of slots) {
@@ -4474,7 +4487,6 @@
             const pool = mdData[mood] || [];
             if (!pool.length) { skipped.push(`${String(h).padStart(2,'0')}시(${mood})`); continue; }
             const picked = [...pool].sort(() => Math.random()-0.5).slice(0, 18);
-            const scheduledAt = new Date(`${dateInp.value}T${String(h).padStart(2,'0')}:00:00`).toISOString();
             schedulePlaylists.push({
               storeName: s.storeName,
               scheduledAt,
@@ -4513,7 +4525,7 @@
 
             const meta = document.createElement('div');
             meta.style.cssText = 'font-size:13px;color:rgba(255,255,255,0.45);padding:0 2px 4px;';
-            meta.textContent = `✓ ${dateInp.value} · ${schedulePlaylists.length}개 시간대 생성됨${skipped.length ? ` (건너뜀 ${skipped.length}개)` : ''}`;
+            meta.textContent = `✓ ${dateInp.value} ${timeInp.value} 적용 · ${schedulePlaylists.length}개 시간대 생성됨${skipped.length ? ` (건너뜀 ${skipped.length}개)` : ''}`;
             wrap.appendChild(meta);
 
             schedulePlaylists.forEach(pl => {
