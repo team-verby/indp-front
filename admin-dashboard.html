@@ -1497,11 +1497,520 @@
     .pl-toast.success { border-color: rgba(198,241,53,0.4); color: #c6f135; }
     .pl-toast.error { border-color: rgba(255,80,80,0.4); color: #ff7070; }
 
+    /* ── 플레이리스트 모드 탭 ── */
+    /* ── 음원 데이터 관리 레이아웃 ── */
+    .pl-direct-layout {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .pl-direct-topbar {
+      display: flex;
+      align-items: flex-end;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .pl-direct-field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .pl-direct-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: rgba(255,255,255,0.35);
+      letter-spacing: 0.06em;
+    }
+    .pl-direct-select {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 14px;
+      font-family: inherit;
+      font-weight: 600;
+      color: #fff;
+      outline: none;
+      cursor: pointer;
+      color-scheme: dark;
+      min-width: 200px;
+    }
+    .pl-direct-select:focus { border-color: #c6f135; }
+    .pl-direct-select option { background: #1e1e24; }
+
+    .pl-direct-schedule-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    /* 직접 입력 카운트 뱃지 */
+    .pl-direct-count {
+      font-size: 13px;
+      color: rgba(255,255,255,0.3);
+      margin-left: auto;
+      align-self: flex-end;
+      padding-bottom: 10px;
+    }
+    .pl-direct-count strong { color: #c6f135; font-weight: 700; }
+
+    /* 테이블 래퍼 */
+    .pl-direct-table-wrap {
+      background: #1a1a1e;
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+
+    /* 스프레드시트 테이블 */
+    .pl-direct-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    .pl-direct-table thead tr {
+      background: rgba(255,255,255,0.03);
+    }
+    .pl-direct-table th {
+      padding: 10px 12px;
+      text-align: left;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.07em;
+      color: rgba(255,255,255,0.25);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      white-space: nowrap;
+    }
+    .pl-direct-table th.col-num { width: 40px; text-align: center; }
+    .pl-direct-table th.col-title { min-width: 200px; }
+    .pl-direct-table th.col-artist { min-width: 140px; }
+    .pl-direct-table th.col-dur { width: 100px; }
+    .pl-direct-table th.col-vid { min-width: 160px; }
+    .pl-direct-table th.col-del { width: 40px; }
+
+    .pl-direct-table td {
+      padding: 5px 6px;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      vertical-align: middle;
+    }
+    .pl-direct-table tbody tr:last-child td { border-bottom: none; }
+    .pl-direct-table tbody tr:hover td { background: rgba(255,255,255,0.015); }
+
+    .pl-direct-table .col-num {
+      text-align: center;
+      color: rgba(255,255,255,0.2);
+      font-size: 12px;
+      user-select: none;
+    }
+
+    /* 셀 입력 필드 */
+    .pl-cell-input {
+      width: 100%;
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      padding: 7px 10px;
+      font-size: 13px;
+      font-family: inherit;
+      color: #fff;
+      outline: none;
+      transition: border-color 0.15s, background 0.15s;
+      box-sizing: border-box;
+    }
+    .pl-cell-input::placeholder { color: rgba(255,255,255,0.18); }
+    .pl-cell-input:hover {
+      border-color: rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.04);
+    }
+    .pl-cell-input:focus {
+      border-color: #c6f135;
+      background: rgba(198,241,53,0.05);
+    }
+    .pl-cell-input.dur-input { font-variant-numeric: tabular-nums; }
+    .pl-cell-input.vid-input { font-size: 12px; color: rgba(255,255,255,0.5); }
+    .pl-cell-input.vid-input:focus { color: #fff; }
+
+    /* 행 삭제 버튼 */
+    .pl-row-del {
+      background: none;
+      border: none;
+      color: rgba(255,255,255,0.15);
+      cursor: pointer;
+      font-size: 15px;
+      padding: 6px 8px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.15s, background 0.15s;
+      font-family: inherit;
+    }
+    .pl-row-del:hover { color: #ff7070; background: rgba(255,80,80,0.08); }
+
+    /* 하단: 행 추가 버튼 */
+    .pl-direct-add-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 16px;
+      border-top: 1px solid rgba(255,255,255,0.05);
+      background: rgba(255,255,255,0.015);
+      cursor: pointer;
+      border: none;
+      width: 100%;
+      text-align: left;
+      font-size: 13px;
+      font-weight: 700;
+      font-family: inherit;
+      color: rgba(255,255,255,0.3);
+      transition: color 0.15s, background 0.15s;
+      border-top: 1px solid rgba(255,255,255,0.05);
+    }
+    .pl-direct-add-row:hover { color: #c6f135; background: rgba(198,241,53,0.04); }
+
+    /* 현재 플리 미리보기 (직접 입력 탭) */
+    .pl-direct-current {
+      background: #1a1a1e;
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+    .pl-direct-current-header {
+      padding: 14px 18px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .pl-direct-current-title {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      color: rgba(255,255,255,0.3);
+    }
+    .pl-direct-current-count {
+      font-size: 12px;
+      color: rgba(255,255,255,0.25);
+    }
+    .pl-direct-current-body {
+      max-height: 260px;
+      overflow-y: auto;
+    }
+    .pl-direct-current-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 18px;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      font-size: 13px;
+    }
+    .pl-direct-current-row:last-child { border-bottom: none; }
+    .pl-direct-current-num { color: rgba(255,255,255,0.2); font-size: 11px; width: 22px; flex-shrink: 0; }
+    .pl-direct-current-title { flex: 1; font-weight: 600; color: rgba(255,255,255,0.8); min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pl-direct-current-artist { color: rgba(255,255,255,0.35); font-size: 12px; white-space: nowrap; }
+    .pl-direct-empty {
+      padding: 40px 16px;
+      text-align: center;
+      color: rgba(255,255,255,0.2);
+      font-size: 13px;
+    }
+
+    /* ── 음원 데이터 관리 ── */
+    .md-upload-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .md-upload-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 9px 18px;
+      background: rgba(198,241,53,0.12);
+      color: #c6f135;
+      border: 1px solid rgba(198,241,53,0.25);
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .md-upload-btn:hover { background: rgba(198,241,53,0.2); }
+    .md-upload-hint {
+      font-size: 12px;
+      color: rgba(255,255,255,0.25);
+    }
+    .md-file-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255,255,255,0.06);
+      border-radius: 6px;
+      padding: 5px 10px;
+      font-size: 12px;
+      color: rgba(255,255,255,0.6);
+    }
+    .md-file-badge button {
+      background: none;
+      border: none;
+      color: rgba(255,255,255,0.35);
+      cursor: pointer;
+      font-size: 12px;
+      padding: 0;
+      line-height: 1;
+    }
+    .md-tab-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 20px;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+      padding-bottom: 0;
+      overflow-x: auto;
+    }
+    .md-tabs {
+      display: flex;
+      gap: 2px;
+      flex-shrink: 0;
+    }
+    .md-tab {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 9px 16px;
+      border: none;
+      border-bottom: 2px solid transparent;
+      background: transparent;
+      color: rgba(255,255,255,0.4);
+      font-size: 13px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: color 0.15s, border-color 0.15s;
+      margin-bottom: -1px;
+    }
+    .md-tab:hover { color: rgba(255,255,255,0.7); }
+    .md-tab.active { color: #c6f135; border-bottom-color: #c6f135; }
+    .md-tab-del {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      font-size: 10px;
+      background: rgba(255,255,255,0.08);
+      color: rgba(255,255,255,0.4);
+      cursor: pointer;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+    .md-tab.active .md-tab-del { background: rgba(198,241,53,0.2); color: #c6f135; }
+    .md-tab-del:hover { background: rgba(255,80,80,0.25); color: #ff6060; }
+    .md-tab-add {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 6px 12px;
+      border: 1px dashed rgba(255,255,255,0.15);
+      border-radius: 6px;
+      background: transparent;
+      color: rgba(255,255,255,0.3);
+      font-size: 12px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      white-space: nowrap;
+      flex-shrink: 0;
+      transition: border-color 0.15s, color 0.15s;
+      margin-left: 4px;
+      margin-bottom: 8px;
+    }
+    .md-tab-add:hover { border-color: rgba(198,241,53,0.4); color: #c6f135; }
+    .md-panel-empty {
+      padding: 60px 24px;
+      text-align: center;
+      color: rgba(255,255,255,0.2);
+      font-size: 14px;
+      line-height: 1.8;
+    }
+
+    /* ── 랜덤 플리 생성 ── */
+    .ap-layout {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 20px;
+      align-items: start;
+    }
+    .ap-box {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 16px;
+      padding: 20px;
+    }
+    .ap-section-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: rgba(255,255,255,0.3);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+    }
+    .ap-mapping-wrap {
+      max-height: 420px;
+      overflow-y: auto;
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 8px;
+      margin-bottom: 12px;
+    }
+    .ap-mapping-table { width: 100%; border-collapse: collapse; }
+    .ap-mapping-table thead th {
+      background: rgba(255,255,255,0.05);
+      padding: 7px 12px;
+      font-size: 11px;
+      font-weight: 700;
+      color: rgba(255,255,255,0.3);
+      letter-spacing: 0.06em;
+      text-align: left;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+    .ap-mapping-table tbody tr { border-bottom: 1px solid rgba(255,255,255,0.04); }
+    .ap-mapping-table tbody tr:last-child { border-bottom: none; }
+    .ap-time-cell {
+      padding: 5px 12px;
+      font-size: 12px;
+      color: rgba(255,255,255,0.4);
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
+      width: 1%;
+    }
+    .ap-mood-sel {
+      background: transparent;
+      border: none;
+      color: rgba(255,255,255,0.75);
+      font-size: 13px;
+      font-weight: 600;
+      font-family: inherit;
+      padding: 5px 4px;
+      width: 100%;
+      outline: none;
+      color-scheme: dark;
+      cursor: pointer;
+    }
+    .ap-table-empty {
+      padding: 24px;
+      text-align: center;
+      color: rgba(255,255,255,0.2);
+      font-size: 13px;
+    }
+    .ap-store-cards { display: flex; flex-direction: column; gap: 10px; }
+    .ap-store-card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 12px;
+      padding: 14px 16px;
+    }
+    .ap-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      gap: 8px;
+    }
+    .ap-card-name { font-size: 14px; font-weight: 700; color: rgba(255,255,255,0.85); }
+    .ap-mood-badge {
+      font-size: 11px;
+      font-weight: 700;
+      color: rgba(255,255,255,0.3);
+      background: rgba(255,255,255,0.06);
+      border-radius: 6px;
+      padding: 3px 9px;
+      white-space: nowrap;
+    }
+    .ap-mood-badge.active { color: #c6f135; background: rgba(198,241,53,0.1); }
+    .ap-card-controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .ap-gen-btn {
+      background: #c6f135;
+      color: #111;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 13px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      white-space: nowrap;
+      margin-left: auto;
+      transition: opacity 0.15s;
+    }
+    .ap-gen-btn:hover { opacity: 0.85; }
+    .ap-gen-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .ap-empty-msg {
+      padding: 40px 16px;
+      text-align: center;
+      color: rgba(255,255,255,0.2);
+      font-size: 13px;
+    }
+    @media (max-width: 900px) { .ap-layout { grid-template-columns: 1fr; } }
+
+    .pl-mode-tabs {
+      display: flex;
+      gap: 0;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 10px;
+      padding: 4px;
+      width: fit-content;
+      margin-bottom: 20px;
+    }
+    .pl-mode-tab {
+      padding: 8px 20px;
+      border: none;
+      border-radius: 7px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      background: transparent;
+      color: rgba(255,255,255,0.4);
+      transition: all 0.15s;
+    }
+    .pl-mode-tab.active {
+      background: rgba(255,255,255,0.1);
+      color: #fff;
+    }
+    .pl-random-mode { display: none; }
+    .pl-random-mode.active { display: block; }
+    .pl-excel-mode { display: block; }
+    .pl-excel-mode.hidden { display: none; }
+
+    .pl-direct-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .pl-direct-hint {
+      font-size: 12px;
+      color: rgba(255,255,255,0.2);
+    }
+
     @media (max-width: 1000px) {
       .pl-layout { grid-template-columns: 240px 1fr; }
     }
     @media (max-width: 768px) {
       .pl-layout { grid-template-columns: 1fr; }
+      .pl-direct-topbar { flex-direction: column; align-items: stretch; }
+      .pl-direct-select { min-width: 0; }
+      .pl-direct-count { margin-left: 0; padding-bottom: 0; }
     }
 
     @media (max-width: 768px) {
@@ -1681,6 +2190,14 @@
         </svg>
         플레이리스트 관리
       </a>
+      <a class="nav-item" onclick="switchPanel('music-data', this)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 18V5l12-2v13"/>
+          <circle cx="6" cy="18" r="3"/>
+          <circle cx="18" cy="16" r="3"/>
+        </svg>
+        음원 데이터 관리
+      </a>
     </nav>
     <div class="sidebar-bottom">
       <div class="admin-profile">
@@ -1772,79 +2289,169 @@
         <div class="panel-header">
           <div>
             <h2 class="panel-title">플레이리스트 관리</h2>
-            <p class="panel-subtitle">엑셀 파일을 업로드하여 매장별 플레이리스트를 생성합니다</p>
+            <p class="panel-subtitle" id="pl-panel-subtitle">엑셀 파일을 업로드하여 매장별 플레이리스트를 생성합니다</p>
           </div>
         </div>
 
-        <div class="pl-layout">
-
-          <!-- 좌측: 업로드만 -->
-          <div class="pl-left">
-            <div class="pl-upload-card">
-              <p class="pl-upload-card-title">엑셀 파일 업로드</p>
-              <div class="pl-dropzone" id="pl-dropzone"
-                onclick="document.getElementById('pl-file-input').click()"
-                ondragover="plDragOver(event)" ondragleave="plDragLeave(event)" ondrop="plDrop(event)">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:0 auto 10px">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                  <polyline points="17 8 12 3 7 8"/>
-                  <line x1="12" y1="3" x2="12" y2="15"/>
-                </svg>
-                <p class="pl-dropzone-text">
-                  <strong>클릭</strong>하거나 파일을 여기로 끌어다 놓으세요<br/>
-                  <span style="font-size:11px;opacity:0.6">.xlsx, .xls 파일 지원 · 시트명 = 매장명</span>
-                </p>
-              </div>
-              <input type="file" id="pl-file-input" class="pl-file-input" accept=".xlsx,.xls" onchange="plFileSelected(this)" />
-
-              <div class="pl-file-info" id="pl-file-info">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#c6f135" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
-                </svg>
-                <span class="pl-file-name" id="pl-file-name"></span>
-                <button class="pl-file-clear" onclick="plClearFile()">✕</button>
-              </div>
-
-              <div class="pl-sheets-wrap" id="pl-sheets-wrap">
-                <div class="pl-sheet-section">
-                  <p class="pl-sheets-label">매칭된 시트</p>
-                  <div class="pl-sheet-chips" id="pl-sheet-chips-matched"></div>
-                </div>
-                <div class="pl-sheet-section" id="pl-sheet-section-unmatched" style="display:none">
-                  <p class="pl-sheets-label unmatched">미매칭 시트</p>
-                  <div class="pl-sheet-chips" id="pl-sheet-chips-unmatched"></div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- 우측: 매장 목록 + 플리 비교 -->
-          <div class="pl-right">
-            <!-- 우측 헤더 -->
-            <div class="pl-right-header">
-              <div class="pl-right-stats" id="pl-right-stats">
-                <span class="pl-stat-item">전체 <strong id="pl-stat-total">0</strong>개 매장</span>
-                <span class="pl-stat-divider">·</span>
-                <span class="pl-stat-item">매칭 <strong id="pl-stat-matched" style="color:#c6f135">0</strong>개</span>
-                <span class="pl-stat-divider">·</span>
-                <span class="pl-stat-item pl-stat-last" id="pl-stat-last">마지막 생성: -</span>
-              </div>
-              <button class="btn-create-pl" id="btn-create-pl" onclick="plCreate()">플레이리스트 생성</button>
-            </div>
-            <!-- 일괄 적용 시각 -->
-            <div class="pl-bulk-schedule" id="pl-bulk-schedule">
-              <span class="pl-bulk-label">일괄 적용 시각</span>
-              <input type="date" class="pl-schedule-input date-input" id="pl-bulk-date" style="flex:1.4" />
-              <select class="pl-schedule-input time-input" id="pl-bulk-time">
-                <option value="">시간 선택</option>
-              </select>
-              <button class="pl-bulk-apply-btn" onclick="plApplyBulkSchedule()">전체 적용</button>
-            </div>
-            <!-- 매장 목록 (클릭 시 인라인 펼침) -->
-            <div class="pl-store-list" id="pl-store-list"></div>
-          </div>
-
+        <!-- 모드 탭 -->
+        <div class="pl-mode-tabs">
+          <button class="pl-mode-tab active" id="pl-mode-tab-excel" onclick="switchPlMode('excel', this)">엑셀 업로드</button>
+          <button class="pl-mode-tab" id="pl-mode-tab-random" onclick="switchPlMode('random', this)">랜덤 생성</button>
         </div>
+
+        <!-- 엑셀 업로드 모드 -->
+        <div class="pl-excel-mode" id="pl-excel-mode">
+          <div class="pl-layout">
+
+            <!-- 좌측: 업로드만 -->
+            <div class="pl-left">
+              <div class="pl-upload-card">
+                <p class="pl-upload-card-title">엑셀 파일 업로드</p>
+                <div class="pl-dropzone" id="pl-dropzone"
+                  onclick="document.getElementById('pl-file-input').click()"
+                  ondragover="plDragOver(event)" ondragleave="plDragLeave(event)" ondrop="plDrop(event)">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:0 auto 10px">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="17 8 12 3 7 8"/>
+                    <line x1="12" y1="3" x2="12" y2="15"/>
+                  </svg>
+                  <p class="pl-dropzone-text">
+                    <strong>클릭</strong>하거나 파일을 여기로 끌어다 놓으세요<br/>
+                    <span style="font-size:11px;opacity:0.6">.xlsx, .xls 파일 지원 · 시트명 = 매장명</span>
+                  </p>
+                </div>
+                <input type="file" id="pl-file-input" class="pl-file-input" accept=".xlsx,.xls" onchange="plFileSelected(this)" />
+
+                <div class="pl-file-info" id="pl-file-info">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#c6f135" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
+                  </svg>
+                  <span class="pl-file-name" id="pl-file-name"></span>
+                  <button class="pl-file-clear" onclick="plClearFile()">✕</button>
+                </div>
+
+                <div class="pl-sheets-wrap" id="pl-sheets-wrap">
+                  <div class="pl-sheet-section">
+                    <p class="pl-sheets-label">매칭된 시트</p>
+                    <div class="pl-sheet-chips" id="pl-sheet-chips-matched"></div>
+                  </div>
+                  <div class="pl-sheet-section" id="pl-sheet-section-unmatched" style="display:none">
+                    <p class="pl-sheets-label unmatched">미매칭 시트</p>
+                    <div class="pl-sheet-chips" id="pl-sheet-chips-unmatched"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 우측: 매장 목록 + 플리 비교 -->
+            <div class="pl-right">
+              <!-- 우측 헤더 -->
+              <div class="pl-right-header">
+                <div class="pl-right-stats" id="pl-right-stats">
+                  <span class="pl-stat-item">전체 <strong id="pl-stat-total">0</strong>개 매장</span>
+                  <span class="pl-stat-divider">·</span>
+                  <span class="pl-stat-item">매칭 <strong id="pl-stat-matched" style="color:#c6f135">0</strong>개</span>
+                  <span class="pl-stat-divider">·</span>
+                  <span class="pl-stat-item pl-stat-last" id="pl-stat-last">마지막 생성: -</span>
+                </div>
+                <button class="btn-create-pl" id="btn-create-pl" onclick="plCreate()">플레이리스트 생성</button>
+              </div>
+              <!-- 일괄 적용 시각 -->
+              <div class="pl-bulk-schedule" id="pl-bulk-schedule">
+                <span class="pl-bulk-label">일괄 적용 시각</span>
+                <input type="date" class="pl-schedule-input date-input" id="pl-bulk-date" style="flex:1.4" />
+                <select class="pl-schedule-input time-input" id="pl-bulk-time">
+                  <option value="">시간 선택</option>
+                </select>
+                <button class="pl-bulk-apply-btn" onclick="plApplyBulkSchedule()">전체 적용</button>
+              </div>
+              <!-- 매장 목록 (클릭 시 인라인 펼침) -->
+              <div class="pl-store-list" id="pl-store-list"></div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- 랜덤 생성 모드 -->
+        <div class="pl-random-mode" id="pl-random-mode">
+          <p style="font-size:13px;color:rgba(255,255,255,0.35);margin-bottom:16px">매장별 무드 매핑(매장 관리 → 매장 상세 → 음원 매핑)을 먼저 설정한 후, 원하는 시간대를 선택하여 18곡 플레이리스트를 생성하세요</p>
+          <div id="ap-store-cards" class="ap-store-cards">
+            <div class="ap-empty-msg">매장 정보를 불러오는 중...</div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ── 음원 데이터 관리 패널 ── -->
+      <div class="section-panel" id="panel-music-data">
+        <div class="panel-header">
+          <div>
+            <h2 class="panel-title">음원 데이터 관리</h2>
+            <p class="panel-subtitle">무드별 탭으로 음원을 관리합니다 · 엑셀 업로드 시 시트명이 탭(무드)명이 됩니다</p>
+          </div>
+        </div>
+
+        <!-- 엑셀 업로드 바 -->
+        <div class="md-upload-bar">
+          <label class="md-upload-btn" for="md-file-input">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/>
+              <line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+            엑셀 업로드
+          </label>
+          <input type="file" id="md-file-input" accept=".xlsx,.xls" style="display:none" onchange="mdFileSelected(this)" />
+          <span class="md-upload-hint">.xlsx · 시트명 = 무드명</span>
+          <div class="md-file-badge" id="md-file-badge" style="display:none">
+            <span id="md-file-name"></span>
+            <button onclick="mdClearFile()" title="초기화">✕</button>
+          </div>
+        </div>
+
+        <!-- 무드 탭 바 -->
+        <div class="md-tab-wrap" id="md-tab-wrap" style="display:none">
+          <div class="md-tabs" id="md-tabs"></div>
+          <button class="md-tab-add" onclick="mdPromptAddTab()">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            탭 추가
+          </button>
+        </div>
+
+        <!-- 빈 상태 -->
+        <div class="md-panel-empty" id="md-panel-empty">
+          엑셀 파일을 업로드하거나<br/><strong style="color:rgba(255,255,255,0.4)">탭 추가</strong> 버튼으로 무드를 만들어 주세요
+        </div>
+
+        <!-- 그리드 영역 -->
+        <div id="md-grid-area" style="display:none">
+          <div class="pl-direct-topbar">
+            <div class="pl-direct-count">
+              입력된 곡 <strong id="md-count-num">0</strong>곡
+            </div>
+            <button class="btn-create-pl" style="margin-left:auto;align-self:flex-end" onclick="mdSave()">저장</button>
+          </div>
+          <div class="pl-direct-table-wrap">
+            <table class="pl-direct-table">
+              <thead>
+                <tr>
+                  <th class="col-num">#</th>
+                  <th class="col-title">제목</th>
+                  <th class="col-artist">가수</th>
+                  <th class="col-dur">재생시간</th>
+                  <th class="col-vid">YouTube ID <span style="font-weight:400;opacity:0.5">(선택)</span></th>
+                  <th class="col-del"></th>
+                </tr>
+              </thead>
+              <tbody id="md-tbody"></tbody>
+            </table>
+            <button class="pl-direct-add-row" onclick="mdAddRow()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              행 추가
+            </button>
+          </div>
+        </div>
+
       </div>
 
     </div>
@@ -1870,6 +2477,7 @@
       <div class="drawer-tab active" onclick="switchDrawerTab('info', this)">기본 정보</div>
       <div class="drawer-tab" onclick="switchDrawerTab('playlist', this)">매장 무드</div>
       <div class="drawer-tab" onclick="switchDrawerTab('recommend', this)">추천곡 관리</div>
+      <div class="drawer-tab" onclick="switchDrawerTab('ap-mapping', this)">음원 매핑</div>
     </div>
     <div class="drawer-body">
       <div class="drawer-tab-panel active" id="drawer-tab-info"></div>
@@ -1894,6 +2502,7 @@
           <p>추천곡 관리 내용이 없습니다</p>
         </div>
       </div>
+      <div class="drawer-tab-panel" id="drawer-tab-ap-mapping"></div>
     </div>
     <div class="drawer-footer" id="drawer-footer"></div>
   </div>
@@ -2349,6 +2958,7 @@
         renderPaymentHistory(id, d._sub);
         renderPlaylistTab({ id, hours: d.hours, playlistType: d.playlistType, timePreferences: d.timePreferences, musicMood: d.musicMood });
         renderRecommendTab({ id, excludedGenre: d.excludedGenre });
+        renderApMappingTab(s);
       } catch(e) {
         console.warn('매장 상세 로드 실패:', e);
         document.getElementById('drawer-tab-info').innerHTML =
@@ -2874,7 +3484,7 @@
     }
 
     // ── 패널 전환 ──
-    const panelTitles = { stores: '매장 관리', playlists: '플레이리스트 관리' };
+    const panelTitles = { stores: '매장 관리', playlists: '플레이리스트 관리', 'music-data': '음원 데이터 관리' };
 
     function switchPanel(panelId, el) {
       document.querySelectorAll('.section-panel').forEach(p => p.classList.remove('active'));
@@ -2883,6 +3493,7 @@
       el.classList.add('active');
       document.getElementById('topbar-title').textContent = panelTitles[panelId];
       if (panelId === 'playlists') plRenderStoreList();
+      if (panelId === 'music-data') mdInit();
       // 모바일: 메뉴 선택 시 사이드바 닫기
       document.querySelector('.sidebar').classList.remove('mobile-open');
       document.getElementById('sidebar-overlay').classList.remove('open');
@@ -3276,6 +3887,451 @@
       plDragLeave();
       const file = e.dataTransfer.files[0];
       if (file) plLoadFile(file);
+    }
+
+    // ── 음원 데이터 관리 ──
+
+    let mdData = {};           // { moodName: [{title,artist,playTime,vid},...] }
+    let mdActiveTab = null;
+    let mdRowCounter = 0;
+    let mdInitialized = false;
+    const MD_STORAGE_KEY = 'adminMusicData_v2';
+
+    function mdInit() {
+      if (mdInitialized) return;
+      mdInitialized = true;
+      try {
+        const saved = JSON.parse(localStorage.getItem(MD_STORAGE_KEY) || '{}');
+        if (saved && typeof saved === 'object' && !Array.isArray(saved)) mdData = saved;
+      } catch {}
+      const tabs = Object.keys(mdData);
+      if (tabs.length > 0) {
+        mdRenderTabs();
+        mdSwitchTab(tabs[0]);
+      } else {
+        mdShowEmpty(true);
+      }
+    }
+
+    function mdShowEmpty(show) {
+      document.getElementById('md-panel-empty').style.display = show ? '' : 'none';
+      document.getElementById('md-grid-area').style.display   = show ? 'none' : '';
+      document.getElementById('md-tab-wrap').style.display    = show ? 'none' : '';
+    }
+
+    // Excel 시트 → 곡 배열 변환 (3단계 fallback)
+    function mdParseSheet(wsSheet) {
+      const rows = XLSX.utils.sheet_to_json(wsSheet, { defval: '' });
+      if (!rows.length) return [];
+
+      // 1) 기존 parseRow (제목/title/가수/artist/재생시간/vlink 등)
+      const standard = rows.map((r, i) => parseRow(r, i)).filter(r => r.title);
+      if (standard.length) {
+        return standard.map(({ title, artist, playTime, vid }) => ({ title, artist, playTime, vid }));
+      }
+
+      // 2) 헤더명 부분 매칭 (대소문자·공백 무시)
+      const keys = Object.keys(rows[0]);
+      const ci = (...terms) =>
+        keys.find(k => terms.some(t => k.toLowerCase().replace(/\s/g,'').includes(t.toLowerCase().replace(/\s/g,'')))) || null;
+
+      const titleKey    = ci('제목','title','곡명','song','track','name');
+      const artistKey   = ci('가수','artist','아티스트','singer','performer');
+      const playTimeKey = ci('재생시간','playtime','time','duration','길이','sec','second');
+      const vidKey      = ci('vlink','youtube','vid','url','link');
+
+      // 첫 번째 열이 번호열(#, No, 번호, 순번 등이거나 값이 모두 숫자)이면 건너뜀
+      const firstKey = keys[0];
+      const isNumCol = /^(#|no\.?|번호|순번|num|number|index|seq|순서)$/i.test(String(firstKey).trim()) ||
+        rows.slice(0, Math.min(rows.length, 5)).every(r => String(r[firstKey]).trim() !== '' && !isNaN(Number(r[firstKey])));
+      const offset = isNumCol ? 1 : 0;
+
+      const getVal = (row, key, pos) =>
+        String(key ? (row[key] ?? '') : (Object.values(row)[pos] ?? '')).trim();
+
+      // 3) 칼럼 매핑 실패 시 열 위치로 대입 (번호열이 있으면 1칸 오프셋)
+      return rows.map(row => ({
+        title:    getVal(row, titleKey,    offset + 0),
+        artist:   getVal(row, artistKey,   offset + 1),
+        playTime: getVal(row, playTimeKey, offset + 2),
+        vid:      getVal(row, vidKey,      offset + 3),
+      })).filter(r => r.title);
+    }
+
+    function mdFileSelected(input) {
+      if (!input.files[0]) return;
+      const file = input.files[0];
+      document.getElementById('md-file-name').textContent = file.name;
+      document.getElementById('md-file-badge').style.display = '';
+      const reader = new FileReader();
+      reader.onload = e => {
+        if (mdActiveTab) mdSaveGrid();
+        const wb = XLSX.read(e.target.result, { type: 'array' });
+        wb.SheetNames.forEach(sheet => {
+          mdData[sheet] = mdParseSheet(wb.Sheets[sheet]);
+        });
+        mdRenderTabs();
+        if (wb.SheetNames[0]) mdSwitchTab(wb.SheetNames[0]);
+        const total = Object.values(mdData).reduce((s, a) => s + a.length, 0);
+        plToast(`✓ ${wb.SheetNames.length}개 무드 탭 · 총 ${total}곡 로드`, 'success');
+        if (total === 0) plToast('곡을 찾지 못했습니다. 헤더명(제목, 가수 등)을 확인해 주세요.', 'error');
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    function mdClearFile() {
+      document.getElementById('md-file-input').value = '';
+      document.getElementById('md-file-badge').style.display = 'none';
+    }
+
+    function mdRenderTabs() {
+      const tabs = Object.keys(mdData);
+      const container = document.getElementById('md-tabs');
+      container.innerHTML = '';
+      tabs.forEach(name => {
+        const btn = document.createElement('button');
+        btn.className = 'md-tab' + (name === mdActiveTab ? ' active' : '');
+        btn.textContent = name;
+        btn.dataset.mood = name;
+        btn.addEventListener('click', () => mdSwitchTab(name));
+
+        const del = document.createElement('span');
+        del.className = 'md-tab-del';
+        del.title = '탭 삭제';
+        del.textContent = '✕';
+        del.addEventListener('click', e => { e.stopPropagation(); mdDeleteTab(name); });
+        btn.appendChild(del);
+
+        container.appendChild(btn);
+      });
+      document.getElementById('md-tab-wrap').style.display = tabs.length ? '' : 'none';
+    }
+
+    function mdSwitchTab(name) {
+      if (mdActiveTab && mdActiveTab !== name) mdSaveGrid();
+      mdActiveTab = name;
+      mdRenderTabs();
+      mdRenderGrid();
+      mdShowEmpty(false);
+    }
+
+    function mdDeleteTab(name) {
+      if (!confirm(`"${name}" 무드 탭을 삭제하시겠습니까? 저장된 데이터도 함께 삭제됩니다.`)) return;
+      delete mdData[name];
+      const tabs = Object.keys(mdData);
+      if (name === mdActiveTab) {
+        mdActiveTab = null;
+        if (tabs.length > 0) { mdSwitchTab(tabs[0]); }
+        else { mdRenderTabs(); mdShowEmpty(true); }
+      } else {
+        mdRenderTabs();
+      }
+    }
+
+    function mdPromptAddTab() {
+      const name = prompt('무드 이름을 입력하세요 (예: Happy, Chill, Energetic)');
+      if (!name || !name.trim()) return;
+      const trimmed = name.trim();
+      if (mdData[trimmed] !== undefined) { alert('이미 존재하는 무드 이름입니다.'); return; }
+      if (mdActiveTab) mdSaveGrid();
+      mdData[trimmed] = [];
+      mdRenderTabs();
+      mdSwitchTab(trimmed);
+    }
+
+    function mdRenderGrid() {
+      const tbody = document.getElementById('md-tbody');
+      tbody.innerHTML = '';
+      mdRowCounter = 0;
+      const songs = mdData[mdActiveTab] || [];
+      if (songs.length > 0) { songs.forEach(s => mdAddRow(s)); }
+      else { for (let i = 0; i < 10; i++) mdAddRow(); }
+      mdUpdateCount();
+    }
+
+    function mdSaveGrid() {
+      if (!mdActiveTab) return;
+      const tbody = document.getElementById('md-tbody');
+      mdData[mdActiveTab] = Array.from(tbody.rows).map(tr => {
+        const inputs = tr.querySelectorAll('input');
+        return {
+          title:    (inputs[0]?.value ?? '').trim(),
+          artist:   (inputs[1]?.value ?? '').trim(),
+          playTime: (inputs[2]?.value ?? '').trim(),
+          vid:      (inputs[3]?.value ?? '').trim(),
+        };
+      }).filter(r => r.title);
+    }
+
+    function mdAddRow(data) {
+      const tbody = document.getElementById('md-tbody');
+      const rowIdx = ++mdRowCounter;
+      const tr = document.createElement('tr');
+      tr.dataset.rowId = rowIdx;
+      tr.innerHTML = `
+        <td class="col-num pl-direct-row-num">—</td>
+        <td><input class="pl-cell-input" placeholder="제목" oninput="mdUpdateCount()" /></td>
+        <td><input class="pl-cell-input" placeholder="가수" /></td>
+        <td><input class="pl-cell-input dur-input" placeholder="3:42" title="MM:SS 형식" /></td>
+        <td><input class="pl-cell-input vid-input" placeholder="YouTube ID (11자)" /></td>
+        <td><button class="pl-row-del" onclick="mdDeleteRow(this)" title="행 삭제">✕</button></td>`;
+      if (data) {
+        const inputs = tr.querySelectorAll('input');
+        inputs[0].value = data.title    || '';
+        inputs[1].value = data.artist   || '';
+        inputs[2].value = data.playTime || '';
+        inputs[3].value = data.vid      || '';
+      }
+      tbody.appendChild(tr);
+      mdRenum();
+    }
+
+    function mdDeleteRow(btn) {
+      btn.closest('tr').remove();
+      mdRenum();
+      mdUpdateCount();
+    }
+
+    function mdRenum() {
+      const tbody = document.getElementById('md-tbody');
+      let filled = 0;
+      Array.from(tbody.rows).forEach(tr => {
+        const title = tr.querySelector('input')?.value.trim();
+        const numCell = tr.querySelector('.pl-direct-row-num');
+        if (title) { filled++; if (numCell) numCell.textContent = filled; }
+        else { if (numCell) numCell.textContent = '—'; }
+      });
+    }
+
+    function mdUpdateCount() {
+      const tbody = document.getElementById('md-tbody');
+      const count = Array.from(tbody.querySelectorAll('tr')).filter(tr => tr.querySelector('input')?.value.trim()).length;
+      const el = document.getElementById('md-count-num');
+      if (el) el.textContent = count;
+      mdRenum();
+    }
+
+    function mdSave() {
+      const btn = document.querySelector('#md-grid-area .btn-create-pl');
+      const origText = btn ? btn.textContent : '저장';
+      try {
+        if (mdActiveTab) mdSaveGrid();
+        const total = Object.values(mdData).reduce((sum, arr) => sum + arr.length, 0);
+        if (total === 0) {
+          plToast('저장할 곡 정보를 입력해 주세요.', 'error');
+          return;
+        }
+        localStorage.setItem(MD_STORAGE_KEY, JSON.stringify(mdData));
+        const moodCount = Object.keys(mdData).length;
+        plToast(`✓ ${moodCount}개 무드 · 총 ${total}곡 저장 완료`, 'success');
+        if (btn) {
+          btn.textContent = '저장됨 ✓';
+          btn.disabled = true;
+          setTimeout(() => { btn.textContent = origText; btn.disabled = false; }, 2000);
+        }
+        mdUpdateCount();
+      } catch(e) {
+        console.error('mdSave 오류:', e);
+        plToast('저장 중 오류가 발생했습니다: ' + e.message, 'error');
+      }
+    }
+
+    // ── 음원 매핑 / 랜덤 플리 생성 ──
+
+    let apData = {};             // { storeName: { "0": "무드명", ..., "23": "무드명" } }
+    const AP_STORAGE_KEY = 'adminMoodSchedule';
+
+    (function apLoadData() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(AP_STORAGE_KEY) || '{}');
+        if (saved && typeof saved === 'object') apData = saved;
+      } catch {}
+    })();
+
+    function switchPlMode(mode, btn) {
+      document.querySelectorAll('.pl-mode-tab').forEach(t => t.classList.remove('active'));
+      btn.classList.add('active');
+      const excelMode = document.getElementById('pl-excel-mode');
+      const randomMode = document.getElementById('pl-random-mode');
+      if (mode === 'random') {
+        excelMode.classList.add('hidden');
+        randomMode.classList.add('active');
+        apRenderStoreCards();
+      } else {
+        excelMode.classList.remove('hidden');
+        randomMode.classList.remove('active');
+      }
+    }
+
+    function renderApMappingTab(s) {
+      const panel = document.getElementById('drawer-tab-ap-mapping');
+      if (!panel) return;
+      const storeName = s.storeName;
+      const storeMap = apData[storeName] || {};
+      const moodNames = Object.keys(mdData);
+
+      panel.innerHTML = '';
+
+      if (!moodNames.length) {
+        panel.innerHTML = '<div class="tab-empty" style="padding:32px 16px"><p style="color:rgba(255,255,255,0.3);font-size:13px">음원 데이터 관리에서 무드 탭을 먼저 생성해 주세요</p></div>';
+        return;
+      }
+
+      const label = document.createElement('div');
+      label.className = 'ap-section-label';
+      label.style.cssText = 'margin:16px 0 10px';
+      label.textContent = '시간대별 무드 매핑';
+      panel.appendChild(label);
+
+      const wrap = document.createElement('div');
+      wrap.className = 'ap-mapping-wrap';
+      wrap.style.maxHeight = '340px';
+
+      const table = document.createElement('table');
+      table.className = 'ap-mapping-table';
+      table.innerHTML = '<thead><tr><th>시간대</th><th>무드</th></tr></thead>';
+      const tbody = document.createElement('tbody');
+
+      for (let h = 0; h < 24; h++) {
+        const tr = document.createElement('tr');
+        const t1 = `${String(h).padStart(2,'0')}:00`;
+        const t2 = `${String((h+1)%24).padStart(2,'0')}:00`;
+        const tdTime = document.createElement('td');
+        tdTime.className = 'ap-time-cell';
+        tdTime.textContent = `${t1}~${t2}`;
+        const tdMood = document.createElement('td');
+        const sel = document.createElement('select');
+        sel.className = 'ap-mood-sel';
+        sel.dataset.hour = h;
+        const blankOpt = document.createElement('option');
+        blankOpt.value = '';
+        blankOpt.textContent = '—';
+        sel.appendChild(blankOpt);
+        moodNames.forEach(m => {
+          const opt = document.createElement('option');
+          opt.value = m;
+          opt.textContent = m;
+          if (m === (storeMap[String(h)] || '')) opt.selected = true;
+          sel.appendChild(opt);
+        });
+        tdMood.appendChild(sel);
+        tr.appendChild(tdTime);
+        tr.appendChild(tdMood);
+        tbody.appendChild(tr);
+      }
+      table.appendChild(tbody);
+      wrap.appendChild(table);
+      panel.appendChild(wrap);
+
+      const saveBtn = document.createElement('button');
+      saveBtn.className = 'btn-create-pl';
+      saveBtn.style.cssText = 'width:100%;margin-top:12px';
+      saveBtn.textContent = '매핑 저장';
+      saveBtn.addEventListener('click', () => {
+        const mapping = {};
+        tbody.querySelectorAll('.ap-mood-sel').forEach(sel => {
+          if (sel.value) mapping[sel.dataset.hour] = sel.value;
+        });
+        apData[storeName] = mapping;
+        localStorage.setItem(AP_STORAGE_KEY, JSON.stringify(apData));
+        plToast(`✓ "${storeName}" 시간대 매핑 저장 완료`, 'success');
+        saveBtn.textContent = '저장됨 ✓';
+        saveBtn.disabled = true;
+        setTimeout(() => { saveBtn.textContent = '매핑 저장'; saveBtn.disabled = false; }, 2000);
+      });
+      panel.appendChild(saveBtn);
+    }
+
+    function apRenderStoreCards() {
+      const container = document.getElementById('ap-store-cards');
+      if (!container) return;
+      container.innerHTML = '';
+      if (!stores.length) {
+        container.innerHTML = '<div class="ap-empty-msg">매장 정보를 불러오는 중입니다...</div>';
+        return;
+      }
+
+      const todayStr = new Date().toISOString().slice(0, 10);
+      const nowH = new Date().getHours();
+      const nowRoundedTime = `${String(nowH).padStart(2,'0')}:${new Date().getMinutes()>=30?'30':'00'}`;
+      const timeOpts = Array.from({length:48}, (_,i) => {
+        const h = String(Math.floor(i/2)).padStart(2,'0');
+        const m = i%2===0?'00':'30';
+        const v = `${h}:${m}`;
+        return `<option${v===nowRoundedTime?' selected':''}>${v}</option>`;
+      }).join('');
+
+      stores.forEach(s => {
+        const card = document.createElement('div');
+        card.className = 'ap-store-card';
+
+        const sm = apData[s.storeName] || {};
+        const initMood = sm[String(nowH)] || null;
+        const initCount = initMood ? (mdData[initMood]||[]).length : 0;
+
+        card.innerHTML = `
+          <div class="ap-card-header">
+            <span class="ap-card-name">${s.storeName}</span>
+            <span class="ap-mood-badge${initMood?' active':''}" data-badge>
+              ${initMood ? `${initMood} · ${initCount}곡` : '매핑 없음'}
+            </span>
+          </div>
+          <div class="ap-card-controls">
+            <input type="date" class="pl-schedule-input date-input" data-date value="${todayStr}" style="height:38px" />
+            <select class="pl-schedule-input time-input" data-time style="height:38px">${timeOpts}</select>
+            <button class="ap-gen-btn" data-genbtn>18곡 플리 생성</button>
+          </div>`;
+
+        const badge    = card.querySelector('[data-badge]');
+        const dateInp  = card.querySelector('[data-date]');
+        const timeInp  = card.querySelector('[data-time]');
+        const genBtn   = card.querySelector('[data-genbtn]');
+
+        const refreshBadge = () => {
+          const h = parseInt(timeInp.value.split(':')[0]);
+          const mood = (apData[s.storeName]||{})[String(h)] || null;
+          const cnt = mood ? (mdData[mood]||[]).length : 0;
+          badge.textContent = mood ? `${mood} · ${cnt}곡` : '매핑 없음';
+          badge.className = `ap-mood-badge${mood?' active':''}`;
+        };
+        timeInp.addEventListener('change', refreshBadge);
+
+        genBtn.addEventListener('click', async () => {
+          const h = parseInt(timeInp.value.split(':')[0]);
+          const mood = (apData[s.storeName]||{})[String(h)];
+          if (!mood) { plToast(`"${s.storeName}" 의 이 시간대에 무드 매핑이 없습니다.`, 'error'); return; }
+          const pool = mdData[mood] || [];
+          if (!pool.length) { plToast(`"${mood}" 무드에 음원 데이터가 없습니다. 음원 데이터 관리에서 먼저 추가해 주세요.`, 'error'); return; }
+
+          const picked = [...pool].sort(() => Math.random()-0.5).slice(0, 18);
+          genBtn.disabled = true;
+          genBtn.textContent = '생성 중...';
+          try {
+            const scheduledAt = new Date(`${dateInp.value}T${timeInp.value}:00`).toISOString();
+            await apiFetch('POST', '/api/admin/scheduled-playlists', {
+              schedulePlaylists: [{
+                storeName: s.storeName,
+                scheduledAt,
+                songs: picked.map(t => ({
+                  title:    t.title,
+                  artist:   t.artist,
+                  vid:      t.vid || genVid(),
+                  playTime: parsePlayTimeSec(t.playTime),
+                }))
+              }]
+            }, adminToken);
+            plToast(`✓ "${s.storeName}" · ${mood} ${picked.length}곡 플리 생성 완료`, 'success');
+            plSetLastCreated();
+          } catch(e) {
+            console.warn('랜덤 플리 생성 실패:', e);
+            plToast('플리 생성 실패. 다시 시도해 주세요.', 'error');
+          }
+          genBtn.disabled = false;
+          genBtn.textContent = '18곡 플리 생성';
+        });
+
+        container.appendChild(card);
+      });
     }
 
     // ── 초기화 ──
