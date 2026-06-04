@@ -4104,7 +4104,6 @@
 
       const today = new Date().toISOString().slice(0, 10).replace(/-/g, '');
       XLSX.writeFile(wb, `음원데이터_${today}.xlsx`);
-      plToast(`✓ ${tabs.length}개 무드 · 엑셀 다운로드 완료`, 'success');
     }
 
     function mdSwitchTab(name) {
