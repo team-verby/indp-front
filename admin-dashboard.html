@@ -1761,6 +1761,37 @@
     }
     .md-export-btn:hover { background: rgba(255,255,255,0.06); color: #fff; border-color: rgba(255,255,255,0.3); }
     .md-export-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+    .md-summary-area {
+      padding: 8px 0 24px;
+    }
+    .md-summary-stats {
+      font-size: 13px;
+      color: rgba(255,255,255,0.35);
+      margin-bottom: 16px;
+    }
+    .md-summary-stats strong { color: rgba(255,255,255,0.8); }
+    .md-summary-list {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .md-summary-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.06);
+      cursor: pointer;
+      transition: background 0.12s, border-color 0.12s;
+      gap: 12px;
+    }
+    .md-summary-row:hover { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.12); }
+    .md-summary-mood { font-size: 14px; font-weight: 700; color: rgba(255,255,255,0.85); }
+    .md-summary-right { display: flex; align-items: center; gap: 16px; }
+    .md-summary-count { font-size: 13px; color: rgba(255,255,255,0.4); font-variant-numeric: tabular-nums; }
+    .md-summary-arrow { color: rgba(255,255,255,0.2); font-size: 13px; }
     .md-file-badge {
       display: flex;
       align-items: center;
@@ -2487,13 +2518,19 @@
 
         <!-- 무드 선택 -->
         <div class="md-selector-wrap" id="md-tab-wrap" style="display:none">
-          <select id="md-mood-select" class="md-mood-select" onchange="mdSwitchTab(this.value)"></select>
+          <select id="md-mood-select" class="md-mood-select" onchange="mdOnSelectChange(this.value)"></select>
           <span class="md-mood-count" id="md-mood-count"></span>
           <button class="md-tab-del-btn" onclick="mdDeleteActive()">무드 삭제</button>
           <button class="md-tab-add" onclick="mdPromptAddTab()">
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             무드 추가
           </button>
+        </div>
+
+        <!-- 요약 -->
+        <div class="md-summary-area" id="md-summary-area" style="display:none">
+          <div class="md-summary-stats" id="md-summary-stats"></div>
+          <div class="md-summary-list" id="md-summary-list"></div>
         </div>
 
         <!-- 빈 상태 -->
@@ -3985,16 +4022,53 @@
       const tabs = Object.keys(mdData);
       if (tabs.length > 0) {
         mdRenderTabs();
-        mdSwitchTab(tabs[0]);
+        mdShowSummary();
       } else {
         mdShowEmpty(true);
       }
     }
 
     function mdShowEmpty(show) {
-      document.getElementById('md-panel-empty').style.display = show ? '' : 'none';
-      document.getElementById('md-grid-area').style.display   = show ? 'none' : '';
-      document.getElementById('md-tab-wrap').style.display    = show ? 'none' : '';
+      document.getElementById('md-panel-empty').style.display    = show ? '' : 'none';
+      document.getElementById('md-grid-area').style.display      = 'none';
+      document.getElementById('md-summary-area').style.display   = 'none';
+      document.getElementById('md-tab-wrap').style.display       = show ? 'none' : '';
+    }
+
+    function mdShowSummary() {
+      mdActiveTab = null;
+      mdRenderTabs();
+      document.getElementById('md-panel-empty').style.display    = 'none';
+      document.getElementById('md-grid-area').style.display      = 'none';
+      document.getElementById('md-summary-area').style.display   = '';
+      document.getElementById('md-tab-wrap').style.display       = '';
+
+      const tabs = Object.keys(mdData);
+      const total = Object.values(mdData).reduce((s, a) => s + a.length, 0);
+
+      document.getElementById('md-summary-stats').innerHTML =
+        `총 <strong>${tabs.length}개</strong> 무드 · <strong>${total}곡</strong>`;
+
+      const list = document.getElementById('md-summary-list');
+      list.innerHTML = '';
+      tabs.forEach(name => {
+        const count = (mdData[name] || []).length;
+        const row = document.createElement('div');
+        row.className = 'md-summary-row';
+        row.innerHTML = `
+          <span class="md-summary-mood">${name}</span>
+          <span class="md-summary-right">
+            <span class="md-summary-count">${count}곡</span>
+            <span class="md-summary-arrow">›</span>
+          </span>`;
+        row.addEventListener('click', () => mdSwitchTab(name));
+        list.appendChild(row);
+      });
+    }
+
+    function mdOnSelectChange(val) {
+      if (!val) { mdShowSummary(); }
+      else { mdSwitchTab(val); }
     }
 
     // Excel 시트 → 곡 배열 변환 (3단계 fallback)
@@ -4049,9 +4123,9 @@
           mdData[sheet] = mdParseSheet(wb.Sheets[sheet]);
         });
         mdRenderTabs();
-        if (wb.SheetNames[0]) mdSwitchTab(wb.SheetNames[0]);
+        mdShowSummary();
         const total = Object.values(mdData).reduce((s, a) => s + a.length, 0);
-        plToast(`✓ ${wb.SheetNames.length}개 무드 탭 · 총 ${total}곡 로드`, 'success');
+        plToast(`✓ ${wb.SheetNames.length}개 무드 · 총 ${total}곡 로드`, 'success');
         if (total === 0) plToast('곡을 찾지 못했습니다. 헤더명(제목, 가수 등)을 확인해 주세요.', 'error');
       };
       reader.readAsArrayBuffer(file);
@@ -4066,6 +4140,11 @@
       const tabs = Object.keys(mdData);
       const sel = document.getElementById('md-mood-select');
       sel.innerHTML = '';
+      const ph = document.createElement('option');
+      ph.value = '';
+      ph.textContent = '전체 보기';
+      ph.selected = !mdActiveTab;
+      sel.appendChild(ph);
       tabs.forEach(name => {
         const opt = document.createElement('option');
         opt.value = name;
@@ -4075,11 +4154,9 @@
       });
       document.getElementById('md-tab-wrap').style.display = tabs.length ? '' : 'none';
       const countEl = document.getElementById('md-mood-count');
-      if (mdActiveTab) {
-        countEl.innerHTML = `<strong>${(mdData[mdActiveTab]||[]).length}</strong>곡`;
-      } else {
-        countEl.innerHTML = '';
-      }
+      countEl.innerHTML = mdActiveTab
+        ? `<strong>${(mdData[mdActiveTab]||[]).length}</strong>곡`
+        : '';
       const exportBtn = document.getElementById('md-export-btn');
       if (exportBtn) exportBtn.disabled = tabs.length === 0;
     }
@@ -4111,7 +4188,10 @@
       mdActiveTab = name;
       mdRenderTabs();
       mdRenderGrid();
-      mdShowEmpty(false);
+      document.getElementById('md-panel-empty').style.display  = 'none';
+      document.getElementById('md-summary-area').style.display = 'none';
+      document.getElementById('md-grid-area').style.display    = '';
+      document.getElementById('md-tab-wrap').style.display     = '';
     }
 
     function mdDeleteActive() {
