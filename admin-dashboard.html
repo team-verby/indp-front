@@ -1960,6 +1960,62 @@
     }
     @media (max-width: 900px) { .ap-layout { grid-template-columns: 1fr; } }
 
+    .ap-result-wrap {
+      margin-top: 12px;
+      border-top: 1px solid rgba(255,255,255,0.08);
+      padding-top: 12px;
+    }
+    .ap-result-meta {
+      font-size: 12px;
+      color: #c6f135;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .ap-result-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+    .ap-result-table thead th {
+      font-size: 10px;
+      font-weight: 700;
+      color: rgba(255,255,255,0.25);
+      letter-spacing: 0.06em;
+      text-align: left;
+      padding: 0 8px 5px;
+    }
+    .ap-result-row {
+      cursor: pointer;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .ap-result-row:hover { background: rgba(255,255,255,0.03); }
+    .ap-result-row td { padding: 7px 8px; }
+    .ap-rt-time  { color: rgba(255,255,255,0.4); white-space: nowrap; font-variant-numeric: tabular-nums; }
+    .ap-rt-mood  { font-weight: 600; color: rgba(255,255,255,0.85); }
+    .ap-rt-count { text-align: right; color: rgba(255,255,255,0.3); font-size: 11px; white-space: nowrap; }
+    .ap-result-songs-row { display: none; }
+    .ap-result-songs-row td { padding: 0 8px 8px; }
+    .ap-result-songs-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+      padding: 6px 0 2px;
+      border-top: 1px solid rgba(255,255,255,0.05);
+    }
+    .ap-result-song-item {
+      display: flex;
+      gap: 8px;
+      font-size: 11px;
+      color: rgba(255,255,255,0.5);
+      padding: 2px 0;
+    }
+    .ap-result-song-num {
+      color: rgba(255,255,255,0.2);
+      min-width: 18px;
+      font-variant-numeric: tabular-nums;
+      flex-shrink: 0;
+    }
+
     .pl-mode-tabs {
       display: flex;
       gap: 0;
@@ -4308,25 +4364,37 @@
         card.className = 'ap-store-card';
 
         const sm = apData[s.storeName] || {};
-        const mappedHours = Array.from({length:24}, (_,h) => h).filter(h => sm[String(h)]);
-        const mappedCount = mappedHours.length;
+        const mappedCount = Array.from({length:24}, (_,h) => h).filter(h => sm[String(h)]).length;
 
-        card.innerHTML = `
-          <div class="ap-card-header">
-            <span class="ap-card-name">${s.storeName}</span>
-            <span class="ap-mood-badge${mappedCount ? ' active' : ''}">
-              ${mappedCount ? `${mappedCount}개 시간대 매핑됨` : '매핑 없음'}
-            </span>
-          </div>
-          <div class="ap-card-controls">
-            <input type="date" class="pl-schedule-input date-input" data-date value="${todayStr}" style="height:38px;flex:1" />
-            <button class="ap-gen-btn" data-genbtn>전체 시간대 플리 생성</button>
-          </div>`;
+        // 헤더
+        const header = document.createElement('div');
+        header.className = 'ap-card-header';
+        header.innerHTML = `
+          <span class="ap-card-name">${s.storeName}</span>
+          <span class="ap-mood-badge${mappedCount ? ' active' : ''}">
+            ${mappedCount ? `${mappedCount}개 시간대 매핑됨` : '매핑 없음'}
+          </span>`;
+        card.appendChild(header);
 
-        const dateInp = card.querySelector('[data-date]');
-        const genBtn  = card.querySelector('[data-genbtn]');
-
+        // 컨트롤
+        const controls = document.createElement('div');
+        controls.className = 'ap-card-controls';
+        const dateInp = document.createElement('input');
+        dateInp.type = 'date';
+        dateInp.className = 'pl-schedule-input date-input';
+        dateInp.value = todayStr;
+        dateInp.style.cssText = 'height:38px;flex:1';
+        const genBtn = document.createElement('button');
+        genBtn.className = 'ap-gen-btn';
+        genBtn.textContent = '전체 시간대 플리 생성';
         if (!mappedCount) genBtn.disabled = true;
+        controls.appendChild(dateInp);
+        controls.appendChild(genBtn);
+        card.appendChild(controls);
+
+        // 결과 영역
+        const resultArea = document.createElement('div');
+        card.appendChild(resultArea);
 
         genBtn.addEventListener('click', async () => {
           const sm2 = apData[s.storeName] || {};
@@ -4344,6 +4412,7 @@
             schedulePlaylists.push({
               storeName: s.storeName,
               scheduledAt,
+              mood,
               songs: picked.map(t => ({
                 title:    t.title,
                 artist:   t.artist,
@@ -4361,12 +4430,73 @@
           genBtn.disabled = true;
           genBtn.textContent = '생성 중...';
           try {
-            await apiFetch('POST', '/api/admin/scheduled-playlists', { schedulePlaylists }, adminToken);
+            // mood 필드는 API 전송 전 제거
+            const payload = schedulePlaylists.map(({ mood: _, ...rest }) => rest);
+            await apiFetch('POST', '/api/admin/scheduled-playlists', { schedulePlaylists: payload }, adminToken);
+
             const msg = skipped.length
               ? `✓ "${s.storeName}" ${schedulePlaylists.length}개 시간대 플리 생성 완료 (건너뜀: ${skipped.join(', ')})`
               : `✓ "${s.storeName}" 전체 ${schedulePlaylists.length}개 시간대 플리 생성 완료`;
             plToast(msg, 'success');
             plSetLastCreated();
+
+            // ── 결과 렌더링 ──
+            resultArea.innerHTML = '';
+            const wrap = document.createElement('div');
+            wrap.className = 'ap-result-wrap';
+
+            const meta = document.createElement('div');
+            meta.className = 'ap-result-meta';
+            meta.textContent = `✓ ${dateInp.value} · ${schedulePlaylists.length}개 시간대 생성됨${skipped.length ? ` (건너뜀 ${skipped.length}개)` : ''}`;
+            wrap.appendChild(meta);
+
+            const table = document.createElement('table');
+            table.className = 'ap-result-table';
+            table.innerHTML = '<thead><tr><th>시간대</th><th>무드</th><th style="text-align:right">곡 수</th></tr></thead>';
+            const tbody = document.createElement('tbody');
+
+            schedulePlaylists.forEach(pl => {
+              const h = new Date(pl.scheduledAt).getHours();
+              const t1 = `${String(h).padStart(2,'0')}:00`;
+              const t2 = `${String((h+1)%24).padStart(2,'0')}:00`;
+
+              const tr = document.createElement('tr');
+              tr.className = 'ap-result-row';
+              const tdTime  = document.createElement('td'); tdTime.className  = 'ap-rt-time';  tdTime.textContent  = `${t1}~${t2}`;
+              const tdMood  = document.createElement('td'); tdMood.className  = 'ap-rt-mood';  tdMood.textContent  = pl.mood;
+              const tdCount = document.createElement('td'); tdCount.className = 'ap-rt-count'; tdCount.textContent = `${pl.songs.length}곡 ▾`;
+              tr.appendChild(tdTime); tr.appendChild(tdMood); tr.appendChild(tdCount);
+
+              const songsTr = document.createElement('tr');
+              songsTr.className = 'ap-result-songs-row';
+              const songsTd = document.createElement('td');
+              songsTd.colSpan = 3;
+              const list = document.createElement('div');
+              list.className = 'ap-result-songs-list';
+              pl.songs.forEach((song, idx) => {
+                const item = document.createElement('div');
+                item.className = 'ap-result-song-item';
+                const num = document.createElement('span'); num.className = 'ap-result-song-num'; num.textContent = idx + 1;
+                const txt = document.createElement('span'); txt.textContent = `${song.title}${song.artist ? ' — ' + song.artist : ''}`;
+                item.appendChild(num); item.appendChild(txt);
+                list.appendChild(item);
+              });
+              songsTd.appendChild(list);
+              songsTr.appendChild(songsTd);
+
+              tr.addEventListener('click', () => {
+                const open = songsTr.style.display !== 'none';
+                songsTr.style.display = open ? 'none' : '';
+                tdCount.textContent = `${pl.songs.length}곡 ${open ? '▾' : '▴'}`;
+              });
+
+              tbody.appendChild(tr);
+              tbody.appendChild(songsTr);
+            });
+
+            table.appendChild(tbody);
+            wrap.appendChild(table);
+            resultArea.appendChild(wrap);
           } catch(e) {
             console.warn('랜덤 플리 생성 실패:', e);
             plToast('플리 생성 실패. 다시 시도해 주세요.', 'error');
