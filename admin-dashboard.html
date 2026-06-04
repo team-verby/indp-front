@@ -4509,59 +4509,73 @@
             // ── 결과 렌더링 ──
             resultArea.innerHTML = '';
             const wrap = document.createElement('div');
-            wrap.className = 'ap-result-wrap';
+            wrap.style.cssText = 'display:flex;flex-direction:column;gap:8px;margin-top:8px;';
 
             const meta = document.createElement('div');
-            meta.className = 'ap-result-meta';
+            meta.style.cssText = 'font-size:13px;color:rgba(255,255,255,0.45);padding:0 2px 4px;';
             meta.textContent = `✓ ${dateInp.value} · ${schedulePlaylists.length}개 시간대 생성됨${skipped.length ? ` (건너뜀 ${skipped.length}개)` : ''}`;
             wrap.appendChild(meta);
-
-            const table = document.createElement('table');
-            table.className = 'ap-result-table';
-            table.innerHTML = '<thead><tr><th>시간대</th><th>무드</th><th style="text-align:right">곡 수</th></tr></thead>';
-            const tbody = document.createElement('tbody');
 
             schedulePlaylists.forEach(pl => {
               const h = new Date(pl.scheduledAt).getHours();
               const t1 = `${String(h).padStart(2,'0')}:00`;
               const t2 = `${String((h+1)%24).padStart(2,'0')}:00`;
 
-              const tr = document.createElement('tr');
-              tr.className = 'ap-result-row';
-              const tdTime  = document.createElement('td'); tdTime.className  = 'ap-rt-time';  tdTime.textContent  = `${t1}~${t2}`;
-              const tdMood  = document.createElement('td'); tdMood.className  = 'ap-rt-mood';  tdMood.textContent  = pl.mood;
-              const tdCount = document.createElement('td'); tdCount.className = 'ap-rt-count'; tdCount.textContent = `${pl.songs.length}곡 ▾`;
-              tr.appendChild(tdTime); tr.appendChild(tdMood); tr.appendChild(tdCount);
+              const item = document.createElement('div');
+              item.className = 'pl-store-item';
 
-              const songsTr = document.createElement('tr');
-              songsTr.className = 'ap-result-songs-row';
-              const songsTd = document.createElement('td');
-              songsTd.colSpan = 3;
-              const list = document.createElement('div');
-              list.className = 'ap-result-songs-list';
+              const top = document.createElement('div');
+              top.className = 'pl-store-item-top';
+              top.style.cssText = 'display:flex;align-items:center;gap:10px;cursor:pointer;';
+
+              const nameWrap = document.createElement('div');
+              nameWrap.style.flex = '1';
+              const nameEl = document.createElement('p');
+              nameEl.className = 'pl-store-name';
+              nameEl.textContent = `${t1}~${t2}`;
+              const moodEl = document.createElement('p');
+              moodEl.style.cssText = 'font-size:12px;color:rgba(255,255,255,0.4);margin:2px 0 0;';
+              moodEl.textContent = pl.mood;
+              nameWrap.appendChild(nameEl);
+              nameWrap.appendChild(moodEl);
+
+              const badge = document.createElement('span');
+              badge.style.cssText = 'font-size:12px;color:rgba(255,255,255,0.4);flex-shrink:0;';
+              badge.textContent = `${pl.songs.length}곡`;
+
+              const chevron = document.createElement('span');
+              chevron.className = 'pl-store-chevron';
+              chevron.textContent = '▼';
+
+              top.appendChild(nameWrap);
+              top.appendChild(badge);
+              top.appendChild(chevron);
+
+              const expand = document.createElement('div');
+              expand.className = 'pl-store-expand';
+
+              const colBody = document.createElement('div');
+              colBody.className = 'pl-compare-col-body';
               pl.songs.forEach((song, idx) => {
-                const item = document.createElement('div');
-                item.className = 'ap-result-song-item';
-                const num = document.createElement('span'); num.className = 'ap-result-song-num'; num.textContent = idx + 1;
-                const txt = document.createElement('span'); txt.textContent = `${song.title}${song.artist ? ' — ' + song.artist : ''}`;
-                item.appendChild(num); item.appendChild(txt);
-                list.appendChild(item);
+                const row = document.createElement('div');
+                row.className = 'pl-compare-row';
+                const num = document.createElement('span'); num.className = 'pl-compare-num'; num.textContent = idx + 1;
+                const title = document.createElement('span'); title.className = 'pl-compare-title'; title.textContent = song.title || '-';
+                const artist = document.createElement('span'); artist.className = 'pl-compare-artist'; artist.textContent = song.artist || '-';
+                row.appendChild(num); row.appendChild(title); row.appendChild(artist);
+                colBody.appendChild(row);
               });
-              songsTd.appendChild(list);
-              songsTr.appendChild(songsTd);
+              expand.appendChild(colBody);
 
-              tr.addEventListener('click', () => {
-                const open = songsTr.style.display !== 'none';
-                songsTr.style.display = open ? 'none' : '';
-                tdCount.textContent = `${pl.songs.length}곡 ${open ? '▾' : '▴'}`;
+              top.addEventListener('click', () => {
+                item.classList.toggle('expanded');
               });
 
-              tbody.appendChild(tr);
-              tbody.appendChild(songsTr);
+              item.appendChild(top);
+              item.appendChild(expand);
+              wrap.appendChild(item);
             });
 
-            table.appendChild(tbody);
-            wrap.appendChild(table);
             resultArea.appendChild(wrap);
           } catch(e) {
             console.warn('랜덤 플리 생성 실패:', e);
