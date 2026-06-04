@@ -1744,6 +1744,23 @@
       font-size: 12px;
       color: rgba(255,255,255,0.25);
     }
+    .md-export-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 9px 18px;
+      background: transparent;
+      color: rgba(255,255,255,0.5);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+    }
+    .md-export-btn:hover { background: rgba(255,255,255,0.06); color: #fff; border-color: rgba(255,255,255,0.3); }
+    .md-export-btn:disabled { opacity: 0.3; cursor: not-allowed; }
     .md-file-badge {
       display: flex;
       align-items: center;
@@ -2454,6 +2471,14 @@
           </label>
           <input type="file" id="md-file-input" accept=".xlsx,.xls" style="display:none" onchange="mdFileSelected(this)" />
           <span class="md-upload-hint">.xlsx · 시트명 = 무드명</span>
+          <button class="md-export-btn" id="md-export-btn" onclick="mdExport()" disabled>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            엑셀 다운로드
+          </button>
           <div class="md-file-badge" id="md-file-badge" style="display:none">
             <span id="md-file-name"></span>
             <button onclick="mdClearFile()" title="초기화">✕</button>
@@ -4055,6 +4080,31 @@
       } else {
         countEl.innerHTML = '';
       }
+      const exportBtn = document.getElementById('md-export-btn');
+      if (exportBtn) exportBtn.disabled = tabs.length === 0;
+    }
+
+    function mdExport() {
+      if (mdActiveTab) mdSaveGrid();
+      const tabs = Object.keys(mdData);
+      if (!tabs.length) { plToast('내보낼 데이터가 없습니다.', 'error'); return; }
+
+      const wb = XLSX.utils.book_new();
+      tabs.forEach(moodName => {
+        const songs = mdData[moodName] || [];
+        const wsData = [
+          ['제목', '가수', '재생시간', 'YouTube ID'],
+          ...songs.map(s => [s.title || '', s.artist || '', s.playTime || '', s.vid || ''])
+        ];
+        const ws = XLSX.utils.aoa_to_sheet(wsData);
+        // 열 너비 설정
+        ws['!cols'] = [{ wch: 40 }, { wch: 20 }, { wch: 12 }, { wch: 16 }];
+        XLSX.utils.book_append_sheet(wb, ws, moodName);
+      });
+
+      const today = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+      XLSX.writeFile(wb, `음원데이터_${today}.xlsx`);
+      plToast(`✓ ${tabs.length}개 무드 · 엑셀 다운로드 완료`, 'success');
     }
 
     function mdSwitchTab(name) {
