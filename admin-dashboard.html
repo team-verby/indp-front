@@ -1763,73 +1763,68 @@
       padding: 0;
       line-height: 1;
     }
-    .md-tab-wrap {
+    .md-selector-wrap {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
       margin-bottom: 20px;
-      border-bottom: 1px solid rgba(255,255,255,0.07);
-      padding-bottom: 0;
-      overflow-x: auto;
+      flex-wrap: wrap;
     }
-    .md-tabs {
-      display: flex;
-      gap: 2px;
-      flex-shrink: 0;
+    .md-mood-select {
+      height: 40px;
+      min-width: 200px;
+      max-width: 320px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 8px;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 600;
+      font-family: inherit;
+      padding: 0 14px;
+      cursor: pointer;
+      outline: none;
+      color-scheme: dark;
+      transition: border-color 0.15s;
     }
-    .md-tab {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      padding: 9px 16px;
-      border: none;
-      border-bottom: 2px solid transparent;
+    .md-mood-select:focus { border-color: rgba(198,241,53,0.4); }
+    .md-mood-count {
+      font-size: 13px;
+      color: rgba(255,255,255,0.35);
+      white-space: nowrap;
+    }
+    .md-mood-count strong { color: rgba(255,255,255,0.75); }
+    .md-tab-del-btn {
+      height: 40px;
+      padding: 0 14px;
+      border: 1px solid rgba(255,80,80,0.25);
+      border-radius: 8px;
       background: transparent;
-      color: rgba(255,255,255,0.4);
+      color: rgba(255,100,100,0.7);
       font-size: 13px;
       font-weight: 600;
       font-family: inherit;
       cursor: pointer;
       white-space: nowrap;
-      transition: color 0.15s, border-color 0.15s;
-      margin-bottom: -1px;
+      transition: border-color 0.15s, color 0.15s;
     }
-    .md-tab:hover { color: rgba(255,255,255,0.7); }
-    .md-tab.active { color: #c6f135; border-bottom-color: #c6f135; }
-    .md-tab-del {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 16px;
-      height: 16px;
-      border-radius: 50%;
-      font-size: 10px;
-      background: rgba(255,255,255,0.08);
-      color: rgba(255,255,255,0.4);
-      cursor: pointer;
-      line-height: 1;
-      flex-shrink: 0;
-    }
-    .md-tab.active .md-tab-del { background: rgba(198,241,53,0.2); color: #c6f135; }
-    .md-tab-del:hover { background: rgba(255,80,80,0.25); color: #ff6060; }
+    .md-tab-del-btn:hover { border-color: rgba(255,80,80,0.6); color: #ff6060; }
     .md-tab-add {
       display: inline-flex;
       align-items: center;
       gap: 4px;
-      padding: 6px 12px;
+      height: 40px;
+      padding: 0 14px;
       border: 1px dashed rgba(255,255,255,0.15);
-      border-radius: 6px;
+      border-radius: 8px;
       background: transparent;
       color: rgba(255,255,255,0.3);
-      font-size: 12px;
+      font-size: 13px;
       font-weight: 600;
       font-family: inherit;
       cursor: pointer;
       white-space: nowrap;
-      flex-shrink: 0;
       transition: border-color 0.15s, color 0.15s;
-      margin-left: 4px;
-      margin-bottom: 8px;
     }
     .md-tab-add:hover { border-color: rgba(198,241,53,0.4); color: #c6f135; }
     .md-panel-empty {
@@ -2465,18 +2460,20 @@
           </div>
         </div>
 
-        <!-- 무드 탭 바 -->
-        <div class="md-tab-wrap" id="md-tab-wrap" style="display:none">
-          <div class="md-tabs" id="md-tabs"></div>
+        <!-- 무드 선택 -->
+        <div class="md-selector-wrap" id="md-tab-wrap" style="display:none">
+          <select id="md-mood-select" class="md-mood-select" onchange="mdSwitchTab(this.value)"></select>
+          <span class="md-mood-count" id="md-mood-count"></span>
+          <button class="md-tab-del-btn" onclick="mdDeleteActive()">무드 삭제</button>
           <button class="md-tab-add" onclick="mdPromptAddTab()">
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            탭 추가
+            무드 추가
           </button>
         </div>
 
         <!-- 빈 상태 -->
         <div class="md-panel-empty" id="md-panel-empty">
-          엑셀 파일을 업로드하거나<br/><strong style="color:rgba(255,255,255,0.4)">탭 추가</strong> 버튼으로 무드를 만들어 주세요
+          엑셀 파일을 업로드하거나<br/><strong style="color:rgba(255,255,255,0.4)">무드 추가</strong> 버튼으로 무드를 만들어 주세요
         </div>
 
         <!-- 그리드 영역 -->
@@ -4042,25 +4039,22 @@
 
     function mdRenderTabs() {
       const tabs = Object.keys(mdData);
-      const container = document.getElementById('md-tabs');
-      container.innerHTML = '';
+      const sel = document.getElementById('md-mood-select');
+      sel.innerHTML = '';
       tabs.forEach(name => {
-        const btn = document.createElement('button');
-        btn.className = 'md-tab' + (name === mdActiveTab ? ' active' : '');
-        btn.textContent = name;
-        btn.dataset.mood = name;
-        btn.addEventListener('click', () => mdSwitchTab(name));
-
-        const del = document.createElement('span');
-        del.className = 'md-tab-del';
-        del.title = '탭 삭제';
-        del.textContent = '✕';
-        del.addEventListener('click', e => { e.stopPropagation(); mdDeleteTab(name); });
-        btn.appendChild(del);
-
-        container.appendChild(btn);
+        const opt = document.createElement('option');
+        opt.value = name;
+        opt.textContent = `${name}  (${(mdData[name]||[]).length}곡)`;
+        if (name === mdActiveTab) opt.selected = true;
+        sel.appendChild(opt);
       });
       document.getElementById('md-tab-wrap').style.display = tabs.length ? '' : 'none';
+      const countEl = document.getElementById('md-mood-count');
+      if (mdActiveTab) {
+        countEl.innerHTML = `<strong>${(mdData[mdActiveTab]||[]).length}</strong>곡`;
+      } else {
+        countEl.innerHTML = '';
+      }
     }
 
     function mdSwitchTab(name) {
@@ -4071,17 +4065,15 @@
       mdShowEmpty(false);
     }
 
-    function mdDeleteTab(name) {
-      if (!confirm(`"${name}" 무드 탭을 삭제하시겠습니까? 저장된 데이터도 함께 삭제됩니다.`)) return;
+    function mdDeleteActive() {
+      if (!mdActiveTab) return;
+      if (!confirm(`"${mdActiveTab}" 무드를 삭제하시겠습니까? 저장된 데이터도 함께 삭제됩니다.`)) return;
+      const name = mdActiveTab;
       delete mdData[name];
       const tabs = Object.keys(mdData);
-      if (name === mdActiveTab) {
-        mdActiveTab = null;
-        if (tabs.length > 0) { mdSwitchTab(tabs[0]); }
-        else { mdRenderTabs(); mdShowEmpty(true); }
-      } else {
-        mdRenderTabs();
-      }
+      mdActiveTab = null;
+      if (tabs.length > 0) { mdSwitchTab(tabs[0]); }
+      else { mdRenderTabs(); mdShowEmpty(true); }
     }
 
     function mdPromptAddTab() {
