@@ -4521,53 +4521,69 @@
             // ── 결과 렌더링 ──
             resultArea.innerHTML = '';
             const wrap = document.createElement('div');
-            wrap.style.cssText = 'display:flex;flex-direction:column;gap:8px;margin-top:8px;';
+            wrap.style.cssText = 'display:flex;flex-direction:column;gap:8px;margin-top:12px;';
 
-            const meta = document.createElement('div');
-            meta.style.cssText = 'font-size:13px;color:rgba(255,255,255,0.45);padding:0 2px 4px;';
-            meta.textContent = `✓ ${dateInp.value} ${timeInp.value} 적용 · ${schedulePlaylists.length}개 시간대 생성됨${skipped.length ? ` (건너뜀 ${skipped.length}개)` : ''}`;
-            wrap.appendChild(meta);
+            // 적용 시각 안내 배너
+            const applyNotice = document.createElement('div');
+            applyNotice.style.cssText = 'display:flex;align-items:center;gap:8px;background:rgba(198,241,53,0.08);border:1px solid rgba(198,241,53,0.25);border-radius:10px;padding:10px 14px;';
+            applyNotice.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#c6f135" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span style="font-size:13px;color:#c6f135;font-weight:600;">${dateInp.value.replace(/-/g,'.')} ${timeInp.value}</span><span style="font-size:13px;color:rgba(255,255,255,0.5);">에 일괄 적용 예정</span>`;
+            wrap.appendChild(applyNotice);
 
-            schedulePlaylists.forEach(pl => {
+            // 단일 아코디언 카드
+            const totalSongs = schedulePlaylists.reduce((s, pl) => s + pl.songs.length, 0);
+            const item = document.createElement('div');
+            item.className = 'pl-store-item';
+
+            const top = document.createElement('div');
+            top.className = 'pl-store-item-top';
+            top.style.cssText = 'display:flex;align-items:center;gap:10px;cursor:pointer;';
+
+            const nameEl = document.createElement('p');
+            nameEl.className = 'pl-store-name';
+            nameEl.style.margin = '0';
+            nameEl.textContent = `${schedulePlaylists.length}개 시간대`;
+
+            const badge = document.createElement('span');
+            badge.style.cssText = 'font-size:12px;color:rgba(255,255,255,0.4);flex-shrink:0;margin-left:auto;';
+            badge.textContent = `총 ${totalSongs}곡`;
+
+            const chevron = document.createElement('span');
+            chevron.className = 'pl-store-chevron';
+            chevron.textContent = '▼';
+
+            top.appendChild(nameEl);
+            top.appendChild(badge);
+            top.appendChild(chevron);
+
+            const expand = document.createElement('div');
+            expand.className = 'pl-store-expand';
+
+            schedulePlaylists.forEach((pl, si) => {
               const h = new Date(pl.scheduledAt).getHours();
               const t1 = `${String(h).padStart(2,'0')}:00`;
               const t2 = `${String((h+1)%24).padStart(2,'0')}:00`;
 
-              const item = document.createElement('div');
-              item.className = 'pl-store-item';
+              // 시간대 섹션 헤더
+              const slotHeader = document.createElement('div');
+              slotHeader.style.cssText = `display:flex;align-items:center;gap:8px;padding:${si === 0 ? '0' : '12px'} 0 6px;${si > 0 ? 'border-top:1px solid rgba(255,255,255,0.05);margin-top:4px;' : ''}`;
+              const slotTime = document.createElement('span');
+              slotTime.style.cssText = 'font-size:13px;font-weight:700;color:#fff;';
+              slotTime.textContent = `${t1}~${t2}`;
+              const slotMood = document.createElement('span');
+              slotMood.style.cssText = 'font-size:12px;color:rgba(255,255,255,0.4);';
+              slotMood.textContent = pl.mood;
+              const slotCount = document.createElement('span');
+              slotCount.style.cssText = 'font-size:12px;color:rgba(255,255,255,0.3);margin-left:auto;';
+              slotCount.textContent = `${pl.songs.length}곡`;
+              slotHeader.appendChild(slotTime);
+              slotHeader.appendChild(slotMood);
+              slotHeader.appendChild(slotCount);
+              expand.appendChild(slotHeader);
 
-              const top = document.createElement('div');
-              top.className = 'pl-store-item-top';
-              top.style.cssText = 'display:flex;align-items:center;gap:10px;cursor:pointer;';
-
-              const nameWrap = document.createElement('div');
-              nameWrap.style.flex = '1';
-              const nameEl = document.createElement('p');
-              nameEl.className = 'pl-store-name';
-              nameEl.textContent = `${t1}~${t2}`;
-              const moodEl = document.createElement('p');
-              moodEl.style.cssText = 'font-size:12px;color:rgba(255,255,255,0.4);margin:2px 0 0;';
-              moodEl.textContent = pl.mood;
-              nameWrap.appendChild(nameEl);
-              nameWrap.appendChild(moodEl);
-
-              const badge = document.createElement('span');
-              badge.style.cssText = 'font-size:12px;color:rgba(255,255,255,0.4);flex-shrink:0;';
-              badge.textContent = `${pl.songs.length}곡`;
-
-              const chevron = document.createElement('span');
-              chevron.className = 'pl-store-chevron';
-              chevron.textContent = '▼';
-
-              top.appendChild(nameWrap);
-              top.appendChild(badge);
-              top.appendChild(chevron);
-
-              const expand = document.createElement('div');
-              expand.className = 'pl-store-expand';
-
+              // 곡 목록
               const colBody = document.createElement('div');
               colBody.className = 'pl-compare-col-body';
+              colBody.style.maxHeight = '160px';
               pl.songs.forEach((song, idx) => {
                 const row = document.createElement('div');
                 row.className = 'pl-compare-row';
@@ -4578,16 +4594,13 @@
                 colBody.appendChild(row);
               });
               expand.appendChild(colBody);
-
-              top.addEventListener('click', () => {
-                item.classList.toggle('expanded');
-              });
-
-              item.appendChild(top);
-              item.appendChild(expand);
-              wrap.appendChild(item);
             });
 
+            top.addEventListener('click', () => { item.classList.toggle('expanded'); });
+
+            item.appendChild(top);
+            item.appendChild(expand);
+            wrap.appendChild(item);
             resultArea.appendChild(wrap);
           } catch(e) {
             console.warn('랜덤 플리 생성 실패:', e);
