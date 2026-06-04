@@ -2491,7 +2491,7 @@
         </div>
 
         <!-- 엑셀 업로드 바 -->
-        <div class="md-upload-bar">
+        <div class="md-upload-bar" id="md-upload-bar">
           <label class="md-upload-btn" for="md-file-input">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
@@ -4029,6 +4029,7 @@
     }
 
     function mdShowEmpty(show) {
+      document.getElementById('md-upload-bar').style.display     = '';
       document.getElementById('md-panel-empty').style.display    = show ? '' : 'none';
       document.getElementById('md-grid-area').style.display      = 'none';
       document.getElementById('md-summary-area').style.display   = 'none';
@@ -4038,6 +4039,7 @@
     function mdShowSummary() {
       mdActiveTab = null;
       mdRenderTabs();
+      document.getElementById('md-upload-bar').style.display     = 'none';
       document.getElementById('md-panel-empty').style.display    = 'none';
       document.getElementById('md-grid-area').style.display      = 'none';
       document.getElementById('md-summary-area').style.display   = '';
@@ -4045,25 +4047,9 @@
 
       const tabs = Object.keys(mdData);
       const total = Object.values(mdData).reduce((s, a) => s + a.length, 0);
-
       document.getElementById('md-summary-stats').innerHTML =
-        `총 <strong>${tabs.length}개</strong> 무드 · <strong>${total}곡</strong>`;
-
-      const list = document.getElementById('md-summary-list');
-      list.innerHTML = '';
-      tabs.forEach(name => {
-        const count = (mdData[name] || []).length;
-        const row = document.createElement('div');
-        row.className = 'md-summary-row';
-        row.innerHTML = `
-          <span class="md-summary-mood">${name}</span>
-          <span class="md-summary-right">
-            <span class="md-summary-count">${count}곡</span>
-            <span class="md-summary-arrow">›</span>
-          </span>`;
-        row.addEventListener('click', () => mdSwitchTab(name));
-        list.appendChild(row);
-      });
+        `<strong>${tabs.length}개</strong> 무드 · <strong>${total}곡</strong>`;
+      document.getElementById('md-summary-list').innerHTML = '';
     }
 
     function mdOnSelectChange(val) {
@@ -4188,6 +4174,7 @@
       mdActiveTab = name;
       mdRenderTabs();
       mdRenderGrid();
+      document.getElementById('md-upload-bar').style.display   = '';
       document.getElementById('md-panel-empty').style.display  = 'none';
       document.getElementById('md-summary-area').style.display = 'none';
       document.getElementById('md-grid-area').style.display    = '';
