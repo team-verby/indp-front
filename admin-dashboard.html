@@ -2958,7 +2958,7 @@
         renderPaymentHistory(id, d._sub);
         renderPlaylistTab({ id, hours: d.hours, playlistType: d.playlistType, timePreferences: d.timePreferences, musicMood: d.musicMood });
         renderRecommendTab({ id, excludedGenre: d.excludedGenre });
-        renderApMappingTab(s);
+        renderApMappingTab(s, d.hours);
       } catch(e) {
         console.warn('매장 상세 로드 실패:', e);
         document.getElementById('drawer-tab-info').innerHTML =
@@ -4163,7 +4163,45 @@
       }
     }
 
-    function renderApMappingTab(s) {
+    function getBusinessHourRange(hoursStr) {
+      if (!hoursStr) return null;
+      // hoursStr 예: "월·화·수·목·금요일 09:00 ~ 22:00, 토요일 10:00 ~ 20:00"
+      // 모든 시간 범위를 추출해 union 취함
+      const re = /(\d{1,2}):(\d{2})\s*[~–\-]\s*(\d{1,2}):(\d{2})/g;
+      let match;
+      let minOpen = null, maxClose = null;
+      while ((match = re.exec(hoursStr)) !== null) {
+        const openMin  = parseInt(match[1]) * 60 + parseInt(match[2]);
+        const closeMin = parseInt(match[3]) * 60 + parseInt(match[4]);
+        if (minOpen  === null || openMin  < minOpen)  minOpen  = openMin;
+        if (maxClose === null || closeMin > maxClose) maxClose = closeMin;
+      }
+      if (minOpen === null) return null;
+      return { openMin: minOpen, closeMin: maxClose };
+    }
+
+    function getBusinessHours(hoursStr) {
+      const range = getBusinessHourRange(hoursStr);
+      if (!range) return Array.from({length:24}, (_, i) => i);
+      const { openMin, closeMin } = range;
+      const startH = Math.floor(openMin / 60);
+      const endH   = Math.floor(closeMin / 60);
+      const endM   = closeMin % 60;
+      // 마지막 슬롯: 종료 시각이 정각이면 그 직전 시간이 마지막 슬롯
+      const lastH  = endM > 0 ? endH : endH - 1;
+      const hours  = [];
+      if (closeMin > openMin) {
+        // 당일 마감
+        for (let h = startH; h <= lastH; h++) hours.push(h);
+      } else {
+        // 자정 넘어가는 영업 (예: 22:00 ~ 03:00)
+        for (let h = startH; h < 24; h++) hours.push(h);
+        for (let h = 0; h <= lastH; h++) hours.push(h);
+      }
+      return hours;
+    }
+
+    function renderApMappingTab(s, hoursStr) {
       const panel = document.getElementById('drawer-tab-ap-mapping');
       if (!panel) return;
       const storeName = s.storeName;
@@ -4177,11 +4215,22 @@
         return;
       }
 
+      const bizHours = getBusinessHours(hoursStr);
+
+      const header = document.createElement('div');
+      header.style.cssText = 'display:flex;align-items:center;justify-content:space-between;margin:16px 0 10px';
       const label = document.createElement('div');
       label.className = 'ap-section-label';
-      label.style.cssText = 'margin:16px 0 10px';
+      label.style.margin = '0';
       label.textContent = '시간대별 무드 매핑';
-      panel.appendChild(label);
+      const hoursInfo = document.createElement('span');
+      hoursInfo.style.cssText = 'font-size:11px;color:rgba(255,255,255,0.3)';
+      hoursInfo.textContent = hoursStr
+        ? `영업시간: ${getBusinessHourRange(hoursStr) ? `${String(Math.floor(getBusinessHourRange(hoursStr).openMin/60)).padStart(2,'0')}:${String(getBusinessHourRange(hoursStr).openMin%60).padStart(2,'0')} ~ ${String(Math.floor(getBusinessHourRange(hoursStr).closeMin/60)).padStart(2,'0')}:${String(getBusinessHourRange(hoursStr).closeMin%60).padStart(2,'0')}` : hoursStr}`
+        : '영업시간 정보 없음 (전체 24시간 표시)';
+      header.appendChild(label);
+      header.appendChild(hoursInfo);
+      panel.appendChild(header);
 
       const wrap = document.createElement('div');
       wrap.className = 'ap-mapping-wrap';
@@ -4192,7 +4241,7 @@
       table.innerHTML = '<thead><tr><th>시간대</th><th>무드</th></tr></thead>';
       const tbody = document.createElement('tbody');
 
-      for (let h = 0; h < 24; h++) {
+      bizHours.forEach(h => {
         const tr = document.createElement('tr');
         const t1 = `${String(h).padStart(2,'0')}:00`;
         const t2 = `${String((h+1)%24).padStart(2,'0')}:00`;
@@ -4218,7 +4267,8 @@
         tr.appendChild(tdTime);
         tr.appendChild(tdMood);
         tbody.appendChild(tr);
-      }
+      });
+
       table.appendChild(tbody);
       wrap.appendChild(table);
       panel.appendChild(wrap);
