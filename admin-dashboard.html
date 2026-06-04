@@ -4252,82 +4252,77 @@
       }
 
       const todayStr = new Date().toISOString().slice(0, 10);
-      const nowH = new Date().getHours();
-      const nowRoundedTime = `${String(nowH).padStart(2,'0')}:${new Date().getMinutes()>=30?'30':'00'}`;
-      const timeOpts = Array.from({length:48}, (_,i) => {
-        const h = String(Math.floor(i/2)).padStart(2,'0');
-        const m = i%2===0?'00':'30';
-        const v = `${h}:${m}`;
-        return `<option${v===nowRoundedTime?' selected':''}>${v}</option>`;
-      }).join('');
 
       stores.forEach(s => {
         const card = document.createElement('div');
         card.className = 'ap-store-card';
 
         const sm = apData[s.storeName] || {};
-        const initMood = sm[String(nowH)] || null;
-        const initCount = initMood ? (mdData[initMood]||[]).length : 0;
+        const mappedHours = Array.from({length:24}, (_,h) => h).filter(h => sm[String(h)]);
+        const mappedCount = mappedHours.length;
 
         card.innerHTML = `
           <div class="ap-card-header">
             <span class="ap-card-name">${s.storeName}</span>
-            <span class="ap-mood-badge${initMood?' active':''}" data-badge>
-              ${initMood ? `${initMood} · ${initCount}곡` : '매핑 없음'}
+            <span class="ap-mood-badge${mappedCount ? ' active' : ''}">
+              ${mappedCount ? `${mappedCount}개 시간대 매핑됨` : '매핑 없음'}
             </span>
           </div>
           <div class="ap-card-controls">
-            <input type="date" class="pl-schedule-input date-input" data-date value="${todayStr}" style="height:38px" />
-            <select class="pl-schedule-input time-input" data-time style="height:38px">${timeOpts}</select>
-            <button class="ap-gen-btn" data-genbtn>18곡 플리 생성</button>
+            <input type="date" class="pl-schedule-input date-input" data-date value="${todayStr}" style="height:38px;flex:1" />
+            <button class="ap-gen-btn" data-genbtn>전체 시간대 플리 생성</button>
           </div>`;
 
-        const badge    = card.querySelector('[data-badge]');
-        const dateInp  = card.querySelector('[data-date]');
-        const timeInp  = card.querySelector('[data-time]');
-        const genBtn   = card.querySelector('[data-genbtn]');
+        const dateInp = card.querySelector('[data-date]');
+        const genBtn  = card.querySelector('[data-genbtn]');
 
-        const refreshBadge = () => {
-          const h = parseInt(timeInp.value.split(':')[0]);
-          const mood = (apData[s.storeName]||{})[String(h)] || null;
-          const cnt = mood ? (mdData[mood]||[]).length : 0;
-          badge.textContent = mood ? `${mood} · ${cnt}곡` : '매핑 없음';
-          badge.className = `ap-mood-badge${mood?' active':''}`;
-        };
-        timeInp.addEventListener('change', refreshBadge);
+        if (!mappedCount) genBtn.disabled = true;
 
         genBtn.addEventListener('click', async () => {
-          const h = parseInt(timeInp.value.split(':')[0]);
-          const mood = (apData[s.storeName]||{})[String(h)];
-          if (!mood) { plToast(`"${s.storeName}" 의 이 시간대에 무드 매핑이 없습니다.`, 'error'); return; }
-          const pool = mdData[mood] || [];
-          if (!pool.length) { plToast(`"${mood}" 무드에 음원 데이터가 없습니다. 음원 데이터 관리에서 먼저 추가해 주세요.`, 'error'); return; }
+          const sm2 = apData[s.storeName] || {};
+          const slots = Array.from({length:24}, (_,h) => h).filter(h => sm2[String(h)]);
+          if (!slots.length) { plToast(`"${s.storeName}" 에 무드 매핑이 없습니다. 매장 상세 > 음원 매핑에서 먼저 설정해 주세요.`, 'error'); return; }
 
-          const picked = [...pool].sort(() => Math.random()-0.5).slice(0, 18);
+          const schedulePlaylists = [];
+          const skipped = [];
+          for (const h of slots) {
+            const mood = sm2[String(h)];
+            const pool = mdData[mood] || [];
+            if (!pool.length) { skipped.push(`${String(h).padStart(2,'0')}시(${mood})`); continue; }
+            const picked = [...pool].sort(() => Math.random()-0.5).slice(0, 18);
+            const scheduledAt = new Date(`${dateInp.value}T${String(h).padStart(2,'0')}:00:00`).toISOString();
+            schedulePlaylists.push({
+              storeName: s.storeName,
+              scheduledAt,
+              songs: picked.map(t => ({
+                title:    t.title,
+                artist:   t.artist,
+                vid:      t.vid || genVid(),
+                playTime: parsePlayTimeSec(t.playTime),
+              }))
+            });
+          }
+
+          if (!schedulePlaylists.length) {
+            plToast('생성할 수 있는 시간대가 없습니다. 음원 데이터를 먼저 추가해 주세요.', 'error');
+            return;
+          }
+
           genBtn.disabled = true;
           genBtn.textContent = '생성 중...';
           try {
-            const scheduledAt = new Date(`${dateInp.value}T${timeInp.value}:00`).toISOString();
-            await apiFetch('POST', '/api/admin/scheduled-playlists', {
-              schedulePlaylists: [{
-                storeName: s.storeName,
-                scheduledAt,
-                songs: picked.map(t => ({
-                  title:    t.title,
-                  artist:   t.artist,
-                  vid:      t.vid || genVid(),
-                  playTime: parsePlayTimeSec(t.playTime),
-                }))
-              }]
-            }, adminToken);
-            plToast(`✓ "${s.storeName}" · ${mood} ${picked.length}곡 플리 생성 완료`, 'success');
+            await apiFetch('POST', '/api/admin/scheduled-playlists', { schedulePlaylists }, adminToken);
+            const msg = skipped.length
+              ? `✓ "${s.storeName}" ${schedulePlaylists.length}개 시간대 플리 생성 완료 (건너뜀: ${skipped.join(', ')})`
+              : `✓ "${s.storeName}" 전체 ${schedulePlaylists.length}개 시간대 플리 생성 완료`;
+            plToast(msg, 'success');
             plSetLastCreated();
           } catch(e) {
             console.warn('랜덤 플리 생성 실패:', e);
             plToast('플리 생성 실패. 다시 시도해 주세요.', 'error');
           }
           genBtn.disabled = false;
-          genBtn.textContent = '18곡 플리 생성';
+          genBtn.textContent = '전체 시간대 플리 생성';
         });
 
         container.appendChild(card);
