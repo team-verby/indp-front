@@ -2244,6 +2244,83 @@
     }
     .empty-state svg { margin-bottom: 20px; opacity: 0.3; }
     .empty-state p { font-size: 15px; }
+
+    /* ══════════════════════════════════════════
+       RESPONSIVE — 768px (tablet / mobile)
+    ══════════════════════════════════════════ */
+    @media (max-width: 768px) {
+
+      /* ── 드로어 ── */
+      .drawer-header { padding: 16px 20px; }
+      .drawer-tabs   { padding: 0 16px; overflow-x: auto; }
+      .drawer-tab    { padding: 11px 12px; font-size: 13px; }
+      .drawer-body   { padding: 20px; }
+      .drawer-footer { padding: 14px 20px; }
+
+      /* ── 플레이리스트 모드 탭 ── */
+      .pl-mode-tabs { width: 100%; }
+      .pl-mode-tab  { flex: 1; text-align: center; padding: 8px 8px; }
+
+      /* ── 엑셀 업로드: 일괄 적용 시각 ── */
+      .pl-bulk-schedule { flex-wrap: wrap; gap: 8px; }
+      .pl-bulk-schedule .pl-schedule-input { flex: 1; min-width: 0; }
+      .pl-bulk-apply-btn { width: 100%; margin-top: 2px; }
+
+      /* ── 랜덤 생성: 카드 컨트롤 (날짜+시간+버튼) ── */
+      .ap-card-controls { flex-direction: column; align-items: stretch; }
+      .ap-card-controls .pl-schedule-input { width: 100%; flex: none; height: 44px; }
+      .ap-gen-btn { margin-left: 0; width: 100%; padding: 12px; font-size: 14px; }
+
+      /* ── 음원 데이터: 업로드 바 ── */
+      .md-upload-bar { gap: 8px; }
+      .md-upload-btn  { flex: 1; justify-content: center; }
+      .md-export-btn  { flex: 1; justify-content: center; }
+      .md-upload-hint { order: 10; width: 100%; }
+
+      /* ── 음원 데이터: 무드 드롭다운 ── */
+      .md-mood-select { min-width: 0; width: 100%; max-width: 100%; }
+
+      /* ── 음원 데이터: 입력 테이블 ── */
+      .pl-direct-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+      /* ── 랜덤 생성 레이아웃 ── */
+      .ap-layout { gap: 14px; }
+      .ap-store-card { padding: 14px; }
+
+      /* ── 플레이리스트 좌측 업로드 카드 ── */
+      .pl-upload-card { padding: 16px; }
+    }
+
+    /* ══════════════════════════════════════════
+       RESPONSIVE — 480px (small phone)
+    ══════════════════════════════════════════ */
+    @media (max-width: 480px) {
+
+      /* ── 전체 패딩 축소 ── */
+      .page-content { padding: 16px 12px; }
+      .topbar { padding: 0 12px; }
+
+      /* ── 드로어 ── */
+      .drawer-tab    { padding: 10px 10px; font-size: 12px; }
+      .drawer-body   { padding: 16px; }
+      .drawer-footer { padding: 12px 16px; }
+
+      /* ── 랜덤 생성 카드 ── */
+      .ap-store-card { padding: 12px; }
+      .ap-card-name  { font-size: 13px; }
+      .ap-card-header { flex-wrap: wrap; gap: 6px; }
+
+      /* ── 음원 데이터 업로드 버튼 ── */
+      .md-upload-btn, .md-export-btn { width: 100%; flex: none; }
+
+      /* ── 플레이리스트 생성 결과 카드 ── */
+      .pl-store-item { padding: 12px; }
+      .pl-store-name { font-size: 13px; }
+
+      /* ── 패널 헤더 ── */
+      .panel-title    { font-size: 16px; }
+      .panel-subtitle { font-size: 12px; }
+    }
   </style>
 </head>
 <body>
