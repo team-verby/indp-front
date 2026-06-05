@@ -25,7 +25,8 @@ function scheduleSessionWarning(token) {
     _sessionWarnTimer = setTimeout(() => {
       refreshAccessToken(); // 성공 시 새 타이머 자동 등록, 실패 시 다음 API 호출의 401 retry가 처리
     }, refreshAt - now);
-  } else if (exp > now) {
+  } else {
+    // 이미 갱신 시점이 지났거나 만료된 경우 즉시 refresh 시도
     refreshAccessToken();
   }
   // 강제 로그아웃 타이머 없음 — refreshToken 유효 기간(30일) 동안 세션 유지
@@ -299,6 +300,14 @@ document.addEventListener('DOMContentLoaded', () => {
   // 새로고침 후에도 만료 타이머/자동 refresh 복원
   const existingToken = getOwnerToken();
   if (existingToken) scheduleSessionWarning(existingToken);
+
+  // 탭 동결 후 복귀 시 타이머 재등록 (모바일/Chrome Memory Saver 대응)
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      const token = getOwnerToken();
+      if (token) scheduleSessionWarning(token);
+    }
+  });
 
   updateNavAuth();
   initMobileNav();
