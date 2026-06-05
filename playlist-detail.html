@@ -241,6 +241,64 @@
     }
     .playlist-notice svg { flex-shrink: 0; opacity: 0.5; }
 
+    .playlist-done-banner {
+      text-align: center;
+      padding: 36px 20px 24px;
+    }
+    .playlist-done-icon {
+      font-size: 36px;
+      margin-bottom: 14px;
+    }
+    .playlist-done-banner h3 {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--dark);
+      margin-bottom: 8px;
+    }
+    .playlist-done-banner p {
+      font-size: 14px;
+      color: var(--text-gray);
+      line-height: 1.65;
+      margin-bottom: 22px;
+    }
+    .btn-refresh-pl {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--dark);
+      color: #fff;
+      border: none;
+      border-radius: 100px;
+      padding: 12px 24px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      transition: opacity 0.15s;
+    }
+    .btn-refresh-pl:hover { opacity: 0.82; }
+
+    .session-warn-banner {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #fff8e1;
+      border: 1px solid #ffc107;
+      border-radius: 10px;
+      padding: 11px 14px;
+      margin-bottom: 16px;
+      font-size: 13px;
+      color: #7a5c00;
+    }
+    .session-warn-banner svg { flex-shrink: 0; }
+    .session-warn-banner a {
+      margin-left: auto;
+      color: #7a5c00;
+      font-weight: 700;
+      text-decoration: underline;
+      white-space: nowrap;
+    }
+
     .playlist-stats {
       display: flex;
       gap: 16px;
@@ -1716,17 +1774,29 @@
                 hideUnmuteTooltip();
               }
             } else if (e.data === YT.PlayerState.ENDED) {
-              // 플레이리스트 전체 종료 → 처음부터 다시 시작
-              headIdx = 0;
-              elapsed = 0;
-              songStartedAt = Date.now();
-              renderQueue();
-              syncYTPlaylist();
+              showPlaylistDone();
             }
           }
         }
       });
     };
+
+    function showPlaylistDone() {
+      clearInterval(ticker);
+      document.getElementById('now-playing-section').style.display = 'none';
+      const vinyl = document.querySelector('.vinyl-img');
+      if (vinyl) vinyl.style.display = 'none';
+      document.getElementById('playlist-notice-wrap').innerHTML = `
+        <div class="playlist-done-banner">
+          <div class="playlist-done-icon">🎵</div>
+          <h3>오늘 준비된 플레이리스트가 모두 재생되었습니다.</h3>
+          <p>오늘의 모든 곡이 재생 완료되었습니다.<br>내일의 플레이리스트 재생을 위해 새로고침 해주세요.</p>
+          <button class="btn-refresh-pl" onclick="location.reload()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+            새로고침
+          </button>
+        </div>`;
+    }
 
     function preloadAndPlay() {
       if (allSongs.length === 0) return;
@@ -1754,7 +1824,6 @@
       if (startPl < 0) startPl = 0;
       seekOnPlay = elapsed > 0 ? elapsed : 0;
       ytPlayer.loadPlaylist({ playlist: ids, index: startPl, startSeconds: elapsed || 0 });
-      ytPlayer.setLoop(true);
       if (isMuted) showUnmuteTooltip();
       updateMediaSession();
     }
@@ -2007,6 +2076,7 @@
       try {
         const token = getOwnerToken();
         let playlist;
+        let sessionExpired = false;
 
         if (token) {
           try {
@@ -2022,6 +2092,7 @@
           } catch(ownerErr) {
             console.warn('[playlist] owner 엔드포인트 실패 → isMyStore=false', ownerErr.message);
             isMyStore = false;
+            sessionExpired = ownerErr.message && ownerErr.message.includes('세션이 만료');
             playlist = await apiFetch('GET', `/api/stores/${storeId}/playlists`, undefined, undefined);
           }
         } else {
@@ -2030,6 +2101,15 @@
 
         if (isMyStore) {
           document.getElementById('volume-row').style.display = '';
+        } else if (sessionExpired) {
+          document.getElementById('playlist-notice-wrap').innerHTML = `
+            <div class="session-warn-banner">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+              </svg>
+              로그인 세션이 만료되었습니다. 재생을 계속하려면 다시 로그인해 주세요.
+              <a href="login.html?mode=owner">다시 로그인</a>
+            </div>`;
         } else {
           document.getElementById('playlist-notice-wrap').innerHTML = `
             <div class="playlist-notice">
