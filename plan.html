@@ -632,7 +632,6 @@
         const card = document.createElement('div');
         card.className = 'plan-select-card' + (defaultSelected ? ' selected' : '');
         card.id = 'plan' + codeShort;
-        const resolvedPlanId = plan.planId ?? plan.id ?? null;
         card.onclick = () => selectPlan(codeShort, resolvedPlanId, priceVal);
         card.innerHTML = `
           ${popularBadge}
