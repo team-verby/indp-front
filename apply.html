@@ -18,6 +18,35 @@
   <script src="api.js"></script>
   <style>
     body { background: var(--light-bg); }
+
+    .email-check-row {
+      display: flex;
+      gap: 8px;
+    }
+    .email-check-row .form-input { flex: 1; }
+    .btn-email-check {
+      flex-shrink: 0;
+      background: var(--dark);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 0 16px;
+      font-size: 14px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: opacity 0.15s;
+    }
+    .btn-email-check:hover { opacity: 0.8; }
+    .btn-email-check:disabled { opacity: 0.5; cursor: not-allowed; }
+    .field-success {
+      font-size: 12px;
+      color: #16a34a;
+      margin-top: 4px;
+      display: none;
+    }
+    .field-success.show { display: block; }
   </style>
 </head>
 <body>
@@ -122,8 +151,12 @@
 
       <div class="form-group">
         <label class="form-label" for="lite-email">이메일 (아이디) <span class="required">*</span></label>
-        <input type="email" id="lite-email" class="form-input" placeholder="로그인에 사용할 이메일을 입력해 주세요" />
-        <p class="field-error" id="err-lite-email">올바른 이메일을 입력해 주세요.</p>
+        <div class="email-check-row">
+          <input type="email" id="lite-email" class="form-input" placeholder="로그인에 사용할 이메일을 입력해 주세요" oninput="resetEmailCheck()" />
+          <button type="button" class="btn-email-check" id="btn-email-check" onclick="checkEmailDuplicate()">중복 확인</button>
+        </div>
+        <p class="field-error" id="err-lite-email"></p>
+        <p class="field-success" id="ok-lite-email">사용 가능한 이메일입니다.</p>
       </div>
 
       <div class="form-group">
@@ -187,9 +220,50 @@
       document.getElementById('form-lite').style.display = 'block';
     }
 
-    function setError(inputId, errId, show) {
+    let emailChecked = false;
+
+    function setError(inputId, errId, show, msg) {
       document.getElementById(inputId).classList.toggle('error', show);
-      document.getElementById(errId).classList.toggle('show', show);
+      const el = document.getElementById(errId);
+      if (msg) el.textContent = msg;
+      el.classList.toggle('show', show);
+    }
+
+    function resetEmailCheck() {
+      emailChecked = false;
+      document.getElementById('ok-lite-email').classList.remove('show');
+      const btn = document.getElementById('btn-email-check');
+      btn.textContent = '중복 확인';
+      btn.disabled = false;
+    }
+
+    async function checkEmailDuplicate() {
+      const email = document.getElementById('lite-email').value.trim();
+      const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+      if (!emailOk) {
+        setError('lite-email', 'err-lite-email', true, '올바른 이메일 형식을 입력해 주세요.');
+        return;
+      }
+
+      const btn = document.getElementById('btn-email-check');
+      btn.disabled = true;
+      btn.textContent = '확인 중...';
+
+      try {
+        await apiFetch('GET', `/api/user/check-email?email=${encodeURIComponent(email)}`);
+        emailChecked = true;
+        setError('lite-email', 'err-lite-email', false);
+        document.getElementById('ok-lite-email').classList.add('show');
+        btn.textContent = '확인완료';
+      } catch(e) {
+        emailChecked = false;
+        const isDuplicate = /중복|이미|duplicate|exist/i.test(e.message || '');
+        setError('lite-email', 'err-lite-email', true,
+          isDuplicate ? '이미 사용 중인 이메일입니다. 다른 이메일을 입력해 주세요.' : '이메일 확인 중 오류가 발생했습니다. 다시 시도해 주세요.');
+        btn.textContent = '중복 확인';
+        btn.disabled = false;
+      }
     }
 
     function goNext() {
@@ -226,11 +300,17 @@
 
       const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
-      setError('lite-name',  'err-lite-name',  !name);
-      setError('lite-email', 'err-lite-email', !emailOk);
-      setError('lite-pw',    'err-lite-pw',    pw.length < 8);
-      setError('lite-pw2',   'err-lite-pw2',   pw !== pw2);
-      if (!name || !emailOk || pw.length < 8 || pw !== pw2) valid = false;
+      setError('lite-name', 'err-lite-name', !name, '성함을 입력해 주세요.');
+      if (!emailOk) {
+        setError('lite-email', 'err-lite-email', true, '올바른 이메일 형식을 입력해 주세요.');
+      } else if (!emailChecked) {
+        setError('lite-email', 'err-lite-email', true, '이메일 중복 확인을 해주세요.');
+      } else {
+        setError('lite-email', 'err-lite-email', false);
+      }
+      setError('lite-pw',  'err-lite-pw',  pw.length < 8, '비밀번호는 8자 이상이어야 합니다.');
+      setError('lite-pw2', 'err-lite-pw2', pw !== pw2,    '비밀번호가 일치하지 않습니다.');
+      if (!name || !emailOk || !emailChecked || pw.length < 8 || pw !== pw2) valid = false;
 
       document.getElementById('submit-error').classList.toggle('show', !valid);
       if (valid) {
