@@ -810,15 +810,15 @@
             <span class="pay-info-value">Plan A 라이트 요금제</span>
           </div>
           <div class="pay-info-row">
-            <span class="pay-info-label">월 구독료</span>
-            <span class="pay-info-value accent">4,400원 / 월</span>
+            <span class="pay-info-label" id="sub-billing-label">월 구독료</span>
+            <span class="pay-info-value accent" id="sub-billing-amount">4,400원 / 월</span>
           </div>
           <div class="pay-info-row">
             <span class="pay-info-label">서비스 이용 기간</span>
             <span class="pay-info-value" id="sub-period">—</span>
           </div>
           <div class="pay-info-row">
-            <span class="pay-info-label">다음 갱신일</span>
+            <span class="pay-info-label" id="sub-renew-label">다음 갱신일</span>
             <span class="pay-info-value" id="sub-renew-date">—</span>
           </div>
         </div>
@@ -845,7 +845,7 @@
               <li>현재 라이브 중인 모든 DJ 채널 <strong style="display:inline;font-weight:700;color:var(--dark)">무제한 청취</strong></li>
               <li>DJ가 큐레이션한 고품질 플레이리스트를 실시간으로 감상</li>
               <li>30초 미리 듣기 제한 없이 전체 트랙 청취 가능</li>
-              <li>월 <strong style="display:inline;font-weight:700;color:var(--dark)">4,400원</strong> (VAT 포함)</li>
+              <li id="sub-benefit-price">월 <strong style="display:inline;font-weight:700;color:var(--dark)">4,400원</strong> (VAT 포함)</li>
             </ul>
           </div>
         </div>
@@ -2141,6 +2141,26 @@
       try {
         const sub = await apiFetch('GET', '/api/user/subscription', undefined, getUserToken());
         if (sub) {
+          // 월간/연간 판별: usagePeriod 우선, 없으면 날짜 차이로 추정
+          let isAnnual = false;
+          if (sub.usagePeriod != null) {
+            isAnnual = sub.usagePeriod >= 12;
+          } else if (sub.startDate && sub.endDate) {
+            const diffDays = (new Date(sub.endDate) - new Date(sub.startDate)) / (1000 * 60 * 60 * 24);
+            isAnnual = diffDays >= 330;
+          }
+
+          document.getElementById('sub-billing-label').textContent = isAnnual ? '연간 구독료' : '월 구독료';
+          document.getElementById('sub-billing-amount').textContent = isAnnual ? '52,800원 / 년' : '4,400원 / 월';
+          document.getElementById('sub-renew-label').textContent = isAnnual ? '만료일' : '다음 갱신일';
+
+          const benefitPriceEl = document.getElementById('sub-benefit-price');
+          if (benefitPriceEl) {
+            benefitPriceEl.innerHTML = isAnnual
+              ? `연간 <strong style="display:inline;font-weight:700;color:var(--dark)">52,800원</strong> (VAT 포함)`
+              : `월 <strong style="display:inline;font-weight:700;color:var(--dark)">4,400원</strong> (VAT 포함)`;
+          }
+
           if (sub.startDate && sub.endDate) {
             document.getElementById('sub-period').textContent = `${fmtD(sub.startDate)} ~ ${fmtD(sub.endDate)}`;
             document.getElementById('sub-renew-date').textContent = fmtD(sub.endDate);
