@@ -609,14 +609,19 @@
         const planSubdesc = info.subdesc || '';
         const featuresList = info.features || [];
 
+        // planId 기준 가격 매핑: 1 → Plan B(8,800원), 2 → Plan C(13,200원)
+        const resolvedPlanId = plan.planId ?? plan.id ?? null;
+        const PRICE_MAP = { 1: { original: 22000, discounted: 8800 }, 2: { original: 33000, discounted: 13200 } };
+        const priceInfo = PRICE_MAP[resolvedPlanId] || {};
         const discountRate = plan.discountRate != null ? plan.discountRate : 0;
         const monthlyPrice = plan.monthlyPrice || 0;
-        const priceVal = discountRate > 0
-          ? Math.round(monthlyPrice * (1 - discountRate / 100))
-          : monthlyPrice;
-        const originalHtml = discountRate > 0
-          ? `<p class="plan-original">${monthlyPrice.toLocaleString()}원</p>` : '';
-        const discountHtml = discountRate > 0
+        const priceVal = priceInfo.discounted
+          || (discountRate > 0 ? Math.round(monthlyPrice * (1 - discountRate / 100)) : monthlyPrice);
+        const originalPrice = priceInfo.original
+          || (discountRate > 0 ? monthlyPrice : 0);
+        const originalHtml = originalPrice
+          ? `<p class="plan-original">${originalPrice.toLocaleString()}원</p>` : '';
+        const discountHtml = originalPrice
           ? `<p class="plan-discount">신규 오픈 기념 6월 30일까지 할인</p>` : '';
         const featuresHtml = featuresList.map((f, fi) => {
           const isHighlight = fi === (featuresList.length - 1) && idx > 0;
