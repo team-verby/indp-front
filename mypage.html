@@ -2132,24 +2132,50 @@
       const email = localStorage.getItem('userEmail') || '—';
       document.getElementById('sub-email-display').textContent = email;
 
-      // 구독 기간: 백엔드 API 연동 전 localStorage or 샘플 표시
       const fmtD = d => {
         const dt = new Date(d);
         return `${dt.getFullYear()}.${String(dt.getMonth()+1).padStart(2,'0')}.${String(dt.getDate()).padStart(2,'0')}`;
       };
-      const today = new Date();
-      const nextMonth = new Date(today);
-      nextMonth.setMonth(nextMonth.getMonth() + 1);
-      document.getElementById('sub-period').textContent = `${fmtD(today)} ~ ${fmtD(nextMonth)}`;
-      document.getElementById('sub-renew-date').textContent = fmtD(nextMonth);
 
-      // 결제 내역 (백엔드 API 연동 전 안내 문구)
-      document.getElementById('sub-payment-list').innerHTML = `
-        <div style="text-align:center;padding:24px 16px;color:var(--text-gray)">
-          <p style="font-size:28px;margin-bottom:10px">📋</p>
-          <p style="font-size:14px;font-weight:600;color:var(--dark);margin-bottom:6px">결제 내역 준비 중</p>
-          <p style="font-size:13px">결제 내역 조회 기능은 곧 제공될 예정입니다.</p>
-        </div>`;
+      // 구독 정보 API
+      try {
+        const sub = await apiFetch('GET', '/api/user/subscription', undefined, getUserToken());
+        if (sub) {
+          if (sub.startDate && sub.endDate) {
+            document.getElementById('sub-period').textContent = `${fmtD(sub.startDate)} ~ ${fmtD(sub.endDate)}`;
+            document.getElementById('sub-renew-date').textContent = fmtD(sub.endDate);
+          }
+        }
+      } catch(e) {
+        console.warn('구독 정보 로드 실패:', e);
+      }
+
+      // 결제 내역 API
+      try {
+        const payments = await apiFetch('GET', '/api/user/payments', undefined, getUserToken());
+        const list = payments?.payments || payments || [];
+        if (!list.length) {
+          document.getElementById('sub-payment-list').innerHTML = `
+            <div style="text-align:center;padding:24px 16px;color:var(--text-gray)">
+              <p style="font-size:14px">결제 내역이 없습니다.</p>
+            </div>`;
+        } else {
+          document.getElementById('sub-payment-list').innerHTML = list.map(p => `
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid #f3f4f6;">
+              <div>
+                <p style="font-size:14px;font-weight:600;color:var(--dark)">${p.planName || 'Plan A 라이트 요금제'}</p>
+                <p style="font-size:12px;color:var(--text-gray);margin-top:2px">${p.paidAt ? fmtD(p.paidAt) : ''}</p>
+              </div>
+              <p style="font-size:15px;font-weight:700;color:var(--dark)">${(p.amount || 0).toLocaleString()}원</p>
+            </div>`).join('');
+        }
+      } catch(e) {
+        console.warn('결제 내역 로드 실패:', e);
+        document.getElementById('sub-payment-list').innerHTML = `
+          <div style="text-align:center;padding:24px 16px;color:var(--text-gray)">
+            <p style="font-size:14px">결제 내역을 불러오지 못했습니다.</p>
+          </div>`;
+      }
 
       // Plan A 구독자는 nav를 구독자 로그아웃으로 표시
       const navActions = document.querySelector('.nav-actions');
