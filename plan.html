@@ -597,7 +597,9 @@
         </ul>`;
       row.appendChild(liteCard);
 
-      plans.forEach((plan, idx) => {
+      // PLAN_C(Plan A 라이트)는 상단 하드코딩 카드로 표시하므로 API 목록에서 제외
+      const filteredPlans = plans.filter(p => (p.type || p.code || '') !== 'PLAN_C');
+      filteredPlans.forEach((plan, idx) => {
         const planType = plan.type || plan.code || '';
         const codeShort = API_CODE_MAP[idx] || String.fromCharCode(67 + idx);
         const defaultSelected = idx === 0;

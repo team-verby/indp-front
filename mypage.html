@@ -1236,7 +1236,7 @@
 
       // 요금제
       const PLAN_NAMES_SUM = {
-        PLAN_A: 'Plan B 기본 요금제', PLAN_B: 'Plan C 프리미엄 요금제',
+        PLAN_A: 'Plan B 기본 요금제', PLAN_B: 'Plan C 프리미엄 요금제', PLAN_C: 'Plan A 라이트 요금제',
         A: 'Plan A 라이트 요금제', B: 'Plan B 기본 요금제', C: 'Plan C 프리미엄 요금제', STANDARD: '스탠다드'
       };
       if (sumPlan && currentPlan) sumPlan.textContent = PLAN_NAMES_SUM[currentPlan] || currentPlan;
@@ -1807,7 +1807,7 @@
 
     async function loadSubscription(storeId, token) {
       const PLAN_NAMES = {
-        PLAN_A: 'Plan B 기본 요금제', PLAN_B: 'Plan C 프리미엄 요금제',
+        PLAN_A: 'Plan B 기본 요금제', PLAN_B: 'Plan C 프리미엄 요금제', PLAN_C: 'Plan A 라이트 요금제',
         A: 'Plan A 라이트 요금제', B: 'Plan B 기본 요금제', C: 'Plan C 프리미엄 요금제',
         STANDARD: '스탠다드 요금제'
       };

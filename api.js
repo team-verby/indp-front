@@ -40,7 +40,7 @@ async function refreshAccessToken() {
     const refreshToken = getRefreshToken();
     if (!refreshToken) return false;
     try {
-      const res = await fetch(BASE_URL + '/api/owner/refresh', {
+      const res = await fetch(BASE_URL + '/api/auth/refresh', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ refreshToken }),
