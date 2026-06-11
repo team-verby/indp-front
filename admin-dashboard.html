@@ -2840,6 +2840,12 @@
             </div>
 
             <div class="ac-field">
+              <label class="ac-label" for="ac-phone">휴대폰 번호</label>
+              <input class="ac-input" id="ac-phone" type="tel" placeholder="010-0000-0000" oninput="this.value=this.value.replace(/[^0-9-]/g,'')" />
+              <p class="ac-error" id="ac-err-phone">올바른 휴대폰 번호를 입력해 주세요.</p>
+            </div>
+
+            <div class="ac-field">
               <label class="ac-label" for="ac-email">이메일 (로그인 아이디)</label>
               <input class="ac-input" id="ac-email" type="email" placeholder="example@email.com" />
               <p class="ac-error" id="ac-err-email">올바른 이메일을 입력해 주세요.</p>
@@ -3902,18 +3908,21 @@
     async function createCreatorAccount() {
       const name   = document.getElementById('ac-name').value.trim();
       const djName = document.getElementById('ac-dj-name').value.trim();
+      const phone  = document.getElementById('ac-phone').value.trim();
       const email  = document.getElementById('ac-email').value.trim();
       const pw     = document.getElementById('ac-pw').value;
       const pw2    = document.getElementById('ac-pw2').value;
       const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+      const phoneOk = /^01[0-9]-?\d{3,4}-?\d{4}$/.test(phone);
 
       acSetErr('ac-err-name',    !name,           '성명을 입력해 주세요.');
       acSetErr('ac-err-dj-name', !djName,         '크리에이터명을 입력해 주세요.');
+      acSetErr('ac-err-phone',   !phoneOk,        '올바른 휴대폰 번호를 입력해 주세요.');
       acSetErr('ac-err-email',   !emailOk,        '올바른 이메일 형식을 입력해 주세요.');
       acSetErr('ac-err-pw',      pw.length < 8,   '비밀번호는 8자 이상이어야 합니다.');
       acSetErr('ac-err-pw2',     pw !== pw2,       '비밀번호가 일치하지 않습니다.');
 
-      if (!name || !djName || !emailOk || pw.length < 8 || pw !== pw2) return;
+      if (!name || !djName || !phoneOk || !emailOk || pw.length < 8 || pw !== pw2) return;
 
       const btn = document.getElementById('ac-submit-btn');
       btn.disabled = true;
@@ -3922,10 +3931,10 @@
       document.getElementById('ac-success-msg').classList.remove('show');
 
       try {
-        await apiFetch('POST', '/api/admin/creators', { name, djName, email, password: pw }, adminToken);
+        await apiFetch('POST', '/api/admin/creators', { name, djName, phone, email, password: pw }, adminToken);
         document.getElementById('ac-success-msg').textContent = `${djName} 계정이 생성되었습니다.`;
         document.getElementById('ac-success-msg').classList.add('show');
-        ['ac-name','ac-dj-name','ac-email','ac-pw','ac-pw2'].forEach(id => document.getElementById(id).value = '');
+        ['ac-name','ac-dj-name','ac-phone','ac-email','ac-pw','ac-pw2'].forEach(id => document.getElementById(id).value = '');
         acLoadList();
       } catch(e) {
         const isDup = /중복|이미|duplicate|exist/i.test(e.message || '');
