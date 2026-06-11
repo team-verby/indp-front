@@ -237,33 +237,22 @@
       btn.disabled = false;
     }
 
-    async function checkEmailDuplicate() {
+    function checkEmailDuplicate() {
       const email = document.getElementById('lite-email').value.trim();
       const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+      const btn = document.getElementById('btn-email-check');
 
       if (!emailOk) {
         setError('lite-email', 'err-lite-email', true, '올바른 이메일 형식을 입력해 주세요.');
         return;
       }
 
-      const btn = document.getElementById('btn-email-check');
+      // TODO: 백엔드 API 준비 후 GET /api/user/check-email?email= 호출로 교체
+      emailChecked = true;
+      setError('lite-email', 'err-lite-email', false);
+      document.getElementById('ok-lite-email').classList.add('show');
+      btn.textContent = '확인완료';
       btn.disabled = true;
-      btn.textContent = '확인 중...';
-
-      try {
-        await apiFetch('GET', `/api/user/check-email?email=${encodeURIComponent(email)}`);
-        emailChecked = true;
-        setError('lite-email', 'err-lite-email', false);
-        document.getElementById('ok-lite-email').classList.add('show');
-        btn.textContent = '확인완료';
-      } catch(e) {
-        emailChecked = false;
-        const isDuplicate = /중복|이미|duplicate|exist/i.test(e.message || '');
-        setError('lite-email', 'err-lite-email', true,
-          isDuplicate ? '이미 사용 중인 이메일입니다. 다른 이메일을 입력해 주세요.' : '이메일 확인 중 오류가 발생했습니다. 다시 시도해 주세요.');
-        btn.textContent = '중복 확인';
-        btn.disabled = false;
-      }
     }
 
     function goNext() {
