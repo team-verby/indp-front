@@ -2758,61 +2758,6 @@
 
       </div>
 
-    </div>
-  </main>
-
-  <!-- TOAST -->
-  <div class="pl-toast" id="pl-toast"></div>
-
-  <!-- SIDEBAR OVERLAY (mobile) -->
-  <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
-
-  <!-- DETAIL DRAWER -->
-  <div class="drawer-backdrop" id="drawer-backdrop" onclick="closeDrawer()"></div>
-  <div class="drawer" id="detail-drawer">
-    <div class="drawer-header">
-      <div>
-        <p class="drawer-title" id="drawer-store-name">-</p>
-        <p class="drawer-subtitle" id="drawer-store-addr">-</p>
-      </div>
-      <button class="drawer-close" onclick="closeDrawer()">✕</button>
-    </div>
-    <div class="drawer-tabs">
-      <div class="drawer-tab active" onclick="switchDrawerTab('info', this)">기본 정보</div>
-      <div class="drawer-tab" onclick="switchDrawerTab('playlist', this)">매장 무드</div>
-      <div class="drawer-tab" onclick="switchDrawerTab('recommend', this)">추천곡 관리</div>
-      <div class="drawer-tab" onclick="switchDrawerTab('ap-mapping', this)">음원 매핑</div>
-      <div class="drawer-tab" onclick="switchDrawerTab('current-pl', this)">현재 플리</div>
-    </div>
-    <div class="drawer-body">
-      <div class="drawer-tab-panel active" id="drawer-tab-info"></div>
-      <div class="drawer-tab-panel" id="drawer-tab-playlist">
-        <div class="tab-empty">
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
-            <circle cx="3" cy="6" r="1.5" fill="currentColor" stroke="none"/>
-            <circle cx="3" cy="12" r="1.5" fill="currentColor" stroke="none"/>
-            <circle cx="3" cy="18" r="1.5" fill="currentColor" stroke="none"/>
-          </svg>
-          <p>플레이리스트가 없습니다</p>
-        </div>
-      </div>
-      <div class="drawer-tab-panel" id="drawer-tab-recommend">
-        <div class="tab-empty">
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10"/>
-            <line x1="12" y1="8" x2="12" y2="12"/>
-            <line x1="12" y1="16" x2="12.01" y2="16"/>
-          </svg>
-          <p>추천곡 관리 내용이 없습니다</p>
-        </div>
-      </div>
-      <div class="drawer-tab-panel" id="drawer-tab-ap-mapping"></div>
-      <div class="drawer-tab-panel" id="drawer-tab-current-pl"></div>
-    </div>
-    <div class="drawer-footer" id="drawer-footer"></div>
-  </div>
-
       <!-- 계정 생성 -->
       <div class="section-panel" id="panel-accounts">
         <div class="panel-header">
@@ -2894,6 +2839,61 @@
           </div>
         </div>
       </div>
+
+    </div>
+  </main>
+
+  <!-- TOAST -->
+  <div class="pl-toast" id="pl-toast"></div>
+
+  <!-- SIDEBAR OVERLAY (mobile) -->
+  <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+  <!-- DETAIL DRAWER -->
+  <div class="drawer-backdrop" id="drawer-backdrop" onclick="closeDrawer()"></div>
+  <div class="drawer" id="detail-drawer">
+    <div class="drawer-header">
+      <div>
+        <p class="drawer-title" id="drawer-store-name">-</p>
+        <p class="drawer-subtitle" id="drawer-store-addr">-</p>
+      </div>
+      <button class="drawer-close" onclick="closeDrawer()">✕</button>
+    </div>
+    <div class="drawer-tabs">
+      <div class="drawer-tab active" onclick="switchDrawerTab('info', this)">기본 정보</div>
+      <div class="drawer-tab" onclick="switchDrawerTab('playlist', this)">매장 무드</div>
+      <div class="drawer-tab" onclick="switchDrawerTab('recommend', this)">추천곡 관리</div>
+      <div class="drawer-tab" onclick="switchDrawerTab('ap-mapping', this)">음원 매핑</div>
+      <div class="drawer-tab" onclick="switchDrawerTab('current-pl', this)">현재 플리</div>
+    </div>
+    <div class="drawer-body">
+      <div class="drawer-tab-panel active" id="drawer-tab-info"></div>
+      <div class="drawer-tab-panel" id="drawer-tab-playlist">
+        <div class="tab-empty">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
+            <circle cx="3" cy="6" r="1.5" fill="currentColor" stroke="none"/>
+            <circle cx="3" cy="12" r="1.5" fill="currentColor" stroke="none"/>
+            <circle cx="3" cy="18" r="1.5" fill="currentColor" stroke="none"/>
+          </svg>
+          <p>플레이리스트가 없습니다</p>
+        </div>
+      </div>
+      <div class="drawer-tab-panel" id="drawer-tab-recommend">
+        <div class="tab-empty">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="8" x2="12" y2="12"/>
+            <line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          <p>추천곡 관리 내용이 없습니다</p>
+        </div>
+      </div>
+      <div class="drawer-tab-panel" id="drawer-tab-ap-mapping"></div>
+      <div class="drawer-tab-panel" id="drawer-tab-current-pl"></div>
+    </div>
+    <div class="drawer-footer" id="drawer-footer"></div>
+  </div>
 
   <script>
     // ── 관리자 토큰 확인 ──
