@@ -559,7 +559,15 @@
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       const serviceStart = isLite ? today : nextTuesdayOnOrAfter(today);
-      const serviceEnd = new Date(serviceStart.getTime() + (isLite ? months * 30 : weeks * 7) * 24 * 60 * 60 * 1000 - 24 * 60 * 60 * 1000);
+      let serviceEnd;
+      if (isLite) {
+        // Plan A: setMonth으로 정확한 월 계산 (12개월 = 정확히 1년)
+        serviceEnd = new Date(serviceStart);
+        serviceEnd.setMonth(serviceEnd.getMonth() + months);
+        serviceEnd.setDate(serviceEnd.getDate() - 1);
+      } else {
+        serviceEnd = new Date(serviceStart.getTime() + weeks * 7 * 24 * 60 * 60 * 1000 - 24 * 60 * 60 * 1000);
+      }
       const startNote = isLite
         ? '결제 완료 즉시 서비스가 시작됩니다.'
         : '인디피 뮤직은 매주 화요일 새로운 플레이리스트가 시작됩니다.';
