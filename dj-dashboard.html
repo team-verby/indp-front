@@ -318,6 +318,36 @@
     .upload-progress    { height: 3px; background: #e5e7eb; border-radius: 2px; margin-top: 5px; }
     .upload-progress-fill { height: 100%; border-radius: 2px; background: var(--blue); transition: width .3s; }
 
+    /* 단계별 섹션 */
+    .step-block { margin-bottom: 32px; }
+    .step-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .step-num {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      background: var(--dark);
+      color: #fff;
+      font-size: 13px; font-weight: 800;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .step-num.done { background: #16a34a; }
+    .step-num.inactive { background: #d1d5db; }
+    .step-title {
+      font-size: 16px; font-weight: 800;
+      color: var(--dark);
+    }
+    .step-title.inactive { color: #9ca3af; }
+    .step-desc {
+      font-size: 13px; color: var(--text-gray);
+      margin-left: 40px; margin-top: -10px;
+      margin-bottom: 14px;
+    }
+
     /* 빈 상태 */
     .empty-state {
       text-align: center;
@@ -419,49 +449,67 @@
     <button class="btn-edit-sm" onclick="openProfileModal()">프로필 수정</button>
   </div>
 
-  <!-- 라이브 채널 카드 -->
-  <div class="live-card" id="live-card">
-    <div class="live-card-top">
-      <div class="air-indicator">
-        <span class="air-dot" id="air-dot"></span>
-        <span class="air-label" id="air-label">OFF AIR</span>
+  <!-- STEP 1: 파일 업로드 -->
+  <div class="step-block">
+    <div class="step-header">
+      <div class="step-num" id="step1-num">1</div>
+      <span class="step-title">파일 업로드</span>
+    </div>
+    <p class="step-desc">방송할 MP3 파일을 업로드해 주세요.</p>
+
+    <div class="upload-zone" id="upload-zone"
+      ondragover="handleDragOver(event)" ondragleave="handleDragLeave()"
+      ondrop="handleDrop(event)" onclick="document.getElementById('file-input').click()">
+      <div class="upload-zone-icon">🎵</div>
+      <div class="upload-zone-title">MP3 파일을 드래그하거나 클릭해서 업로드</div>
+      <div class="upload-zone-sub">MP3 · WAV 지원 · 파일당 최대 50MB · 본인 소유 저작권 음악만</div>
+      <button class="upload-zone-btn" onclick="event.stopPropagation(); document.getElementById('file-input').click()">파일 선택</button>
+    </div>
+    <input type="file" id="file-input" multiple accept=".mp3,.wav" onchange="handleFileSelect(event)" />
+
+    <div id="track-list-wrap" style="display:none">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <span style="font-size:14px;font-weight:700;color:var(--dark)">업로드된 파일</span>
+        <span style="font-size:13px;color:var(--text-gray)" id="track-count"></span>
       </div>
-      <span class="track-count-badge" id="track-count-badge"></span>
+      <div class="track-list" id="track-list"></div>
     </div>
+  </div>
 
-    <div class="live-off-body" id="live-off">
-      <div class="live-off-icon">📻</div>
-      <div class="live-off-title">채널이 꺼져 있습니다</div>
-      <div class="live-off-desc">업로드된 트랙으로 라이브를 시작하세요.</div>
-      <button class="btn-start-live" id="btn-start-live" onclick="startLive()">▶ 라이브 시작</button>
+  <!-- STEP 2: 라이브 방송 -->
+  <div class="step-block" id="step2-block">
+    <div class="step-header">
+      <div class="step-num inactive" id="step2-num">2</div>
+      <span class="step-title inactive" id="step2-title">라이브 방송 시작</span>
     </div>
+    <p class="step-desc" id="step2-desc" style="color:#9ca3af">파일 업로드 후 라이브를 시작할 수 있습니다.</p>
 
-    <div class="live-on-body" id="live-on" style="display:none">
-      <div class="live-on-icon">📡</div>
-      <div class="live-on-info">
-        <div class="live-on-title">라이브 방송 중</div>
-        <div class="live-on-desc" id="live-on-desc">—</div>
-        <button class="btn-stop-live" onclick="stopLive()">■ 방송 종료</button>
+    <div class="live-card" id="live-card">
+      <div class="live-card-top">
+        <div class="air-indicator">
+          <span class="air-dot" id="air-dot"></span>
+          <span class="air-label" id="air-label">OFF AIR</span>
+        </div>
+        <span class="track-count-badge" id="track-count-badge"></span>
+      </div>
+
+      <div class="live-off-body" id="live-off">
+        <div class="live-off-icon">📻</div>
+        <div class="live-off-title">채널이 꺼져 있습니다</div>
+        <div class="live-off-desc">업로드된 트랙으로 라이브를 시작하세요.</div>
+        <button class="btn-start-live" id="btn-start-live" onclick="startLive()">▶ 라이브 시작</button>
+      </div>
+
+      <div class="live-on-body" id="live-on" style="display:none">
+        <div class="live-on-icon">📡</div>
+        <div class="live-on-info">
+          <div class="live-on-title">라이브 방송 중</div>
+          <div class="live-on-desc" id="live-on-desc">—</div>
+          <button class="btn-stop-live" onclick="stopLive()">■ 방송 종료</button>
+        </div>
       </div>
     </div>
   </div>
-
-  <!-- 트랙 업로드 & 목록 -->
-  <div class="upload-zone" id="upload-zone"
-    ondragover="handleDragOver(event)" ondragleave="handleDragLeave()"
-    ondrop="handleDrop(event)" onclick="document.getElementById('file-input').click()">
-    <div class="upload-zone-icon">🎵</div>
-    <div class="upload-zone-title">MP3 파일을 드래그하거나 클릭해서 업로드</div>
-    <div class="upload-zone-sub">MP3 · WAV 지원 · 파일당 최대 50MB · 본인 소유 저작권 음악만</div>
-    <button class="upload-zone-btn" onclick="event.stopPropagation(); document.getElementById('file-input').click()">파일 선택</button>
-  </div>
-  <input type="file" id="file-input" multiple accept=".mp3,.wav" onchange="handleFileSelect(event)" />
-
-  <div class="section-hd">
-    <span class="section-title">업로드된 트랙</span>
-    <span class="section-count" id="track-count"></span>
-  </div>
-  <div class="track-list" id="track-list"></div>
 
 </div>
 
@@ -605,14 +653,7 @@ function init() {
 }
 
 /* ── 트랙 데이터 ── */
-let tracks = [
-  { id:1, filename:'morning_haze.mp3',     duration:'3:42', secs:222, status:'ready' },
-  { id:2, filename:'slow_burn.mp3',        duration:'4:15', secs:255, status:'ready' },
-  { id:3, filename:'coastal_drive.mp3',    duration:'3:58', secs:238, status:'ready' },
-  { id:4, filename:'late_night_outro.mp3', duration:'5:01', secs:301, status:'ready' },
-  { id:5, filename:'velvet_haze.mp3',      duration:'4:33', secs:273, status:'review' },
-  { id:6, filename:'city_lights.mp3',      duration:'3:50', secs:230, status:'ready' },
-];
+let tracks = [];
 
 /* ── 채널 상태 ── */
 let isLive = false;
@@ -671,18 +712,37 @@ function renderChannel() {
 const T_LABEL = { ready:'준비 완료', uploading:'업로드 중', review:'검토 중' };
 function renderTracks() {
   const list       = document.getElementById('track-list');
+  const listWrap   = document.getElementById('track-list-wrap');
   const readyCount = tracks.filter(t => t.status === 'ready').length;
-  document.getElementById('track-count').textContent  = `${tracks.length}개 (준비 완료 ${readyCount}개)`;
-  document.getElementById('stat-tr').textContent      = tracks.length;
+  document.getElementById('stat-tr').textContent = tracks.length;
 
   if (!tracks.length) {
-    list.innerHTML = `
-      <div class="empty-state">
-        <div class="empty-state-icon">🎵</div>
-        <div class="empty-state-title">업로드된 트랙이 없습니다</div>
-        <div class="empty-state-desc">위 영역에 MP3 파일을 드래그하거나 클릭해서 추가하세요.</div>
-      </div>`;
+    listWrap.style.display = 'none';
+    // Step 1 → 미완료
+    document.getElementById('step1-num').classList.remove('done');
     return;
+  }
+
+  listWrap.style.display = '';
+  document.getElementById('track-count').textContent = `총 ${tracks.length}개`;
+
+  // Step 1 → 완료
+  document.getElementById('step1-num').classList.add('done');
+
+  // Step 2 → 파일 있으면 활성화
+  const step2Num   = document.getElementById('step2-num');
+  const step2Title = document.getElementById('step2-title');
+  const step2Desc  = document.getElementById('step2-desc');
+  if (readyCount > 0) {
+    step2Num.classList.remove('inactive');
+    step2Title.classList.remove('inactive');
+    step2Desc.textContent = `준비 완료된 트랙 ${readyCount}개로 라이브를 시작할 수 있습니다.`;
+    step2Desc.style.color = '';
+  } else {
+    step2Num.classList.add('inactive');
+    step2Title.classList.add('inactive');
+    step2Desc.textContent = '파일 업로드 후 라이브를 시작할 수 있습니다.';
+    step2Desc.style.color = '#9ca3af';
   }
 
   list.innerHTML = tracks.map((t, i) => `
