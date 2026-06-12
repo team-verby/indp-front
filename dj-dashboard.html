@@ -575,10 +575,38 @@
     .btn-modal-cancel:hover  { background: #e5e7eb; }
     .btn-modal-confirm:hover { opacity: 0.85; }
 
-    @media (max-width: 560px) {
-      .track-item { grid-template-columns: 28px 1fr 64px 48px; }
-      .t-badge { display: none; }
-      .live-on-body { flex-direction: column; align-items: flex-start; }
+    /* ── 모바일 ── */
+    @media (max-width: 768px) {
+      .dj-wrap { padding: 24px 16px 80px; }
+      .dj-live-panel { position: static; }
+      .revenue-grid { grid-template-columns: 1fr 1fr; }
+      .revenue-card { padding: 20px 16px; }
+      .live-card { margin-bottom: 16px; }
+      .notice-card { padding: 16px; }
+      .track-list { max-height: 360px; }
+      .overall-progress-wrap { padding: 12px; }
+    }
+
+    @media (max-width: 480px) {
+      .dj-wrap { padding: 16px 14px 80px; }
+      .dj-profile-name { font-size: 17px; }
+      .revenue-grid { grid-template-columns: 1fr; }
+      .revenue-item-value { font-size: 18px; }
+      .revenue-card-title { font-size: 15px; }
+      .apply-bar { flex-direction: column; align-items: flex-start; gap: 8px; }
+      .btn-apply { width: 100%; text-align: center; }
+      .track-item { grid-template-columns: 24px 1fr 48px 28px; gap: 0 8px; }
+      .track-name { font-size: 13px; }
+      .track-dur { font-size: 12px; }
+      .overall-progress-header { flex-wrap: wrap; gap: 4px; }
+      .upload-zone { padding: 20px 14px; }
+      .upload-zone-compact-sub { display: none; }
+      .live-off-body { padding: 24px 16px 20px; }
+      .live-on-body { flex-direction: column; align-items: flex-start; gap: 12px; padding: 16px; }
+      .live-on-icon { width: 48px; height: 48px; font-size: 22px; }
+      .btn-start-live { width: 100%; text-align: center; }
+      .notice-list li { font-size: 11px; }
+      .dj-layout { gap: 16px; }
     }
   </style>
 </head>
@@ -675,6 +703,7 @@
         </div>
         <ul class="notice-list">
           <li><strong>방송 시간 연장:</strong> 파일을 추가하면 방송 가능 시간이 자동으로 늘어납니다.</li>
+          <li><strong>변경사항 적용:</strong> 파일을 추가하거나 삭제한 후 반드시 <strong>적용하기</strong> 버튼을 눌러야 방송에 반영됩니다.</li>
           <div class="notice-divider"></div>
           <li><strong>저작권 준수:</strong> 반드시 본인이 저작권을 보유하거나 합법적 이용 권한이 있는 음원만 업로드·재생할 수 있습니다.</li>
           <li><strong>분쟁 책임:</strong> 저작권 침해, 공연권 분쟁 등 법적 문제가 발생하는 경우 해당 크리에이터가 모든 책임을 집니다. 인디피 뮤직은 책임을 지지 않습니다.</li>
