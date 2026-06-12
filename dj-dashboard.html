@@ -283,7 +283,15 @@
     .section-title { font-size: 15px; font-weight: 700; color: var(--dark); }
     .section-count { font-size: 13px; color: var(--text-gray); }
 
-    .track-list { display: flex; flex-direction: column; gap: 6px; }
+    .track-list {
+      display: flex; flex-direction: column; gap: 6px;
+      max-height: 480px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+    .track-list::-webkit-scrollbar { width: 4px; }
+    .track-list::-webkit-scrollbar-track { background: transparent; }
+    .track-list::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
     .track-item {
       background: white;
       border: 1px solid #e5e7eb;
@@ -652,8 +660,26 @@ function init() {
   renderChannel();
 }
 
-/* ── 트랙 데이터 ── */
-let tracks = [];
+/* ── 트랙 데이터 (임시: 백엔드 GET /api/dj/tracks 연동 전 100개 샘플) ── */
+const SAMPLE_TRACK_NAMES = [
+  'morning_light', 'slow_burn', 'coastal_drive', 'late_night', 'velvet_haze',
+  'city_lights', 'rain_walk', 'golden_hour', 'deep_blue', 'neon_fade',
+  'sunday_chill', 'rooftop_session', 'after_midnight', 'drift_away', 'soft_focus',
+  'harbour_view', 'still_water', 'warm_static', 'echo_chamber', 'signal_lost',
+  'cloud_nine', 'midnight_run', 'open_road', 'last_light', 'frequency',
+  'analog_dream', 'passing_time', 'hollow_sound', 'first_snow', 'amber_glow',
+  'radio_silence', 'low_tide', 'evening_sun', 'inner_city', 'far_away',
+  'forest_floor', 'paper_thin', 'slow_motion', 'quiet_storm', 'blue_hour',
+  'side_street', 'water_tower', 'soft_landing', 'somewhere_warm', 'night_shift',
+  'empty_room', 'still_here', 'glass_ceiling', 'loose_ends', 'half_light',
+];
+let tracks = Array.from({ length: 100 }, (_, i) => {
+  const name = SAMPLE_TRACK_NAMES[i % SAMPLE_TRACK_NAMES.length] + (i >= SAMPLE_TRACK_NAMES.length ? `_${Math.floor(i / SAMPLE_TRACK_NAMES.length) + 1}` : '');
+  const secs = 150 + Math.floor(Math.random() * 120); // 2분 30초 ~ 4분 30초
+  const min  = Math.floor(secs / 60);
+  const sec  = String(secs % 60).padStart(2, '0');
+  return { id: i + 1, filename: `${name}.mp3`, duration: `${min}:${sec}`, secs, status: i < 90 ? 'ready' : 'review' };
+});
 
 /* ── 채널 상태 ── */
 let isLive = false;
