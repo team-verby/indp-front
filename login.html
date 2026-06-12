@@ -183,31 +183,21 @@
 
         <img src="vinyl.png" alt="인디피 뮤직" class="login-vinyl" />
 
-        <!-- 로그인 탭 -->
-        <div style="display:flex;background:#f3f4f6;border-radius:10px;padding:4px;margin-bottom:28px;">
-          <button id="tab-subscriber" onclick="switchTab('subscriber')"
-            style="flex:1;padding:9px;border:none;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer;background:#fff;color:var(--dark);box-shadow:0 1px 3px rgba(0,0,0,0.1);">
-            구독자 로그인
-          </button>
-          <button id="tab-owner" onclick="switchTab('owner')"
-            style="flex:1;padding:9px;border:none;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer;background:transparent;color:var(--text-gray);">
-            매장 관리자
-          </button>
-        </div>
-
-        <!-- 매장 관리자 폼 -->
-        <div id="form-owner" style="display:none">
-          <h1 class="login-title">매장 관리자 로그인</h1>
-          <p class="login-subtitle">인디피 뮤직 매장 관리 시스템</p>
+        <!-- 통합 로그인 폼 -->
+        <div id="form-unified">
+          <h1 class="login-title">로그인</h1>
+          <p class="login-subtitle">인디피 뮤직</p>
           <div class="form-group">
-            <label class="form-label" for="username">아이디</label>
-            <input type="text" id="username" class="form-input" placeholder="아이디를 입력해 주세요" />
+            <label class="form-label" for="login-id">아이디 / 이메일</label>
+            <input type="text" id="login-id" class="form-input" placeholder="아이디 또는 이메일을 입력해 주세요"
+              onkeydown="if(event.key==='Enter') document.getElementById('login-pw').focus()" />
           </div>
           <div class="form-group">
-            <label class="form-label" for="password">비밀번호</label>
+            <label class="form-label" for="login-pw">비밀번호</label>
             <div class="pw-wrap">
-              <input type="password" id="password" class="form-input" placeholder="비밀번호를 입력해 주세요" />
-              <button class="pw-toggle" type="button" onclick="togglePw('password','eye-icon')" aria-label="비밀번호 표시/숨기기">
+              <input type="password" id="login-pw" class="form-input" placeholder="비밀번호를 입력해 주세요"
+                onkeydown="if(event.key==='Enter') handleUnifiedLogin()" />
+              <button class="pw-toggle" type="button" onclick="togglePw('login-pw','eye-icon')" aria-label="비밀번호 표시/숨기기">
                 <svg id="eye-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
                   <circle cx="12" cy="12" r="3"/>
@@ -215,30 +205,8 @@
               </button>
             </div>
           </div>
-          <button class="btn-login" onclick="handleOwnerLogin()">로그인</button>
-        </div>
-
-        <!-- 구독자 폼 (Plan A) -->
-        <div id="form-subscriber">
-          <h1 class="login-title">구독자 로그인</h1>
-          <p class="login-subtitle">Plan A 라이트 구독자 전용</p>
-          <div class="form-group">
-            <label class="form-label" for="sub-email">이메일</label>
-            <input type="email" id="sub-email" class="form-input" placeholder="가입 시 등록한 이메일" />
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="sub-password">비밀번호</label>
-            <div class="pw-wrap">
-              <input type="password" id="sub-password" class="form-input" placeholder="비밀번호를 입력해 주세요" />
-              <button class="pw-toggle" type="button" onclick="togglePw('sub-password','eye-icon-sub')" aria-label="비밀번호 표시/숨기기">
-                <svg id="eye-icon-sub" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                  <circle cx="12" cy="12" r="3"/>
-                </svg>
-              </button>
-            </div>
-          </div>
-          <button class="btn-login" onclick="handleSubscriberLogin()">로그인</button>
+          <p id="login-error" style="font-size:13px;color:#e53e3e;margin-bottom:8px;display:none">아이디/이메일 또는 비밀번호를 확인해 주세요.</p>
+          <button class="btn-login" id="btn-login" onclick="handleUnifiedLogin()">로그인</button>
         </div>
 
       </div>
@@ -248,22 +216,6 @@
 
   <script src="api.js"></script>
   <script>
-    // URL 파라미터로 탭 초기화 (?mode=owner)
-    (function() {
-      const mode = new URLSearchParams(location.search).get('mode');
-      if (mode === 'owner') switchTab('owner');
-    })();
-
-    function switchTab(tab) {
-      const isOwner = tab === 'owner';
-      document.getElementById('form-owner').style.display      = isOwner ? '' : 'none';
-      document.getElementById('form-subscriber').style.display = isOwner ? 'none' : '';
-      const activeStyle   = 'flex:1;padding:9px;border:none;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer;background:#fff;color:var(--dark);box-shadow:0 1px 3px rgba(0,0,0,0.1);';
-      const inactiveStyle = 'flex:1;padding:9px;border:none;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer;background:transparent;color:var(--text-gray);';
-      document.getElementById('tab-owner').style.cssText      = isOwner ? activeStyle : inactiveStyle;
-      document.getElementById('tab-subscriber').style.cssText = isOwner ? inactiveStyle : activeStyle;
-    }
-
     function togglePw(inputId, iconId) {
       const pw = document.getElementById(inputId);
       const icon = document.getElementById(iconId);
@@ -276,12 +228,34 @@
       }
     }
 
-    async function handleOwnerLogin() {
-      const loginId = document.getElementById('username').value.trim();
-      const password = document.getElementById('password').value;
-      if (!loginId || !password) { alert('아이디와 비밀번호를 입력해 주세요.'); return; }
+    async function handleUnifiedLogin() {
+      const id       = document.getElementById('login-id').value.trim();
+      const password = document.getElementById('login-pw').value;
+      const errEl    = document.getElementById('login-error');
+      const btn      = document.getElementById('btn-login');
+
+      if (!id || !password) { errEl.textContent = '아이디/이메일과 비밀번호를 입력해 주세요.'; errEl.style.display = ''; return; }
+      errEl.style.display = 'none';
+      btn.disabled = true;
+      btn.textContent = '로그인 중...';
+
+      const isEmail = id.includes('@');
+
+      // 이메일 형식이면 구독자 로그인 먼저, 실패 시 매장 관리자 로그인 시도
+      // 아이디 형식이면 매장 관리자 로그인만 시도
       try {
-        const data = await apiFetch('POST', '/api/owner/login', { loginId, password });
+        if (isEmail) {
+          try {
+            const data = await apiFetch('POST', '/api/user/login', { email: id, password });
+            setUserToken(data.accessToken, data.refreshToken);
+            localStorage.setItem('userEmail', id);
+            window.location.href = 'playlist.html?tab=dj';
+            return;
+          } catch(e) {}
+        }
+
+        // 매장 관리자 로그인
+        const data = await apiFetch('POST', '/api/owner/login', { loginId: id, password });
         setOwnerToken(data.accessToken, data.refreshToken);
         try {
           const storeList = await apiFetch('GET', '/api/owner/stores', undefined, data.accessToken);
@@ -293,22 +267,12 @@
           if (first && first.storeId) setOwnerStoreId(first.storeId);
         } catch(e) {}
         window.location.href = 'playlist.html';
-      } catch(e) {
-        alert('로그인에 실패했습니다. 아이디와 비밀번호를 확인해 주세요.');
-      }
-    }
 
-    async function handleSubscriberLogin() {
-      const email    = document.getElementById('sub-email').value.trim();
-      const password = document.getElementById('sub-password').value;
-      if (!email || !password) { alert('이메일과 비밀번호를 입력해 주세요.'); return; }
-      try {
-        const data = await apiFetch('POST', '/api/user/login', { email, password });
-        setUserToken(data.accessToken, data.refreshToken);
-        localStorage.setItem('userEmail', email);
-        window.location.href = 'playlist.html?tab=dj';
       } catch(e) {
-        alert('로그인에 실패했습니다. 이메일과 비밀번호를 확인해 주세요.');
+        errEl.textContent = '아이디/이메일 또는 비밀번호를 확인해 주세요.';
+        errEl.style.display = '';
+        btn.disabled = false;
+        btn.textContent = '로그인';
       }
     }
   </script>
