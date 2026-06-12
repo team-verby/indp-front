@@ -390,6 +390,88 @@
     }
     .dj-live-panel-note strong { color: #e53e3e; }
 
+    /* 변경사항 적용 바 */
+    .apply-bar {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      background: #fffbeb;
+      border: 1px solid #fde68a;
+      border-radius: 10px;
+      padding: 10px 14px;
+      margin-bottom: 10px;
+    }
+    .apply-bar.visible { display: flex; }
+    .apply-bar-text {
+      font-size: 13px; font-weight: 600;
+      color: #92400e;
+    }
+    .btn-apply {
+      background: var(--dark);
+      color: #fff;
+      border: none; border-radius: 8px;
+      padding: 7px 16px;
+      font-size: 13px; font-weight: 700;
+      cursor: pointer; font-family: inherit;
+      white-space: nowrap;
+      transition: opacity 0.15s;
+      flex-shrink: 0;
+    }
+    .btn-apply:hover { opacity: 0.85; }
+
+    /* 정산 카드 */
+    .revenue-card {
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 20px;
+      padding: 28px;
+      margin-top: 24px;
+    }
+    .revenue-card-title {
+      font-size: 17px; font-weight: 800;
+      color: var(--dark); margin-bottom: 6px;
+    }
+    .revenue-card-subtitle {
+      font-size: 13px; color: var(--text-gray);
+      margin-bottom: 24px;
+    }
+    .revenue-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    @media (max-width: 700px) { .revenue-grid { grid-template-columns: 1fr 1fr; } }
+    .revenue-item {
+      background: #f8f9fb;
+      border-radius: 14px;
+      padding: 18px 16px;
+    }
+    .revenue-item-label {
+      font-size: 12px; font-weight: 700;
+      color: var(--text-gray);
+      letter-spacing: 0.04em;
+      margin-bottom: 8px;
+    }
+    .revenue-item-value {
+      font-size: 22px; font-weight: 900;
+      color: var(--dark);
+    }
+    .revenue-item-unit {
+      font-size: 13px; font-weight: 500;
+      color: var(--text-gray); margin-left: 2px;
+    }
+    .revenue-pending-notice {
+      background: #f3f4f6;
+      border-radius: 10px;
+      padding: 14px 16px;
+      font-size: 13px;
+      color: var(--text-gray);
+      line-height: 1.6;
+      text-align: center;
+    }
+
     /* 시청자 수 */
     .listener-row {
       display: flex;
@@ -637,6 +719,12 @@
           </div>
         </div>
 
+        <!-- 변경사항 적용 바 -->
+        <div class="apply-bar" id="apply-bar">
+          <span class="apply-bar-text" id="apply-bar-text">변경사항이 있습니다</span>
+          <button class="btn-apply" onclick="applyChanges()">적용하기</button>
+        </div>
+
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
           <span style="font-size:14px;font-weight:700;color:var(--dark)">업로드된 파일</span>
           <span style="font-size:13px;color:var(--text-gray)" id="track-count"></span>
@@ -645,6 +733,29 @@
       </div>
     </div>
 
+  </div>
+
+  <!-- 정산 카드 -->
+  <div class="revenue-card">
+    <p class="revenue-card-title">수익 정산</p>
+    <p class="revenue-card-subtitle">구독자 청취 시간 기반으로 수익이 산정됩니다.</p>
+    <div class="revenue-grid">
+      <div class="revenue-item">
+        <div class="revenue-item-label">이번 달 예상 수익</div>
+        <div class="revenue-item-value">—<span class="revenue-item-unit">원</span></div>
+      </div>
+      <div class="revenue-item">
+        <div class="revenue-item-label">누적 정산 금액</div>
+        <div class="revenue-item-value">—<span class="revenue-item-unit">원</span></div>
+      </div>
+      <div class="revenue-item">
+        <div class="revenue-item-label">다음 정산 예정일</div>
+        <div class="revenue-item-value" style="font-size:16px">—</div>
+      </div>
+    </div>
+    <div class="revenue-pending-notice">
+      정산 정책이 준비 중입니다. 정책 확정 후 이 영역에 상세 내역이 표시됩니다.
+    </div>
   </div>
 
 </div>
@@ -784,8 +895,40 @@ function init() {
   document.getElementById('dj-name').textContent   = djName;
   applyThumb(djThumb, document.getElementById('dj-avatar-wrap'));
 
+  // 초기 샘플 트랙은 적용 완료 상태로 설정
+  appliedTrackIds = new Set(tracks.map(t => t.id));
+
   renderTracks();
   renderChannel();
+}
+
+/* ── 변경사항 적용 관리 ── */
+let appliedTrackIds = new Set(); // 실제 라이브에 적용된 트랙 ID 집합
+
+function markChanged() {
+  const bar     = document.getElementById('apply-bar');
+  const barText = document.getElementById('apply-bar-text');
+  if (!bar) return;
+
+  const currentIds  = new Set(tracks.filter(t => !t.uploading).map(t => t.id));
+  const added       = [...currentIds].filter(id => !appliedTrackIds.has(id)).length;
+  const removed     = [...appliedTrackIds].filter(id => !currentIds.has(id)).length;
+  const hasChanges  = added > 0 || removed > 0;
+
+  bar.classList.toggle('visible', hasChanges);
+  if (hasChanges) {
+    const parts = [];
+    if (added   > 0) parts.push(`추가 ${added}개`);
+    if (removed > 0) parts.push(`삭제 ${removed}개`);
+    barText.textContent = `미적용 변경사항 — ${parts.join(', ')}`;
+  }
+}
+
+function applyChanges() {
+  appliedTrackIds = new Set(tracks.filter(t => !t.uploading).map(t => t.id));
+  document.getElementById('apply-bar').classList.remove('visible');
+  renderChannel();
+  // TODO: 백엔드 연동 후 트랙 목록 변경 API 호출
 }
 
 /* ── 트랙 데이터 (임시: 백엔드 GET /api/dj/tracks 연동 전 100개 샘플) ── */
@@ -924,6 +1067,9 @@ function renderTracks() {
 
   // 전체 진행률 업데이트
   updateOverallProgress();
+
+  // 변경사항 적용 바 업데이트
+  markChanged();
 
   // 라이브 카드: 파일 유무에 따른 안내 문구 업데이트
   const readyCount = doneTracks.length;
