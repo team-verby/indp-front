@@ -740,7 +740,8 @@ function renderTracks() {
   const list       = document.getElementById('track-list');
   const listWrap   = document.getElementById('track-list-wrap');
   const readyCount = tracks.filter(t => t.status === 'ready').length;
-  document.getElementById('stat-tr').textContent = tracks.length;
+  const statEl = document.getElementById('stat-tr');
+  if (statEl) statEl.textContent = tracks.length;
 
   if (!tracks.length) {
     listWrap.style.display = 'none';
