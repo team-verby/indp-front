@@ -390,6 +390,61 @@
     }
     .dj-live-panel-note strong { color: #e53e3e; }
 
+    /* 시청자 수 */
+    .listener-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 24px;
+      border-top: 1px solid #f0fdf4;
+      font-size: 13px;
+      color: #16a34a;
+      font-weight: 700;
+    }
+    .listener-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: #16a34a;
+      animation: pulse-dot 2s infinite;
+      flex-shrink: 0;
+    }
+
+    /* 유의사항 카드 */
+    .notice-card {
+      background: #fffbeb;
+      border: 1px solid #fde68a;
+      border-radius: 16px;
+      padding: 18px 20px;
+      margin-bottom: 0;
+    }
+    .notice-card-title {
+      font-size: 13px; font-weight: 800;
+      color: #92400e;
+      margin-bottom: 12px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .notice-list {
+      list-style: none; padding: 0; margin: 0;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .notice-list li {
+      font-size: 12px; color: #78350f;
+      line-height: 1.6;
+      padding-left: 14px;
+      position: relative;
+    }
+    .notice-list li::before {
+      content: '·';
+      position: absolute; left: 0;
+      font-weight: 900; color: #d97706;
+    }
+    .notice-list li strong {
+      display: inline; font-weight: 700; color: #92400e;
+    }
+    .notice-divider {
+      height: 1px; background: #fde68a;
+      margin: 10px 0;
+    }
+
     /* 빈 상태 */
     .empty-state {
       text-align: center;
@@ -519,10 +574,34 @@
             <button class="btn-stop-live" onclick="stopLive()">■ 방송 종료</button>
           </div>
         </div>
+        <!-- 시청자 수 (ON AIR 시에만 표시) -->
+        <div class="listener-row" id="listener-row" style="display:none">
+          <span class="listener-dot"></span>
+          <span id="listener-count">0명</span> 청취 중
+        </div>
       </div>
+
       <p class="dj-live-panel-note">
         <strong>⚠ 이 페이지를 닫으면 라이브 방송이 종료됩니다.</strong>
       </p>
+
+      <!-- 유의사항 -->
+      <div class="notice-card">
+        <div class="notice-card-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          방송 유의사항
+        </div>
+        <ul class="notice-list">
+          <li><strong>방송 시간 연장:</strong> 파일을 추가하면 방송 가능 시간이 자동으로 늘어납니다.</li>
+          <div class="notice-divider"></div>
+          <li><strong>저작권 준수:</strong> 반드시 본인이 저작권을 보유하거나 합법적 이용 권한이 있는 음원만 업로드·재생할 수 있습니다.</li>
+          <li><strong>분쟁 책임:</strong> 저작권 침해, 공연권 분쟁 등 법적 문제가 발생하는 경우 해당 크리에이터가 모든 책임을 집니다. 인디피 뮤직은 책임을 지지 않습니다.</li>
+          <li><strong>콘텐츠 제거:</strong> 저작권 문제가 확인된 음원은 사전 통보 없이 즉시 재생 목록에서 제외될 수 있습니다.</li>
+          <div class="notice-divider"></div>
+          <li><strong>페이지 유지:</strong> 방송 중 이 페이지를 닫거나 새로고침하면 라이브가 종료됩니다.</li>
+          <li><strong>파일 형식:</strong> MP3 · WAV만 허용되며, 파일당 최대 50MB입니다.</li>
+        </ul>
+      </div>
     </div>
 
     <!-- 오른쪽: 트랙 관리 -->
@@ -758,6 +837,8 @@ function renderChannel() {
 
   const readyCount = tracks.filter(t => !t.uploading).length;
 
+  const listenerRow = document.getElementById('listener-row');
+
   if (!isLive) {
     card.classList.remove('on-air');
     dot.classList.remove('live');
@@ -766,6 +847,7 @@ function renderChannel() {
     badge.innerHTML = '';
     offEl.style.display = '';
     onEl.style.display  = 'none';
+    if (listenerRow) listenerRow.style.display = 'none';
 
     const btn = document.getElementById('btn-start-live');
     btn.disabled    = readyCount === 0;
@@ -780,6 +862,11 @@ function renderChannel() {
     onEl.style.display  = 'flex';
     document.getElementById('live-on-desc').textContent =
       `${readyCount}개 트랙이 구독자에게 스트리밍되고 있습니다.`;
+    if (listenerRow) {
+      listenerRow.style.display = '';
+      // TODO: 백엔드 API 연동 후 실시간 시청자 수로 교체
+      document.getElementById('listener-count').textContent = '0명';
+    }
   }
 }
 
