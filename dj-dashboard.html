@@ -655,7 +655,8 @@ function saveProfile() {
 
 /* ── 모달 외부 클릭 닫기 ── */
 ['track-edit-modal', 'profile-modal'].forEach(id => {
-  document.getElementById(id).addEventListener('click', e => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('click', e => {
     if (e.target === e.currentTarget) e.currentTarget.classList.remove('open');
   });
 });
