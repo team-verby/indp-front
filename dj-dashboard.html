@@ -283,6 +283,50 @@
     .section-title { font-size: 15px; font-weight: 700; color: var(--dark); }
     .section-count { font-size: 13px; color: var(--text-gray); }
 
+    /* 전체 업로드 진행률 */
+    .overall-progress-wrap {
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin-bottom: 10px;
+    }
+    .overall-progress-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      font-size: 13px;
+    }
+    .overall-progress-label { font-weight: 700; color: var(--dark); }
+    .overall-progress-ratio { color: var(--text-gray); }
+    .overall-progress-bar {
+      height: 6px; background: #f3f4f6; border-radius: 100px; overflow: hidden;
+    }
+    .overall-progress-fill {
+      height: 100%; border-radius: 100px;
+      background: var(--blue); transition: width .4s ease;
+    }
+    .overall-progress-fill.done { background: #16a34a; }
+
+    /* 업로드 존 축소 버튼 */
+    .upload-zone-compact {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      background: #f8f9fb;
+      border: 1.5px dashed #d1d5db;
+      border-radius: 12px;
+      padding: 12px 16px;
+      margin-bottom: 12px;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .upload-zone-compact:hover { border-color: var(--blue); background: #f5f7ff; }
+    .upload-zone-compact-icon { font-size: 18px; flex-shrink: 0; }
+    .upload-zone-compact-text { font-size: 14px; font-weight: 600; color: var(--text-sub); }
+    .upload-zone-compact-sub { font-size: 12px; color: var(--text-gray); margin-left: auto; }
+
     .track-list {
       display: flex; flex-direction: column; gap: 6px;
       max-height: 480px;
@@ -298,22 +342,17 @@
       border-radius: 12px;
       padding: 12px 16px;
       display: grid;
-      grid-template-columns: 28px 1fr 64px 88px 48px;
+      grid-template-columns: 28px 1fr 64px 36px;
       gap: 0 12px;
       align-items: center;
     }
+    .track-item.uploading-item { border-color: #bfdbfe; background: #f8fbff; }
     .track-item:hover { border-color: #c7d2fe; }
-    .track-num   { font-size: 12px; color: var(--text-light-gray); text-align: center; }
-    .track-name  { font-size: 14px; font-weight: 600; color: var(--dark); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
-    .track-dur   { font-size: 13px; color: var(--text-gray); }
-    .t-badge {
-      font-size: 11px; font-weight: 700;
-      padding: 3px 10px; border-radius: 100px;
-      white-space: nowrap; width: fit-content;
-    }
-    .t-badge.ready     { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
-    .t-badge.uploading { background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; }
-    .t-badge.review    { background: #fffbeb; color: #d97706; border: 1px solid #fde68a; }
+    .track-num  { font-size: 12px; color: var(--text-light-gray); text-align: center; }
+    .track-name { font-size: 14px; font-weight: 600; color: var(--dark); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .track-name-wrap { min-width: 0; }
+    .track-name-wrap .track-name { display: block; }
+    .track-dur  { font-size: 13px; color: var(--text-gray); white-space: nowrap; }
     .btn-tr-del {
       width: 32px; height: 32px;
       background: none; border: none;
@@ -323,7 +362,7 @@
       align-items: center; justify-content: center;
     }
     .btn-tr-del:hover { background: #fee2e2; color: #e11d48; }
-    .upload-progress    { height: 3px; background: #e5e7eb; border-radius: 2px; margin-top: 5px; }
+    .upload-progress { height: 3px; background: #e5e7eb; border-radius: 2px; margin-top: 5px; }
     .upload-progress-fill { height: 100%; border-radius: 2px; background: var(--blue); transition: width .3s; }
 
     /* 단계별 섹션 */
@@ -475,7 +514,26 @@
     </div>
     <input type="file" id="file-input" multiple accept=".mp3,.wav" onchange="handleFileSelect(event)" />
 
+    <!-- 업로드 존 축소 버튼 (파일 있을 때만 표시) -->
+    <div class="upload-zone-compact" id="upload-zone-compact"
+      onclick="document.getElementById('file-input').click()">
+      <span class="upload-zone-compact-icon">➕</span>
+      <span class="upload-zone-compact-text">파일 추가</span>
+      <span class="upload-zone-compact-sub">MP3 · WAV · 파일당 최대 50MB</span>
+    </div>
+
     <div id="track-list-wrap" style="display:none">
+      <!-- 전체 업로드 진행률 -->
+      <div class="overall-progress-wrap" id="overall-progress-wrap" style="display:none">
+        <div class="overall-progress-header">
+          <span class="overall-progress-label">업로드 진행 중</span>
+          <span class="overall-progress-ratio" id="overall-progress-ratio">0 / 0</span>
+        </div>
+        <div class="overall-progress-bar">
+          <div class="overall-progress-fill" id="overall-progress-fill" style="width:0%"></div>
+        </div>
+      </div>
+
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
         <span style="font-size:14px;font-weight:700;color:var(--dark)">업로드된 파일</span>
         <span style="font-size:13px;color:var(--text-gray)" id="track-count"></span>
@@ -678,15 +736,15 @@ let tracks = Array.from({ length: 100 }, (_, i) => {
   const secs = 150 + Math.floor(Math.random() * 120); // 2분 30초 ~ 4분 30초
   const min  = Math.floor(secs / 60);
   const sec  = String(secs % 60).padStart(2, '0');
-  return { id: i + 1, filename: `${name}.mp3`, duration: `${min}:${sec}`, secs, status: i < 90 ? 'ready' : 'review' };
+  return { id: i + 1, filename: `${name}.mp3`, duration: `${min}:${sec}`, secs, uploading: false };
 });
 
 /* ── 채널 상태 ── */
 let isLive = false;
 
 function startLive() {
-  const readyCount = tracks.filter(t => t.status === 'ready').length;
-  if (!readyCount) { alert('준비 완료 상태의 트랙이 없습니다. 먼저 트랙을 업로드해 주세요.'); return; }
+  const readyCount = tracks.filter(t => !t.uploading).length;
+  if (!readyCount) { alert('업로드 완료된 트랙이 없습니다. 먼저 파일을 업로드해 주세요.'); return; }
   isLive = true;
   setDjLive(true);
   renderChannel();
@@ -707,7 +765,7 @@ function renderChannel() {
   const offEl  = document.getElementById('live-off');
   const onEl   = document.getElementById('live-on');
 
-  const readyCount = tracks.filter(t => t.status === 'ready').length;
+  const readyCount = tracks.filter(t => !t.uploading).length;
 
   if (!isLive) {
     card.classList.remove('on-air');
@@ -734,53 +792,82 @@ function renderChannel() {
   }
 }
 
-/* ── 트랙 목록 렌더 ── */
-const T_LABEL = { ready:'준비 완료', uploading:'업로드 중', review:'검토 중' };
+function updateOverallProgress() {
+  const total      = tracks.length;
+  const uploading  = tracks.filter(t => t.uploading).length;
+  const done       = total - uploading;
+  const wrap       = document.getElementById('overall-progress-wrap');
+  const fill       = document.getElementById('overall-progress-fill');
+  const ratio      = document.getElementById('overall-progress-ratio');
+
+  if (uploading === 0) { wrap.style.display = 'none'; return; }
+
+  wrap.style.display = '';
+  const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+  fill.style.width = pct + '%';
+  fill.classList.toggle('done', pct === 100);
+  ratio.textContent = `${done} / ${total}개`;
+
+  const label = document.querySelector('#overall-progress-wrap .overall-progress-label');
+  if (label) label.textContent = pct === 100 ? '업로드 완료' : '업로드 진행 중';
+}
+
 function renderTracks() {
-  const list       = document.getElementById('track-list');
-  const listWrap   = document.getElementById('track-list-wrap');
-  const readyCount = tracks.filter(t => t.status === 'ready').length;
-  const statEl = document.getElementById('stat-tr');
+  const list     = document.getElementById('track-list');
+  const listWrap = document.getElementById('track-list-wrap');
+  const compact  = document.getElementById('upload-zone-compact');
+  const fullZone = document.getElementById('upload-zone');
+  const statEl   = document.getElementById('stat-tr');
   if (statEl) statEl.textContent = tracks.length;
 
   if (!tracks.length) {
-    listWrap.style.display = 'none';
-    // Step 1 → 미완료
+    listWrap.style.display   = 'none';
+    compact.style.display    = 'none';
+    fullZone.style.display   = '';
     document.getElementById('step1-num').classList.remove('done');
+    // Step 2 비활성
+    document.getElementById('step2-num').classList.add('inactive');
+    document.getElementById('step2-title').classList.add('inactive');
+    document.getElementById('step2-desc').textContent = '파일 업로드 후 라이브를 시작할 수 있습니다.';
+    document.getElementById('step2-desc').style.color = '#9ca3af';
     return;
   }
 
-  listWrap.style.display = '';
+  // 파일 있으면 업로드 존 축소
+  fullZone.style.display  = 'none';
+  compact.style.display   = 'flex';
+  listWrap.style.display  = '';
   document.getElementById('track-count').textContent = `총 ${tracks.length}개`;
-
-  // Step 1 → 완료
   document.getElementById('step1-num').classList.add('done');
 
-  // Step 2 → 파일 있으면 활성화
+  // 전체 진행률 업데이트
+  updateOverallProgress();
+
+  // Step 2: 업로드 중이 아닌 트랙이 있으면 활성화
+  const readyCount = tracks.filter(t => !t.uploading).length;
   const step2Num   = document.getElementById('step2-num');
   const step2Title = document.getElementById('step2-title');
   const step2Desc  = document.getElementById('step2-desc');
   if (readyCount > 0) {
     step2Num.classList.remove('inactive');
     step2Title.classList.remove('inactive');
-    step2Desc.textContent = `준비 완료된 트랙 ${readyCount}개로 라이브를 시작할 수 있습니다.`;
+    step2Desc.textContent = `${readyCount}개 트랙으로 라이브를 시작할 수 있습니다.`;
     step2Desc.style.color = '';
   } else {
     step2Num.classList.add('inactive');
     step2Title.classList.add('inactive');
-    step2Desc.textContent = '파일 업로드 후 라이브를 시작할 수 있습니다.';
+    step2Desc.textContent = '파일 업로드 완료 후 라이브를 시작할 수 있습니다.';
     step2Desc.style.color = '#9ca3af';
   }
 
   list.innerHTML = tracks.map((t, i) => `
-    <div class="track-item">
+    <div class="track-item ${t.uploading ? 'uploading-item' : ''}">
       <span class="track-num">${i + 1}</span>
-      <div class="track-name">
-        ${t.filename}
-        ${t.progress != null ? `<div class="upload-progress"><div class="upload-progress-fill" style="width:${t.progress}%"></div></div>` : ''}
+      <div class="track-name-wrap">
+        <span class="track-name">${t.filename}</span>
+        ${t.uploading ? `<div class="upload-progress"><div class="upload-progress-fill" style="width:${t.progress || 0}%"></div></div>` : ''}
       </div>
-      <span class="track-dur">${t.duration}</span>
-      <span class="t-badge ${t.status}">${T_LABEL[t.status] || t.status}</span>
+      <span class="track-dur">${t.uploading ? `${t.progress || 0}%` : t.duration}</span>
       <button class="btn-tr-del" onclick="removeTrack(${t.id})" title="삭제">✕</button>
     </div>`).join('');
 }
@@ -794,7 +881,7 @@ function handleFileSelect(e){ processFiles([...e.target.files]); e.target.value 
 function processFiles(files) {
   files.filter(f => f.type.startsWith('audio/')).forEach(file => {
     const id = Date.now() + Math.random();
-    tracks.push({ id, filename: file.name, duration: '-', secs: 0, status: 'uploading', progress: 0 });
+    tracks.push({ id, filename: file.name, duration: '-', secs: 0, uploading: true, progress: 0 });
     renderTracks();
     renderChannel();
     simulateUpload(id);
@@ -804,16 +891,20 @@ function processFiles(files) {
 function simulateUpload(id) {
   let p = 0;
   const iv = setInterval(() => {
-    p += Math.random() * 18;
+    p += Math.random() * 15;
     if (p >= 100) { p = 100; clearInterval(iv); }
     const t = tracks.find(t => t.id === id);
     if (t) {
       t.progress = Math.round(p);
-      if (p >= 100) { t.status = 'review'; delete t.progress; }
+      if (p >= 100) {
+        t.uploading = false;
+        t.duration  = `${2 + Math.floor(Math.random() * 3)}:${String(Math.floor(Math.random() * 60)).padStart(2,'0')}`;
+        delete t.progress;
+      }
       renderTracks();
       renderChannel();
     }
-  }, 280);
+  }, 300);
 }
 
 function removeTrack(id) {
