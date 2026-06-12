@@ -445,7 +445,8 @@ function logout() {
   location.href = 'index.html';
 }
 
-const djToken = localStorage.getItem('djToken') || getOwnerToken();
+// TODO: 백엔드 DJ 인증 API 준비 후 실제 토큰 검증으로 교체
+const djToken = localStorage.getItem('djToken') || getOwnerToken() || localStorage.getItem('adminToken') || 'temp';
 let djName    = localStorage.getItem('djName') || localStorage.getItem('storeName') || 'DJ';
 let djGenre   = localStorage.getItem('djGenre') || '';
 
