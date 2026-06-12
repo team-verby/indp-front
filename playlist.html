@@ -628,11 +628,8 @@
 
     function enterDjDashboard(e) {
       e.preventDefault();
-      if (localStorage.getItem('djToken') || localStorage.getItem('ownerToken')) {
-        location.href = 'dj-dashboard.html';
-      } else {
-        location.href = 'login.html?mode=owner';
-      }
+      // TODO: 백엔드 DJ 인증 API 준비 후 토큰 검증 복원
+      location.href = 'dj-dashboard.html';
     }
 
     let brandRendered = false;
