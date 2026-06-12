@@ -31,18 +31,22 @@
       gap: 16px;
       margin-bottom: 32px;
     }
-    .dj-avatar-circle {
-      width: 52px; height: 52px;
+    .dj-avatar-wrap {
+      width: 64px; height: 64px;
       border-radius: 50%;
-      background: var(--dark);
+      overflow: hidden;
+      flex-shrink: 0;
+      background: #e8eaf0;
       display: flex; align-items: center; justify-content: center;
-      font-size: 22px; flex-shrink: 0;
+      border: 2px solid #e5e7eb;
+    }
+    .dj-avatar-wrap img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      border-radius: 50%;
     }
     .dj-profile-info { flex: 1; }
     .dj-profile-name { font-size: 20px; font-weight: 800; color: var(--dark); }
-    .dj-profile-genre { font-size: 13px; color: var(--text-gray); margin-top: 2px; }
-    .dj-profile-stat { font-size: 13px; color: var(--text-gray); margin-top: 4px; }
-    .dj-profile-stat strong { color: var(--dark); font-weight: 700; }
     .btn-edit-sm {
       background: #f3f4f6;
       border: none;
@@ -56,6 +60,38 @@
       white-space: nowrap;
     }
     .btn-edit-sm:hover { background: #e5e7eb; }
+
+    /* 프로필 모달 썸네일 */
+    .profile-thumb-edit {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 20px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid #f3f4f6;
+    }
+    .profile-thumb-preview {
+      width: 72px; height: 72px;
+      border-radius: 50%;
+      overflow: hidden;
+      background: #e8eaf0;
+      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      border: 2px solid #e5e7eb;
+    }
+    .profile-thumb-preview img { width: 100%; height: 100%; object-fit: cover; }
+    .profile-thumb-actions { display: flex; flex-direction: column; gap: 6px; }
+    .profile-thumb-btn {
+      background: #f3f4f6;
+      border: none; border-radius: 8px;
+      padding: 7px 14px;
+      font-size: 13px; font-weight: 600;
+      color: var(--text-sub);
+      cursor: pointer; font-family: inherit;
+    }
+    .profile-thumb-btn:hover { background: #e5e7eb; }
+    .profile-thumb-btn.danger { color: #e53e3e; }
+    .profile-thumb-btn.danger:hover { background: #fff5f5; }
 
     /* 라이브 채널 카드 */
     .live-card {
@@ -335,11 +371,14 @@
 
   <!-- 프로필 -->
   <div class="dj-profile-row">
-    <div class="dj-avatar-circle">🎧</div>
+    <div class="dj-avatar-wrap" id="dj-avatar-wrap">
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="rgba(0,0,0,0.2)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+        <circle cx="12" cy="7" r="4"/>
+      </svg>
+    </div>
     <div class="dj-profile-info">
       <div class="dj-profile-name" id="dj-name">DJ 이름</div>
-      <div class="dj-profile-genre" id="dj-genre"></div>
-      <div class="dj-profile-stat"><strong id="stat-tr">0</strong>개 트랙 업로드됨</div>
     </div>
     <button class="btn-edit-sm" onclick="openProfileModal()">프로필 수정</button>
   </div>
@@ -412,19 +451,50 @@
 
 <!-- MODAL: 프로필 수정 -->
 <div class="modal-overlay" id="profile-modal">
-  <div class="modal">
+  <div class="modal" style="max-height:90vh;overflow-y:auto">
     <div class="modal-hd">
-      <div class="modal-title">DJ 프로필 수정</div>
+      <div class="modal-title">프로필 수정</div>
       <button class="modal-close" onclick="closeProfileModal()">✕</button>
     </div>
-    <div class="form-group" style="margin-bottom:16px">
-      <label class="form-label">DJ 이름</label>
-      <input class="form-input" id="edit-dj-name" type="text" />
+
+    <!-- 썸네일 -->
+    <div class="profile-thumb-edit">
+      <div class="profile-thumb-preview" id="profile-thumb-preview">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="rgba(0,0,0,0.2)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+          <circle cx="12" cy="7" r="4"/>
+        </svg>
+      </div>
+      <div class="profile-thumb-actions">
+        <label class="profile-thumb-btn" style="cursor:pointer">
+          사진 변경
+          <input type="file" id="profile-thumb-input" accept="image/*" style="display:none" onchange="handleThumbChange(event)" />
+        </label>
+        <button class="profile-thumb-btn danger" onclick="removeThumb()">사진 삭제</button>
+      </div>
+    </div>
+
+    <div class="form-group" style="margin-bottom:14px">
+      <label class="form-label">성명</label>
+      <input class="form-input" id="edit-real-name" type="text" placeholder="실명을 입력해 주세요" />
+    </div>
+    <div class="form-group" style="margin-bottom:14px">
+      <label class="form-label">크리에이터명 (활동명)</label>
+      <input class="form-input" id="edit-dj-name" type="text" placeholder="예: DJ Parkwan" />
+    </div>
+    <div class="form-group" style="margin-bottom:14px">
+      <label class="form-label">휴대폰 번호</label>
+      <input class="form-input" id="edit-phone" type="tel" placeholder="010-0000-0000" oninput="this.value=this.value.replace(/[^0-9-]/g,'')" />
+    </div>
+    <div class="form-group" style="margin-bottom:14px">
+      <label class="form-label">이메일 <span style="font-size:11px;color:var(--text-gray);font-weight:400">(로그인 아이디)</span></label>
+      <input class="form-input" id="edit-email" type="email" readonly style="background:#f8f9fb;color:var(--text-gray);cursor:default" />
     </div>
     <div class="form-group" style="margin-bottom:0">
-      <label class="form-label">장르 / 소개</label>
-      <input class="form-input" id="edit-dj-genre" type="text" placeholder="예: Indie · Jazz · Chill" />
+      <label class="form-label">새 비밀번호 <span style="font-size:11px;color:var(--text-gray);font-weight:400">(변경 시에만 입력)</span></label>
+      <input class="form-input" id="edit-pw" type="password" placeholder="변경하려면 입력해 주세요 (8자 이상)" />
     </div>
+
     <div class="modal-footer">
       <button class="btn-modal-cancel" onclick="closeProfileModal()">취소</button>
       <button class="btn-modal-confirm" onclick="saveProfile()">저장</button>
@@ -447,8 +517,11 @@ function logout() {
 
 // TODO: 백엔드 DJ 인증 API 준비 후 실제 토큰 검증으로 교체
 const djToken = localStorage.getItem('djToken') || getOwnerToken() || localStorage.getItem('adminToken') || 'temp';
-let djName    = localStorage.getItem('djName') || localStorage.getItem('storeName') || 'DJ';
-let djGenre   = localStorage.getItem('djGenre') || '';
+let djName     = localStorage.getItem('djName')     || localStorage.getItem('storeName') || 'DJ';
+let djRealName = localStorage.getItem('djRealName') || '';
+let djPhone    = localStorage.getItem('djPhone')    || '';
+let djEmail    = localStorage.getItem('djEmail')    || '';
+let djThumb    = localStorage.getItem('djThumb')    || null;
 
 function init() {
   // GNB 스크롤 플로팅
@@ -473,7 +546,7 @@ function init() {
 
   document.getElementById('dj-main').style.display = 'block';
   document.getElementById('dj-name').textContent   = djName;
-  document.getElementById('dj-genre').textContent  = djGenre || '';
+  applyThumb(djThumb, document.getElementById('dj-avatar-wrap'));
 
   renderTracks();
   renderChannel();
@@ -634,22 +707,66 @@ function saveTrackEdit() {
 }
 
 /* ── 프로필 수정 ── */
+const DEFAULT_AVATAR_SVG = `<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="rgba(0,0,0,0.2)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
+
+function applyThumb(src, container) {
+  container.innerHTML = src
+    ? `<img src="${src}" alt="썸네일" />`
+    : DEFAULT_AVATAR_SVG;
+}
+
+function handleThumbChange(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    djThumb = ev.target.result;
+    applyThumb(djThumb, document.getElementById('profile-thumb-preview'));
+  };
+  reader.readAsDataURL(file);
+}
+
+function removeThumb() {
+  djThumb = null;
+  document.getElementById('profile-thumb-input').value = '';
+  applyThumb(null, document.getElementById('profile-thumb-preview'));
+}
+
 function openProfileModal() {
-  document.getElementById('edit-dj-name').value  = djName;
-  document.getElementById('edit-dj-genre').value = djGenre;
+  document.getElementById('edit-dj-name').value   = djName;
+  document.getElementById('edit-real-name').value = djRealName;
+  document.getElementById('edit-phone').value     = djPhone;
+  document.getElementById('edit-email').value     = djEmail;
+  document.getElementById('edit-pw').value        = '';
+  applyThumb(djThumb, document.getElementById('profile-thumb-preview'));
   document.getElementById('profile-modal').classList.add('open');
   setTimeout(() => document.getElementById('edit-dj-name').focus(), 50);
 }
+
 function closeProfileModal() { document.getElementById('profile-modal').classList.remove('open'); }
+
 function saveProfile() {
-  const name  = document.getElementById('edit-dj-name').value.trim();
-  const genre = document.getElementById('edit-dj-genre').value.trim();
+  const name     = document.getElementById('edit-dj-name').value.trim();
+  const realName = document.getElementById('edit-real-name').value.trim();
+  const phone    = document.getElementById('edit-phone').value.trim();
+  const pw       = document.getElementById('edit-pw').value;
   if (!name) { document.getElementById('edit-dj-name').focus(); return; }
-  djName = name; djGenre = genre;
-  localStorage.setItem('djName', djName);
-  localStorage.setItem('djGenre', djGenre);
-  document.getElementById('dj-name').textContent  = djName;
-  document.getElementById('dj-genre').textContent = djGenre || '';
+
+  djName     = name;
+  djRealName = realName;
+  djPhone    = phone;
+  localStorage.setItem('djName',     djName);
+  localStorage.setItem('djRealName', djRealName);
+  localStorage.setItem('djPhone',    djPhone);
+  if (djThumb) localStorage.setItem('djThumb', djThumb);
+  else         localStorage.removeItem('djThumb');
+
+  document.getElementById('dj-name').textContent = djName;
+  applyThumb(djThumb, document.getElementById('dj-avatar-wrap'));
+
+  // TODO: 백엔드 API 준비 후 PATCH /api/dj/profile 호출로 교체
+  // if (pw) { /* 비밀번호 변경 API */ }
+
   closeProfileModal();
 }
 
