@@ -476,7 +476,7 @@
 
     <div class="form-group" style="margin-bottom:14px">
       <label class="form-label">성명</label>
-      <input class="form-input" id="edit-real-name" type="text" placeholder="실명을 입력해 주세요" />
+      <input class="form-input" id="edit-real-name" type="text" readonly style="background:#f8f9fb;color:var(--text-gray);cursor:default" />
     </div>
     <div class="form-group" style="margin-bottom:14px">
       <label class="form-label">크리에이터명 (활동명)</label>
@@ -484,16 +484,24 @@
     </div>
     <div class="form-group" style="margin-bottom:14px">
       <label class="form-label">휴대폰 번호</label>
-      <input class="form-input" id="edit-phone" type="tel" placeholder="010-0000-0000" oninput="this.value=this.value.replace(/[^0-9-]/g,'')" />
+      <input class="form-input" id="edit-phone" type="tel" readonly style="background:#f8f9fb;color:var(--text-gray);cursor:default" />
     </div>
-    <div class="form-group" style="margin-bottom:14px">
+    <div class="form-group" style="margin-bottom:20px">
       <label class="form-label">이메일 <span style="font-size:11px;color:var(--text-gray);font-weight:400">(로그인 아이디)</span></label>
       <input class="form-input" id="edit-email" type="email" readonly style="background:#f8f9fb;color:var(--text-gray);cursor:default" />
     </div>
-    <div class="form-group" style="margin-bottom:0">
-      <label class="form-label">새 비밀번호 <span style="font-size:11px;color:var(--text-gray);font-weight:400">(변경 시에만 입력)</span></label>
-      <input class="form-input" id="edit-pw" type="password" placeholder="변경하려면 입력해 주세요 (8자 이상)" />
+
+    <!-- 비밀번호 변경 구분선 -->
+    <div style="font-size:12px;font-weight:700;color:var(--text-gray);letter-spacing:0.05em;margin-bottom:12px;padding-top:4px;border-top:1px solid #f3f4f6;">비밀번호 변경 <span style="font-weight:400">(선택)</span></div>
+    <div class="form-group" style="margin-bottom:14px">
+      <label class="form-label">현재 비밀번호</label>
+      <input class="form-input" id="edit-pw-current" type="password" placeholder="현재 비밀번호를 입력해 주세요" oninput="toggleNewPwField()" />
     </div>
+    <div class="form-group" style="margin-bottom:0" id="new-pw-field" style="display:none">
+      <label class="form-label">새 비밀번호 <span style="font-size:11px;color:var(--text-gray);font-weight:400">(8자 이상)</span></label>
+      <input class="form-input" id="edit-pw-new" type="password" placeholder="새 비밀번호를 입력해 주세요" />
+    </div>
+    <p class="field-error" id="pw-change-error" style="font-size:12px;color:#e53e3e;margin-top:6px;display:none"></p>
 
     <div class="modal-footer">
       <button class="btn-modal-cancel" onclick="closeProfileModal()">취소</button>
@@ -732,12 +740,22 @@ function removeThumb() {
   applyThumb(null, document.getElementById('profile-thumb-preview'));
 }
 
+function toggleNewPwField() {
+  const hasInput = document.getElementById('edit-pw-current').value.length > 0;
+  document.getElementById('new-pw-field').style.display = hasInput ? '' : 'none';
+  if (!hasInput) document.getElementById('edit-pw-new').value = '';
+  document.getElementById('pw-change-error').style.display = 'none';
+}
+
 function openProfileModal() {
   document.getElementById('edit-dj-name').value   = djName;
   document.getElementById('edit-real-name').value = djRealName;
   document.getElementById('edit-phone').value     = djPhone;
   document.getElementById('edit-email').value     = djEmail;
-  document.getElementById('edit-pw').value        = '';
+  document.getElementById('edit-pw-current').value = '';
+  document.getElementById('edit-pw-new').value     = '';
+  document.getElementById('new-pw-field').style.display = 'none';
+  document.getElementById('pw-change-error').style.display = 'none';
   applyThumb(djThumb, document.getElementById('profile-thumb-preview'));
   document.getElementById('profile-modal').classList.add('open');
   setTimeout(() => document.getElementById('edit-dj-name').focus(), 50);
@@ -745,27 +763,39 @@ function openProfileModal() {
 
 function closeProfileModal() { document.getElementById('profile-modal').classList.remove('open'); }
 
-function saveProfile() {
-  const name     = document.getElementById('edit-dj-name').value.trim();
-  const realName = document.getElementById('edit-real-name').value.trim();
-  const phone    = document.getElementById('edit-phone').value.trim();
-  const pw       = document.getElementById('edit-pw').value;
+async function saveProfile() {
+  const name       = document.getElementById('edit-dj-name').value.trim();
+  const currentPw  = document.getElementById('edit-pw-current').value;
+  const newPw      = document.getElementById('edit-pw-new').value;
+  const errEl      = document.getElementById('pw-change-error');
+
   if (!name) { document.getElementById('edit-dj-name').focus(); return; }
 
-  djName     = name;
-  djRealName = realName;
-  djPhone    = phone;
-  localStorage.setItem('djName',     djName);
-  localStorage.setItem('djRealName', djRealName);
-  localStorage.setItem('djPhone',    djPhone);
+  // 비밀번호 변경 유효성 검사
+  if (currentPw) {
+    if (newPw.length < 8) {
+      errEl.textContent = '새 비밀번호는 8자 이상이어야 합니다.';
+      errEl.style.display = '';
+      return;
+    }
+    // TODO: 백엔드 API 준비 후 실제 현재 비밀번호 검증 및 변경 API 호출로 교체
+    // try {
+    //   await apiFetch('PATCH', '/api/dj/password', { currentPassword: currentPw, newPassword: newPw }, djToken);
+    // } catch(e) {
+    //   errEl.textContent = '현재 비밀번호가 일치하지 않습니다.';
+    //   errEl.style.display = '';
+    //   return;
+    // }
+  }
+  errEl.style.display = 'none';
+
+  djName = name;
+  localStorage.setItem('djName', djName);
   if (djThumb) localStorage.setItem('djThumb', djThumb);
   else         localStorage.removeItem('djThumb');
 
   document.getElementById('dj-name').textContent = djName;
   applyThumb(djThumb, document.getElementById('dj-avatar-wrap'));
-
-  // TODO: 백엔드 API 준비 후 PATCH /api/dj/profile 호출로 교체
-  // if (pw) { /* 비밀번호 변경 API */ }
 
   closeProfileModal();
 }
