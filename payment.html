@@ -695,6 +695,8 @@
         const body = {
           applicantName: localStorage.getItem('applicantName') || '',
           applicantPhone: localStorage.getItem('applicantPhone') || '',
+          loginId: localStorage.getItem('applicantLoginId') || '',
+          email: localStorage.getItem('applicantEmail') || '',
           inquiryContent: '',
           planId: parseInt(localStorage.getItem('selectedPlanId') || '1'),
           usagePeriod: selectedMonths,

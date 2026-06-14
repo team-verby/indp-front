@@ -150,13 +150,19 @@
       </div>
 
       <div class="form-group">
-        <label class="form-label" for="lite-email">이메일 (아이디) <span class="required">*</span></label>
+        <label class="form-label" for="lite-id">아이디 <span class="required">*</span></label>
         <div class="email-check-row">
-          <input type="email" id="lite-email" class="form-input" placeholder="로그인에 사용할 이메일을 입력해 주세요" oninput="resetEmailCheck()" />
-          <button type="button" class="btn-email-check" id="btn-email-check" onclick="checkEmailDuplicate()">중복 확인</button>
+          <input type="text" id="lite-id" class="form-input" placeholder="영문·숫자 조합 4자 이상" oninput="resetIdCheck()" />
+          <button type="button" class="btn-email-check" id="btn-id-check" onclick="checkIdDuplicate()">중복 확인</button>
         </div>
-        <p class="field-error" id="err-lite-email"></p>
-        <p class="field-success" id="ok-lite-email">사용 가능한 이메일입니다.</p>
+        <p class="field-error" id="err-lite-id"></p>
+        <p class="field-success" id="ok-lite-id">사용 가능한 아이디입니다.</p>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="lite-email">이메일 <span class="required">*</span></label>
+        <input type="email" id="lite-email" class="form-input" placeholder="공지 및 정산 수신에 사용됩니다" />
+        <p class="field-error" id="err-lite-email">올바른 이메일 형식을 입력해 주세요.</p>
       </div>
 
       <div class="form-group">
@@ -220,7 +226,7 @@
       document.getElementById('form-lite').style.display = 'block';
     }
 
-    let emailChecked = false;
+    let idChecked = false;
 
     function setError(inputId, errId, show, msg) {
       document.getElementById(inputId).classList.toggle('error', show);
@@ -229,30 +235,41 @@
       el.classList.toggle('show', show);
     }
 
-    function resetEmailCheck() {
-      emailChecked = false;
-      document.getElementById('ok-lite-email').classList.remove('show');
-      const btn = document.getElementById('btn-email-check');
+    function resetIdCheck() {
+      idChecked = false;
+      document.getElementById('ok-lite-id').classList.remove('show');
+      const btn = document.getElementById('btn-id-check');
       btn.textContent = '중복 확인';
       btn.disabled = false;
     }
 
-    function checkEmailDuplicate() {
-      const email = document.getElementById('lite-email').value.trim();
-      const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-      const btn = document.getElementById('btn-email-check');
+    async function checkIdDuplicate() {
+      const loginId = document.getElementById('lite-id').value.trim();
+      const btn = document.getElementById('btn-id-check');
 
-      if (!emailOk) {
-        setError('lite-email', 'err-lite-email', true, '올바른 이메일 형식을 입력해 주세요.');
+      if (loginId.length < 4) {
+        setError('lite-id', 'err-lite-id', true, '아이디는 4자 이상이어야 합니다.');
+        return;
+      }
+      if (!/^[a-zA-Z0-9_]+$/.test(loginId)) {
+        setError('lite-id', 'err-lite-id', true, '영문·숫자·언더바(_)만 사용 가능합니다.');
         return;
       }
 
-      // TODO: 백엔드 API 준비 후 GET /api/user/check-email?email= 호출로 교체
-      emailChecked = true;
-      setError('lite-email', 'err-lite-email', false);
-      document.getElementById('ok-lite-email').classList.add('show');
-      btn.textContent = '확인완료';
       btn.disabled = true;
+      btn.textContent = '확인 중...';
+      try {
+        await apiFetch('GET', `/api/user/check-id?loginId=${encodeURIComponent(loginId)}`);
+        idChecked = true;
+        setError('lite-id', 'err-lite-id', false);
+        document.getElementById('ok-lite-id').classList.add('show');
+        btn.textContent = '확인완료';
+      } catch(e) {
+        idChecked = false;
+        setError('lite-id', 'err-lite-id', true, e.message || '이미 사용 중인 아이디입니다.');
+        btn.textContent = '중복 확인';
+        btn.disabled = false;
+      }
     }
 
     function goNext() {
@@ -281,31 +298,35 @@
     }
 
     function goNextLite() {
-      const name  = document.getElementById('lite-name').value.trim();
-      const email = document.getElementById('lite-email').value.trim();
-      const pw    = document.getElementById('lite-pw').value;
-      const pw2   = document.getElementById('lite-pw2').value;
+      const name    = document.getElementById('lite-name').value.trim();
+      const loginId = document.getElementById('lite-id').value.trim();
+      const email   = document.getElementById('lite-email').value.trim();
+      const pw      = document.getElementById('lite-pw').value;
+      const pw2     = document.getElementById('lite-pw2').value;
       let valid = true;
 
+      const idOk    = loginId.length >= 4 && /^[a-zA-Z0-9_]+$/.test(loginId);
       const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
       setError('lite-name', 'err-lite-name', !name, '성함을 입력해 주세요.');
-      if (!emailOk) {
-        setError('lite-email', 'err-lite-email', true, '올바른 이메일 형식을 입력해 주세요.');
-      } else if (!emailChecked) {
-        setError('lite-email', 'err-lite-email', true, '이메일 중복 확인을 해주세요.');
+      if (!idOk) {
+        setError('lite-id', 'err-lite-id', true, '영문·숫자·언더바(_) 조합 4자 이상으로 입력해 주세요.');
+      } else if (!idChecked) {
+        setError('lite-id', 'err-lite-id', true, '아이디 중복 확인을 해주세요.');
       } else {
-        setError('lite-email', 'err-lite-email', false);
+        setError('lite-id', 'err-lite-id', false);
       }
+      setError('lite-email', 'err-lite-email', !emailOk);
       setError('lite-pw',  'err-lite-pw',  pw.length < 8, '비밀번호는 8자 이상이어야 합니다.');
       setError('lite-pw2', 'err-lite-pw2', pw !== pw2,    '비밀번호가 일치하지 않습니다.');
-      if (!name || !emailOk || !emailChecked || pw.length < 8 || pw !== pw2) valid = false;
+
+      if (!name || !idOk || !idChecked || !emailOk || pw.length < 8 || pw !== pw2) valid = false;
 
       document.getElementById('submit-error').classList.toggle('show', !valid);
       if (valid) {
         localStorage.setItem('applicantName', name);
+        localStorage.setItem('applicantLoginId', loginId);
         localStorage.setItem('applicantEmail', email);
-        // 비밀번호는 결제 완료 후 서버 전송 — 임시 세션 저장
         sessionStorage.setItem('applicantPw', pw);
         window.location.href = 'payment.html?plan=' + plan;
       }
