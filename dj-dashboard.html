@@ -636,7 +636,7 @@
   <div class="access-denied-title">접근 권한이 없습니다</div>
   <div class="access-denied-desc">매장 관리자 또는 DJ 계정으로 로그인한 경우에만 접근할 수 있습니다.</div>
   <a href="login.html?mode=owner" class="btn-primary" style="text-decoration:none;">로그인하기</a>
-  <button onclick="enterDemo()" style="margin-top:8px;background:none;border:1px solid #e5e7eb;color:var(--text-gray);border-radius:100px;padding:10px 20px;font-size:13px;cursor:pointer;font-family:inherit;">데모로 보기</button>
+  <a href="login.html" style="margin-top:8px;display:inline-block;background:none;border:1px solid #e5e7eb;color:var(--text-gray);border-radius:100px;padding:10px 20px;font-size:13px;cursor:pointer;text-decoration:none;">로그인하기</a>
 </div>
 
 <!-- 메인 -->
@@ -695,7 +695,7 @@
         <strong>⚠ 이 페이지를 닫으면 라이브 방송이 종료됩니다.</strong>
       </p>
 
-      <!-- 유의사항 -->
+      <!-- 방송 유의사항 -->
       <div class="notice-card">
         <div class="notice-card-title">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
@@ -706,11 +706,31 @@
           <li><strong>변경사항 적용:</strong> 파일을 추가하거나 삭제한 후 반드시 <strong>적용하기</strong> 버튼을 눌러야 방송에 반영됩니다.</li>
           <div class="notice-divider"></div>
           <li><strong>저작권 준수:</strong> 반드시 본인이 저작권을 보유하거나 합법적 이용 권한이 있는 음원만 업로드·재생할 수 있습니다.</li>
-          <li><strong>분쟁 책임:</strong> 저작권 침해, 공연권 분쟁 등 법적 문제가 발생하는 경우 해당 크리에이터가 모든 책임을 집니다. 인디피 뮤직은 책임을 지지 않습니다.</li>
+          <li><strong>분쟁 책임:</strong> 저작권 침해 등 법적 문제 발생 시 해당 크리에이터가 모든 책임을 집니다.</li>
           <li><strong>콘텐츠 제거:</strong> 저작권 문제가 확인된 음원은 사전 통보 없이 즉시 재생 목록에서 제외될 수 있습니다.</li>
           <div class="notice-divider"></div>
           <li><strong>페이지 유지:</strong> 방송 중 이 페이지를 닫거나 새로고침하면 라이브가 종료됩니다.</li>
           <li><strong>파일 형식:</strong> MP3 · WAV만 허용되며, 파일당 최대 50MB입니다.</li>
+        </ul>
+      </div>
+
+      <!-- 크리에이터 정책 -->
+      <div class="notice-card" style="margin-top:12px">
+        <div class="notice-card-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          크리에이터 정책
+        </div>
+        <ul class="notice-list">
+          <li><strong>음원 기준:</strong> 트랙 길이 2분 이상 · 128kbps 이상 · MP3 또는 WAV</li>
+          <li><strong>활동 유지:</strong> 월 최소 5트랙 이상 업로드를 유지해야 합니다. 3개월 연속 미달 시 라이브 기능이 제한됩니다.</li>
+          <div class="notice-divider"></div>
+          <li><strong>계정 보안:</strong> 계정을 제3자와 공유하거나 양도하는 행위는 금지됩니다.</li>
+          <li><strong>어뷰징 금지:</strong> 봇·자동 재생 등 비정상적인 방법으로 청취 수를 조작하는 행위는 정산 무효 및 계정 제재 사유가 됩니다.</li>
+          <li><strong>부적절 콘텐츠:</strong> 폭력·혐오·성인 콘텐츠가 포함된 음원은 즉시 삭제됩니다.</li>
+          <div class="notice-divider"></div>
+          <li><strong>정산 지급:</strong> 매월 익월 15일 지급 · 최소 출금 금액 10,000원 (미달 시 이월)</li>
+          <li><strong>세금:</strong> 개인 크리에이터는 정산액의 3.3%가 원천징수된 후 지급됩니다.</li>
+          <li><strong>정책 위반 제재:</strong> 경고 → 정산 보류 → 계정 영구 비활성화 순으로 처리됩니다.</li>
         </ul>
       </div>
     </div>
@@ -767,7 +787,7 @@
   <!-- 정산 카드 -->
   <div class="revenue-card">
     <p class="revenue-card-title">수익 정산</p>
-    <p class="revenue-card-subtitle">구독자 청취 시간 기반으로 수익이 산정됩니다.</p>
+    <p class="revenue-card-subtitle">청취자 수와 청취 시간에 따라 정산 금액이 결정됩니다. 더 많은 구독자가 더 오래 들을수록 수익이 늘어납니다.</p>
     <div class="revenue-grid">
       <div class="revenue-item">
         <div class="revenue-item-label">이번 달 예상 수익</div>
@@ -783,7 +803,7 @@
       </div>
     </div>
     <div class="revenue-pending-notice">
-      정산 정책이 준비 중입니다. 정책 확정 후 이 영역에 상세 내역이 표시됩니다.
+      정산은 매월 익월 15일에 지급됩니다. 최소 출금 금액은 10,000원이며, 미달 시 다음 달로 이월됩니다.
     </div>
   </div>
 
@@ -880,19 +900,12 @@
 
 <script>
 /* ── 인증 ── */
-function enterDemo() {
-  localStorage.setItem('djToken', 'demo');
-  localStorage.setItem('djName', 'DJ Parkwan');
-  localStorage.setItem('djGenre', 'Indie · Jazz · Chill');
-  location.reload();
-}
 function logout() {
   ['djToken', 'djName', 'djGenre'].forEach(k => localStorage.removeItem(k));
   location.href = 'index.html';
 }
 
-// TODO: 백엔드 DJ 인증 API 준비 후 실제 토큰 검증으로 교체
-const djToken = localStorage.getItem('djToken') || getOwnerToken() || localStorage.getItem('adminToken') || 'temp';
+const djToken = localStorage.getItem('djToken') || getOwnerToken() || localStorage.getItem('adminToken');
 let djName     = localStorage.getItem('djName')     || localStorage.getItem('storeName') || 'DJ';
 let djRealName = localStorage.getItem('djRealName') || '';
 let djPhone    = localStorage.getItem('djPhone')    || '';
@@ -924,8 +937,7 @@ function init() {
   document.getElementById('dj-name').textContent   = djName;
   applyThumb(djThumb, document.getElementById('dj-avatar-wrap'));
 
-  // 초기 샘플 트랙은 적용 완료 상태로 설정
-  appliedTrackIds = new Set(tracks.map(t => t.id));
+  appliedTrackIds = new Set();
 
   renderTracks();
   renderChannel();
@@ -960,26 +972,8 @@ function applyChanges() {
   // TODO: 백엔드 연동 후 트랙 목록 변경 API 호출
 }
 
-/* ── 트랙 데이터 (임시: 백엔드 GET /api/dj/tracks 연동 전 100개 샘플) ── */
-const SAMPLE_TRACK_NAMES = [
-  'morning_light', 'slow_burn', 'coastal_drive', 'late_night', 'velvet_haze',
-  'city_lights', 'rain_walk', 'golden_hour', 'deep_blue', 'neon_fade',
-  'sunday_chill', 'rooftop_session', 'after_midnight', 'drift_away', 'soft_focus',
-  'harbour_view', 'still_water', 'warm_static', 'echo_chamber', 'signal_lost',
-  'cloud_nine', 'midnight_run', 'open_road', 'last_light', 'frequency',
-  'analog_dream', 'passing_time', 'hollow_sound', 'first_snow', 'amber_glow',
-  'radio_silence', 'low_tide', 'evening_sun', 'inner_city', 'far_away',
-  'forest_floor', 'paper_thin', 'slow_motion', 'quiet_storm', 'blue_hour',
-  'side_street', 'water_tower', 'soft_landing', 'somewhere_warm', 'night_shift',
-  'empty_room', 'still_here', 'glass_ceiling', 'loose_ends', 'half_light',
-];
-let tracks = Array.from({ length: 100 }, (_, i) => {
-  const name = SAMPLE_TRACK_NAMES[i % SAMPLE_TRACK_NAMES.length] + (i >= SAMPLE_TRACK_NAMES.length ? `_${Math.floor(i / SAMPLE_TRACK_NAMES.length) + 1}` : '');
-  const secs = 150 + Math.floor(Math.random() * 120); // 2분 30초 ~ 4분 30초
-  const min  = Math.floor(secs / 60);
-  const sec  = String(secs % 60).padStart(2, '0');
-  return { id: i + 1, filename: `${name}.mp3`, duration: `${min}:${sec}`, secs, uploading: false };
-});
+/* ── 트랙 데이터 ── */
+let tracks = [];
 
 /* ── 채널 상태 ── */
 let isLive = false;
