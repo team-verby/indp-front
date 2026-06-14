@@ -2906,10 +2906,10 @@
     </div>
     <div class="drawer-tabs">
       <div class="drawer-tab active" onclick="switchDrawerTab('info', this)">기본 정보</div>
-      <div class="drawer-tab" onclick="switchDrawerTab('playlist', this)">매장 무드</div>
-      <div class="drawer-tab" onclick="switchDrawerTab('recommend', this)">추천곡 관리</div>
-      <div class="drawer-tab" onclick="switchDrawerTab('ap-mapping', this)">음원 매핑</div>
-      <div class="drawer-tab" onclick="switchDrawerTab('current-pl', this)">현재 플리</div>
+      <div class="drawer-tab" data-store-only onclick="switchDrawerTab('playlist', this)">매장 무드</div>
+      <div class="drawer-tab" data-store-only onclick="switchDrawerTab('recommend', this)">추천곡 관리</div>
+      <div class="drawer-tab" data-store-only onclick="switchDrawerTab('ap-mapping', this)">음원 매핑</div>
+      <div class="drawer-tab" data-store-only onclick="switchDrawerTab('current-pl', this)">현재 플리</div>
     </div>
     <!-- 크리에이터 상세 패널 (매장 드로어와 공유, 별도 내용) -->
     <div id="creator-detail-panel" style="display:none;height:100%;overflow-y:auto">
@@ -3595,6 +3595,7 @@
       document.getElementById('detail-drawer').classList.remove('open');
       document.getElementById('creator-detail-panel').style.display = 'none';
       document.getElementById('store-detail-panel').style.display = '';
+      document.querySelectorAll('[data-store-only]').forEach(t => t.style.display = '');
     }
 
     // ── 플레이리스트 탭 ──
@@ -4119,6 +4120,7 @@
       `;
       document.getElementById('creator-detail-panel').style.display = '';
       document.getElementById('store-detail-panel').style.display = 'none';
+      document.querySelectorAll('[data-store-only]').forEach(t => t.style.display = 'none');
       document.getElementById('drawer-backdrop').classList.add('open');
       document.getElementById('detail-drawer').classList.add('open');
     }
