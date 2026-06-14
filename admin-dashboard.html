@@ -2869,15 +2869,11 @@
                   <tr>
                     <th>크리에이터</th>
                     <th>연락처</th>
-                    <th>라이브</th>
-                    <th>트랙</th>
                     <th>생성일</th>
-                    <th>상태</th>
-                    <th></th>
                   </tr>
                 </thead>
                 <tbody id="ac-table-body">
-                  <tr><td colspan="7" style="text-align:center;padding:32px;color:rgba(255,255,255,0.3)">불러오는 중...</td></tr>
+                  <tr><td colspan="3" style="text-align:center;padding:32px;color:rgba(255,255,255,0.3)">불러오는 중...</td></tr>
                 </tbody>
               </table>
             </div>
@@ -4015,9 +4011,6 @@
           const thumbHtml = c.thumbnailUrl
             ? `<div class="ac-thumb"><img src="${c.thumbnailUrl}" alt="" /></div>`
             : `<div class="ac-thumb"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>`;
-          const liveBadge = c.isLive
-            ? `<span class="ac-live-on"><span class="ac-live-dot"></span>ON AIR${c.listenerCount > 0 ? ` · ${c.listenerCount}명` : ''}</span>`
-            : `<span class="ac-live-off">OFF</span>`;
           return `
           <tr style="cursor:pointer" onclick="acOpenDetail(${JSON.stringify(c).replace(/"/g,'&quot;')})">
             <td>
@@ -4033,19 +4026,11 @@
               <div style="color:rgba(255,255,255,0.7)">${c.name || '-'}</div>
               <div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:1px">${c.phone || '-'}</div>
             </td>
-            <td>${liveBadge}</td>
-            <td style="color:rgba(255,255,255,0.6)">${c.trackCount != null ? `${c.trackCount}개` : '-'}</td>
             <td style="color:rgba(255,255,255,0.4)">${fmtD(c.createdAt)}</td>
-            <td><span class="status-badge ${c.active !== false ? 'status-active' : 'status-expired'}">${c.active !== false ? '활성' : '비활성'}</span></td>
-            <td onclick="event.stopPropagation()">
-              <div class="btn-row">
-                <button class="btn-action reject" onclick="acDeactivate(${c.id}, this)" ${c.active === false ? 'disabled' : ''}>비활성화</button>
-              </div>
-            </td>
           </tr>`;
         }).join('');
       } catch(e) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:32px;color:rgba(255,255,255,0.3)">등록된 크리에이터가 없습니다.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;padding:32px;color:rgba(255,255,255,0.3)">등록된 크리에이터가 없습니다.</td></tr>';
       }
     }
 
@@ -4054,7 +4039,6 @@
         ? `<div class="cr-drawer-avatar"><img src="${c.thumbnailUrl}" alt="" /></div>`
         : `<div class="cr-drawer-avatar"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>`;
       const fmtD = d => d ? new Date(d).toLocaleDateString('ko-KR', { year:'numeric', month:'2-digit', day:'2-digit' }) : '-';
-      const fmtAmt = v => v != null ? `${Number(v).toLocaleString()}원` : '—';
 
       document.getElementById('detail-creator-wrap').innerHTML = `
         <div class="cr-drawer-profile">
@@ -4063,9 +4047,6 @@
             <div class="cr-drawer-name">${c.djName || '-'}</div>
             <div class="cr-drawer-email">${c.email || '-'}</div>
           </div>
-          <span class="status-badge ${c.active !== false ? 'status-active' : 'status-expired'}" style="margin-left:auto">
-            ${c.active !== false ? '활성' : '비활성'}
-          </span>
         </div>
 
         <div class="cr-info-grid">
@@ -4073,49 +4054,6 @@
           <div class="cr-info-item"><div class="cr-info-label">휴대폰</div><div class="cr-info-value">${c.phone || '-'}</div></div>
           <div class="cr-info-item"><div class="cr-info-label">이메일</div><div class="cr-info-value" style="font-size:12px">${c.email || '-'}</div></div>
           <div class="cr-info-item"><div class="cr-info-label">생성일</div><div class="cr-info-value">${fmtD(c.createdAt)}</div></div>
-        </div>
-
-        <div class="cr-section">
-          <div class="cr-section-title">라이브 현황</div>
-          <div class="cr-live-row">
-            ${c.isLive
-              ? `<span class="ac-live-on"><span class="ac-live-dot"></span>ON AIR</span>`
-              : `<span class="ac-live-off">OFF AIR</span>`}
-            <span style="font-size:13px;color:rgba(255,255,255,0.4)">현재 청취자 ${c.listenerCount ?? 0}명</span>
-          </div>
-          <div class="cr-stat-row">
-            <div class="cr-stat">
-              <div class="cr-stat-val">${c.trackCount ?? 0}</div>
-              <div class="cr-stat-lbl">업로드 트랙</div>
-            </div>
-            <div class="cr-stat">
-              <div class="cr-stat-val">${c.totalListenMinutes != null ? Math.floor(c.totalListenMinutes / 60) + 'h' : '—'}</div>
-              <div class="cr-stat-lbl">누적 청취 시간</div>
-            </div>
-            <div class="cr-stat">
-              <div class="cr-stat-val">${c.subscriberCount ?? '—'}</div>
-              <div class="cr-stat-lbl">구독자 수</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="cr-section">
-          <div class="cr-section-title">정산 현황</div>
-          <div class="cr-stat-row" style="margin-top:0">
-            <div class="cr-stat">
-              <div class="cr-stat-val" style="font-size:16px">${fmtAmt(c.thisMonthEstimate)}</div>
-              <div class="cr-stat-lbl">이번 달 예상 수익</div>
-            </div>
-            <div class="cr-stat">
-              <div class="cr-stat-val" style="font-size:16px">${fmtAmt(c.totalPaid)}</div>
-              <div class="cr-stat-lbl">누적 정산 금액</div>
-            </div>
-          </div>
-          <div class="cr-revenue-placeholder" style="margin-top:10px">정산 정책 준비 중 — 확정 후 실데이터 표시</div>
-        </div>
-
-        <div style="padding:16px 24px">
-          <button class="btn-action reject" style="width:100%;padding:10px;font-size:13px" onclick="acDeactivate(${c.id}, this)" ${c.active === false ? 'disabled' : ''}>계정 비활성화</button>
         </div>
       `;
       document.getElementById('creator-detail-panel').style.display = '';
