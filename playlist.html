@@ -628,7 +628,11 @@
 
     function enterDjDashboard(e) {
       e.preventDefault();
-      // TODO: 백엔드 DJ 인증 API 준비 후 토큰 검증 복원
+      const djToken = localStorage.getItem('djToken');
+      if (!djToken) {
+        location.href = 'login.html';
+        return;
+      }
       location.href = 'dj-dashboard.html';
     }
 
