@@ -407,8 +407,9 @@
     <!-- Plan Cards -->
     <div class="plan-cards-row" id="plan-cards-row">
 
-      <!-- Plan A 라이트 -->
-      <div class="plan-select-card" id="planA" onclick="selectPlan('A', 3, 4400)">
+      <!-- Plan A 라이트 — 준비중 -->
+      <div class="plan-select-card" id="planA" style="opacity:0.55;cursor:not-allowed;pointer-events:none;position:relative;">
+        <span class="popular-badge" style="background:#9ca3af">준비중</span>
         <p class="plan-card-name">Plan A 라이트 요금제</p>
         <p class="plan-card-subdesc">DJ 플레이리스트 전용 플랜</p>
         <p class="plan-original"></p>
@@ -576,12 +577,13 @@
       const row = document.getElementById('plan-cards-row');
       row.innerHTML = '';
 
-      // Plan A 라이트 (백엔드 미적용, 항상 하드코딩으로 앞에 표시)
+      // Plan A 라이트 — 준비중 (선택 불가)
       const liteCard = document.createElement('div');
       liteCard.className = 'plan-select-card';
       liteCard.id = 'planA';
-      liteCard.onclick = () => selectPlan('A', 3, 4400);
+      liteCard.style.cssText = 'opacity:0.55;cursor:not-allowed;pointer-events:none;position:relative;';
       liteCard.innerHTML = `
+        <span class="popular-badge" style="background:#9ca3af">준비중</span>
         <p class="plan-card-name">Plan A 라이트 요금제</p>
         <p class="plan-card-subdesc">DJ 플레이리스트 전용 플랜</p>
         <p class="plan-original"></p>
