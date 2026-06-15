@@ -2797,18 +2797,19 @@
           </div>
         </div>
 
-        <!-- 모드 탭 -->
+        <!-- 생성 방식 토글 -->
         <div class="pl-mode-tabs">
           <button class="pl-mode-tab active" id="pl-mode-tab-excel" onclick="switchPlMode('excel', this)">엑셀 업로드</button>
           <button class="pl-mode-tab" id="pl-mode-tab-random" onclick="switchPlMode('random', this)">랜덤 생성</button>
         </div>
 
-        <!-- 엑셀 업로드 모드 -->
-        <div class="pl-excel-mode" id="pl-excel-mode">
-          <div class="pl-layout">
+        <div class="pl-layout">
 
-            <!-- 좌측: 업로드만 -->
-            <div class="pl-left">
+          <!-- ───── 좌측 패널 ───── -->
+          <div class="pl-left">
+
+            <!-- 엑셀 입력부 (엑셀 모드) -->
+            <div id="pl-input-excel">
               <div class="pl-upload-card">
                 <p class="pl-upload-card-title">엑셀 파일 업로드</p>
                 <div class="pl-dropzone" id="pl-dropzone"
@@ -2847,52 +2848,8 @@
               </div>
             </div>
 
-            <!-- 우측: 매장 목록 + 플리 비교 -->
-            <div class="pl-right">
-              <!-- 우측 헤더 -->
-              <div class="pl-right-header">
-                <div class="pl-right-stats" id="pl-right-stats">
-                  <span class="pl-stat-item">전체 <strong id="pl-stat-total">0</strong>개 매장</span>
-                  <span class="pl-stat-divider">·</span>
-                  <span class="pl-stat-item">매칭 <strong id="pl-stat-matched" style="color:#c6f135">0</strong>개</span>
-                  <span class="pl-stat-divider">·</span>
-                  <span class="pl-stat-item pl-stat-last" id="pl-stat-last">마지막 생성: -</span>
-                </div>
-                <button class="btn-create-pl" id="btn-create-pl" onclick="plCreate()">플레이리스트 생성</button>
-              </div>
-              <!-- 일괄 적용 시각 -->
-              <div class="pl-bulk-schedule" id="pl-bulk-schedule">
-                <span class="pl-bulk-label">일괄 적용 시각</span>
-                <input type="date" class="pl-schedule-input date-input" id="pl-bulk-date" style="flex:1.4" />
-                <select class="pl-schedule-input time-input" id="pl-bulk-time">
-                  <option value="">시간 선택</option>
-                </select>
-                <button class="pl-bulk-apply-btn" onclick="plApplyBulkSchedule()">전체 적용</button>
-              </div>
-              <!-- 매장 목록 (클릭 시 인라인 펼침) -->
-              <div class="pl-store-list" id="pl-store-list"></div>
-            </div>
-
-          </div>
-        </div>
-
-        <!-- 랜덤 생성 모드 -->
-        <div class="pl-random-mode" id="pl-random-mode">
-          <div class="pl-layout">
-
-            <!-- 좌측 패널 -->
-            <div class="pl-left">
-
-              <!-- [1] 생성 설정 카드 -->
-              <div class="ap-gen-card">
-                <p class="ap-gen-card-title">플리 생성 설정</p>
-                <label class="ap-extra-label">적용 날짜</label>
-                <input type="date" class="ap-gen-date-input" id="ap-gen-date" />
-                <button class="ap-gen-apply-btn" onclick="apApplyBulkDate()">전체 매장에 일괄 적용</button>
-                <button class="ap-gen-create-btn" id="ap-bulk-gen-btn" onclick="apBulkGenerate()" disabled>전체 매장 플리 생성</button>
-              </div>
-
-              <!-- [2] 일괄 무드 초기화 카드 -->
+            <!-- 랜덤 입력부 (랜덤 모드) -->
+            <div id="pl-input-random" style="display:none">
               <div class="ap-gen-card">
                 <p class="ap-gen-card-title">무드 일괄 초기화</p>
                 <div class="ap-extra-field">
@@ -2902,73 +2859,93 @@
                 <button class="ap-gen-apply-btn" id="ap-bulk-init-btn" onclick="apBulkInitMood()">전체 매장 운영시간에 적용</button>
                 <p style="font-size:11px;color:rgba(255,255,255,0.25);margin-top:8px;line-height:1.6">매장별 운영시간을 API에서 불러와<br/>해당 시간대를 입력한 무드로 일괄 설정합니다</p>
               </div>
-
-              <!-- [3] 개별 곡 추가 카드 -->
-              <div class="ap-gen-card">
-                <p class="ap-gen-card-title">개별 곡 추가</p>
-                <div class="ap-extra-field">
-                  <label class="ap-extra-label">가수</label>
-                  <input type="text" class="ap-extra-input" id="ap-extra-artist" placeholder="아티스트명" />
-                </div>
-                <div class="ap-extra-field">
-                  <label class="ap-extra-label">제목</label>
-                  <input type="text" class="ap-extra-input" id="ap-extra-title" placeholder="곡 제목" />
-                </div>
-                <div class="ap-extra-row">
-                  <div class="ap-extra-field">
-                    <label class="ap-extra-label">재생시간</label>
-                    <input type="text" class="ap-extra-input" id="ap-extra-duration" placeholder="mm:ss" />
-                  </div>
-                  <div class="ap-extra-field">
-                    <label class="ap-extra-label">YouTube ID/URL</label>
-                    <input type="text" class="ap-extra-input" id="ap-extra-vid" placeholder="URL 또는 11자리 ID" />
-                  </div>
-                </div>
-                <div class="ap-extra-field">
-                  <label class="ap-extra-label">매장</label>
-                  <select class="ap-extra-input" id="ap-extra-store">
-                    <option value="">매장 선택</option>
-                  </select>
-                </div>
-                <div class="ap-extra-row">
-                  <div class="ap-extra-field">
-                    <label class="ap-extra-label">시간대</label>
-                    <select class="ap-extra-input" id="ap-extra-hour">
-                      <option value="">시간 선택</option>
-                    </select>
-                  </div>
-                  <div class="ap-extra-field">
-                    <label class="ap-extra-label">삽입 순서</label>
-                    <input type="number" class="ap-extra-input" id="ap-extra-pos" min="1" max="18" value="1" />
-                  </div>
-                </div>
-                <button class="ap-extra-add-btn" onclick="apAddExtraSong()">+ 곡 추가</button>
-
-                <!-- 추가된 곡 목록 -->
-                <div class="ap-extra-list" id="ap-extra-list" style="display:none">
-                  <p class="ap-extra-list-label">추가된 개별 곡</p>
-                  <div id="ap-extra-items"></div>
-                </div>
-              </div>
-
             </div>
 
-            <!-- 우측 패널 -->
-            <div class="pl-right">
-              <div class="pl-right-header">
-                <div class="pl-right-stats">
-                  <span class="pl-stat-item">전체 <strong id="ap-stat-total">0</strong>개 매장</span>
-                  <span class="pl-stat-divider">·</span>
-                  <span class="pl-stat-item">매핑 완료 <strong id="ap-stat-mapped" style="color:#c6f135">0</strong>개</span>
+            <!-- 개별 곡 추가 카드 (공통) -->
+            <div class="ap-gen-card">
+              <p class="ap-gen-card-title">개별 곡 추가</p>
+              <div class="ap-extra-field">
+                <label class="ap-extra-label">가수</label>
+                <input type="text" class="ap-extra-input" id="ap-extra-artist" placeholder="아티스트명" />
+              </div>
+              <div class="ap-extra-field">
+                <label class="ap-extra-label">제목</label>
+                <input type="text" class="ap-extra-input" id="ap-extra-title" placeholder="곡 제목" />
+              </div>
+              <div class="ap-extra-row">
+                <div class="ap-extra-field">
+                  <label class="ap-extra-label">재생시간</label>
+                  <input type="text" class="ap-extra-input" id="ap-extra-duration" placeholder="mm:ss" />
+                </div>
+                <div class="ap-extra-field">
+                  <label class="ap-extra-label">YouTube ID/URL</label>
+                  <input type="text" class="ap-extra-input" id="ap-extra-vid" placeholder="URL 또는 11자리 ID" />
                 </div>
               </div>
-              <div id="ap-store-cards" class="pl-store-list">
-                <div class="ap-empty-msg">매장 정보를 불러오는 중...</div>
+              <div class="ap-extra-field">
+                <label class="ap-extra-label">매장</label>
+                <select class="ap-extra-input" id="ap-extra-store">
+                  <option value="">매장 선택</option>
+                </select>
               </div>
-              <div id="ap-bulk-result"></div>
+              <div class="ap-extra-row">
+                <div class="ap-extra-field" id="ap-extra-hour-field">
+                  <label class="ap-extra-label">시간대</label>
+                  <select class="ap-extra-input" id="ap-extra-hour">
+                    <option value="">시간 선택</option>
+                  </select>
+                </div>
+                <div class="ap-extra-field">
+                  <label class="ap-extra-label">삽입 순서</label>
+                  <input type="number" class="ap-extra-input" id="ap-extra-pos" min="1" value="1" />
+                </div>
+              </div>
+              <button class="ap-extra-add-btn" onclick="apAddExtraSong()">+ 곡 추가</button>
+
+              <!-- 추가된 곡 목록 -->
+              <div class="ap-extra-list" id="ap-extra-list" style="display:none">
+                <p class="ap-extra-list-label">추가된 개별 곡</p>
+                <div id="ap-extra-items"></div>
+              </div>
             </div>
 
           </div>
+
+          <!-- ───── 우측 패널 (공통 매장 목록) ───── -->
+          <div class="pl-right">
+            <!-- 우측 헤더 -->
+            <div class="pl-right-header">
+              <div class="pl-right-stats">
+                <span id="pl-stats-excel">
+                  <span class="pl-stat-item">전체 <strong id="pl-stat-total">0</strong>개 매장</span>
+                  <span class="pl-stat-divider">·</span>
+                  <span class="pl-stat-item">매칭 <strong id="pl-stat-matched" style="color:#c6f135">0</strong>개</span>
+                  <span class="pl-stat-divider">·</span>
+                  <span class="pl-stat-item pl-stat-last" id="pl-stat-last">마지막 생성: -</span>
+                </span>
+                <span id="pl-stats-random" style="display:none">
+                  <span class="pl-stat-item">전체 <strong id="ap-stat-total">0</strong>개 매장</span>
+                  <span class="pl-stat-divider">·</span>
+                  <span class="pl-stat-item">매핑 완료 <strong id="ap-stat-mapped" style="color:#c6f135">0</strong>개</span>
+                </span>
+              </div>
+              <button class="btn-create-pl" id="btn-create-pl" onclick="plGenerate()">플레이리스트 생성</button>
+            </div>
+            <!-- 일괄 적용 시각 (공통) -->
+            <div class="pl-bulk-schedule show" id="pl-bulk-schedule">
+              <span class="pl-bulk-label">일괄 적용 시각</span>
+              <input type="date" class="pl-schedule-input date-input" id="pl-bulk-date" style="flex:1.4" />
+              <select class="pl-schedule-input time-input" id="pl-bulk-time">
+                <option value="">시간 선택</option>
+              </select>
+              <button class="pl-bulk-apply-btn" onclick="plApplyBulkScheduleUnified()">전체 적용</button>
+            </div>
+            <!-- 매장 목록 (공통, 클릭 시 인라인 펼침) -->
+            <div class="pl-store-list" id="pl-store-list"></div>
+            <!-- 생성 결과 -->
+            <div id="pl-gen-result"></div>
+          </div>
+
         </div>
 
       </div>
@@ -4218,7 +4195,7 @@
       document.getElementById('panel-' + panelId).classList.add('active');
       el.classList.add('active');
       document.getElementById('topbar-title').textContent = panelTitles[panelId];
-      if (panelId === 'playlists') plRenderStoreList();
+      if (panelId === 'playlists') switchPlMode(plGenMode);
       if (panelId === 'music-data') mdInit();
       if (panelId === 'accounts') acLoadList();
       if (panelId === 'subscribers') loadSubscribers();
@@ -4425,6 +4402,8 @@
     const apScheduledAt = {}; // { storeName: { date, time } } — 랜덤 생성용
     const plCurrentSongs = {}; // { storeName: [ {title,artist,playTime} ] } — API 캐시
     let plSelectedStore = null;
+    let plGenMode = 'excel';   // 'excel' | 'random' — 현재 생성 방식
+    const plGenerated = {};    // { storeName: { mode, scheduledAt, songs?, slots? } } — 방금 생성/등록한 예약 플리 캐시
 
     // 재생시간 문자열 → 초 (정수, "MM:SS", "H:MM:SS" 모두 지원)
     function parsePlayTimeSec(val) {
@@ -4485,11 +4464,27 @@
     }
 
     // 매장 목록 렌더 (엑셀 있으면 매칭 배지 + 곡수 변화 + 적용시각 입력)
+    // 엑셀 업로드 곡 + 개별 추가 곡(flat) 병합 결과
+    function plEffectiveSongs(storeName) {
+      const base = (playlists[storeName] || []).map(t => ({
+        title: t.title, artist: t.artist, vid: t.vid, playTime: t.playTime
+      }));
+      const extras = (apExtraSongs[storeName]?.['flat'] || [])
+        .slice().sort((a, b) => a.position - b.position);
+      for (const extra of extras) {
+        const s = { title: extra.song.title, artist: extra.song.artist, vid: extra.song.vid, playTime: extra.song.playTime };
+        const idx = extra.position - 1;
+        if (idx >= 0 && idx < base.length) base.splice(idx, 1, s);
+        else base.push(s);
+      }
+      return base;
+    }
+
     function plRenderStoreList() {
       const wrap = document.getElementById('pl-store-list');
       const hasExcel = Object.keys(playlists).length > 0;
       wrap.innerHTML = stores.map(s => {
-        const newTracks   = playlists[s.storeName];
+        const newTracks   = playlists[s.storeName] ? plEffectiveSongs(s.storeName) : null;
         const curSongs    = plCurrentSongs[s.storeName];
         const newCount    = newTracks ? newTracks.length : 0;
         const curCount    = curSongs  ? curSongs.length  : null;
@@ -4596,7 +4591,7 @@
       const expandEl = document.getElementById('pl-expand-' + safeId);
       if (!expandEl) return;
 
-      const newTracks = playlists[storeName] || [];
+      const newTracks = playlists[storeName] ? plEffectiveSongs(storeName) : [];
       const loading   = currentSongs === null;
 
       const renderRows = (list) => list.length > 0
@@ -4699,9 +4694,9 @@
     function plInitBulkSchedule() {
       const bulkEl = document.getElementById('pl-bulk-schedule');
       bulkEl.classList.add('show');
-      // 날짜 기본값: 오늘
-      const todayStr = new Date().toISOString().slice(0, 10);
-      document.getElementById('pl-bulk-date').value = todayStr;
+      // 날짜 기본값: 오늘 (비어있을 때만)
+      const dateEl = document.getElementById('pl-bulk-date');
+      if (!dateEl.value) dateEl.value = new Date().toISOString().slice(0, 10);
       // 시간 옵션 채우기 (비어있으면)
       const sel = document.getElementById('pl-bulk-time');
       if (sel.options.length <= 1) {
@@ -4716,18 +4711,37 @@
       }
     }
 
-    function plApplyBulkSchedule() {
+    // 생성 버튼 라우터 (방식에 따라 분기)
+    function plGenerate() {
+      if (plGenMode === 'random') apBulkGenerate();
+      else plCreate();
+    }
+
+    // 일괄 적용 시각 — 방식에 따라 분기
+    function plApplyBulkScheduleUnified() {
       const date = document.getElementById('pl-bulk-date').value;
-      const time = document.getElementById('pl-bulk-time').value;
-      if (!date || !time) return;
-      stores.forEach(s => {
-        if (playlists[s.storeName]?.length > 0) {
-          if (!plScheduledAt[s.storeName]) plScheduledAt[s.storeName] = {};
-          plScheduledAt[s.storeName].date = date;
-          plScheduledAt[s.storeName].time = time;
-        }
-      });
-      plRenderStoreList();
+      if (!date) { plToast('날짜를 먼저 선택해 주세요.', 'error'); return; }
+
+      if (plGenMode === 'random') {
+        stores.forEach(s => {
+          if (!apScheduledAt[s.storeName]) apScheduledAt[s.storeName] = {};
+          apScheduledAt[s.storeName].date = date;
+        });
+        apRenderStoreCards();
+        plToast(`✓ 전체 매장 적용 날짜를 ${date}로 설정했습니다`, 'success');
+      } else {
+        const time = document.getElementById('pl-bulk-time').value;
+        if (!time) { plToast('시각을 선택해 주세요.', 'error'); return; }
+        stores.forEach(s => {
+          if (playlists[s.storeName]?.length > 0) {
+            if (!plScheduledAt[s.storeName]) plScheduledAt[s.storeName] = {};
+            plScheduledAt[s.storeName].date = date;
+            plScheduledAt[s.storeName].time = time;
+          }
+        });
+        plRenderStoreList();
+        plToast(`✓ 매칭 매장 적용 시각을 ${date} ${time}로 설정했습니다`, 'success');
+      }
     }
 
     function apSetSchedule(storeName, field, val) {
@@ -4741,21 +4755,26 @@
       const duration = document.getElementById('ap-extra-duration').value.trim();
       const vidInput = document.getElementById('ap-extra-vid').value.trim();
       const storeName= document.getElementById('ap-extra-store').value;
+      const isExcel  = plGenMode === 'excel';
       const hour     = parseInt(document.getElementById('ap-extra-hour').value);
       const pos      = parseInt(document.getElementById('ap-extra-pos').value) || 1;
 
       if (!artist || !title) { plToast('가수와 제목은 필수 항목입니다.', 'error'); return; }
       if (!storeName)         { plToast('매장을 선택해 주세요.', 'error'); return; }
-      if (isNaN(hour))        { plToast('시간대를 선택해 주세요.', 'error'); return; }
+      if (!isExcel && isNaN(hour)) { plToast('시간대를 선택해 주세요.', 'error'); return; }
 
       // YouTube URL → 11자리 ID 파싱
       const vidMatch = vidInput.match(/(?:v=|youtu\.be\/|embed\/)([A-Za-z0-9_-]{11})/);
       const vid = vidMatch ? vidMatch[1] : (vidInput.length === 11 ? vidInput : '');
 
-      if (!apExtraSongs[storeName])       apExtraSongs[storeName] = {};
-      if (!apExtraSongs[storeName][hour]) apExtraSongs[storeName][hour] = [];
-      apExtraSongs[storeName][hour].push({
-        position: Math.max(1, Math.min(pos, 18)),
+      // 엑셀 모드: 시간대 구분 없는 단일 곡목록 → 'flat' 키 사용
+      const slotKey = isExcel ? 'flat' : hour;
+      const position = isExcel ? Math.max(1, pos) : Math.max(1, Math.min(pos, 18));
+
+      if (!apExtraSongs[storeName])          apExtraSongs[storeName] = {};
+      if (!apExtraSongs[storeName][slotKey]) apExtraSongs[storeName][slotKey] = [];
+      apExtraSongs[storeName][slotKey].push({
+        position,
         song: { title, artist, vid, playTime: parsePlayTimeSec(duration) }
       });
 
@@ -4765,8 +4784,10 @@
       });
 
       apRenderExtraList();
-      apRenderStoreCards(); // 타임라인 배지 갱신
-      plToast(`✓ "${title}" — ${storeName} ${String(hour).padStart(2,'0')}시 ${pos}번째에 추가됨`, 'success');
+      if (isExcel) plRenderStoreList();
+      else apRenderStoreCards(); // 타임라인 배지 갱신
+      const where = isExcel ? `${position}번째` : `${String(hour).padStart(2,'0')}시 ${pos}번째`;
+      plToast(`✓ "${title}" — ${storeName} ${where}에 추가됨`, 'success');
     }
 
     function apRemoveExtraSong(storeName, hour, idx) {
@@ -4775,7 +4796,8 @@
       if (!apExtraSongs[storeName][hour].length) delete apExtraSongs[storeName][hour];
       if (!Object.keys(apExtraSongs[storeName]).length) delete apExtraSongs[storeName];
       apRenderExtraList();
-      apRenderStoreCards();
+      if (plGenMode === 'excel') plRenderStoreList();
+      else apRenderStoreCards();
     }
 
     function apRenderExtraList() {
@@ -4787,7 +4809,7 @@
       Object.entries(apExtraSongs).forEach(([storeName, hourMap]) => {
         Object.entries(hourMap).forEach(([hour, songs]) => {
           songs.forEach((item, idx) => {
-            allItems.push({ storeName, hour: parseInt(hour), idx, item });
+            allItems.push({ storeName, hour, idx, item });
           });
         });
       });
@@ -4795,14 +4817,19 @@
       if (!allItems.length) { listDiv.style.display = 'none'; return; }
       listDiv.style.display = 'block';
 
-      itemsDiv.innerHTML = allItems.map(({ storeName, hour, idx, item }) => `
+      itemsDiv.innerHTML = allItems.map(({ storeName, hour, idx, item }) => {
+        const where = hour === 'flat'
+          ? `${item.position}번째`
+          : `${String(parseInt(hour)).padStart(2,'0')}시 · ${item.position}번째`;
+        return `
         <div class="ap-extra-song-item">
           <div style="flex:1;min-width:0">
             <span class="ap-extra-song-name">${item.song.title}</span>
-            <span class="ap-extra-song-meta">${storeName} · ${String(hour).padStart(2,'0')}시 · ${item.position}번째</span>
+            <span class="ap-extra-song-meta">${storeName} · ${where}</span>
           </div>
-          <button class="ap-extra-del-btn" onclick="apRemoveExtraSong('${storeName.replace(/'/g,"\\'")}', ${hour}, ${idx})">✕</button>
-        </div>`).join('');
+          <button class="ap-extra-del-btn" onclick="apRemoveExtraSong('${storeName.replace(/'/g,"\\'")}', '${hour}', ${idx})">✕</button>
+        </div>`;
+      }).join('');
     }
 
     async function apBulkInitMood() {
@@ -4841,21 +4868,6 @@
       );
     }
 
-    function apApplyBulkDate() {
-      const date = document.getElementById('ap-gen-date').value;
-      if (!date) { plToast('날짜를 먼저 선택해 주세요.', 'error'); return; }
-      stores.forEach(s => {
-        if (!apScheduledAt[s.storeName]) apScheduledAt[s.storeName] = {};
-        apScheduledAt[s.storeName].date = date;
-      });
-      apRenderStoreCards();
-      plToast(`✓ 전체 매장 적용 날짜를 ${date}로 설정했습니다`, 'success');
-    }
-
-    function apInitGenDate() {
-      const dateEl = document.getElementById('ap-gen-date');
-      if (dateEl && !dateEl.value) dateEl.value = new Date().toISOString().slice(0, 10);
-    }
 
     function apPopulateExtraStoreDropdown() {
       const storeSel = document.getElementById('ap-extra-store');
@@ -4882,7 +4894,6 @@
       document.getElementById('pl-file-input').value = '';
       document.getElementById('pl-file-info').classList.remove('show');
       document.getElementById('pl-sheets-wrap').classList.remove('show');
-      document.getElementById('pl-bulk-schedule').classList.remove('show');
       plUpdateHeader();
       plRenderStoreList();
     }
@@ -4900,24 +4911,48 @@
           .filter(s => playlists[s.storeName] && playlists[s.storeName].length > 0)
           .map(s => {
             const sched = plScheduledAt[s.storeName] || {};
-            const scheduledAt = sched.date
-              ? new Date(`${sched.date}T${sched.time || '00:00'}:00`).toISOString()
+            const bulkDate = document.getElementById('pl-bulk-date')?.value;
+            const bulkTime = document.getElementById('pl-bulk-time')?.value;
+            const dateVal = sched.date || bulkDate;
+            const timeVal = sched.time || bulkTime || '00:00';
+            const scheduledAt = dateVal
+              ? new Date(`${dateVal}T${timeVal}:00`).toISOString()
               : new Date().toISOString();
-            return {
-            storeName: s.storeName,
-            scheduledAt,
-            songs: playlists[s.storeName].map(t => ({
+
+            // 단일 곡목록 기준 songs 구성
+            let songs = playlists[s.storeName].map(t => ({
               title: t.title,
               artist: t.artist,
-              vid: t.vid,
+              vid: t.vid || genVid(),
               playTime: parsePlayTimeSec(t.playTime)
-            }))
-          };
+            }));
+
+            // 개별 곡 추가 (position 위치에 replace)
+            const extras = (apExtraSongs[s.storeName]?.['flat'] || [])
+              .slice()
+              .sort((a, b) => a.position - b.position);
+            for (const extra of extras) {
+              const newSong = {
+                title:    extra.song.title,
+                artist:   extra.song.artist,
+                vid:      extra.song.vid || genVid(),
+                playTime: extra.song.playTime,
+              };
+              const idx = extra.position - 1;
+              if (idx >= 0 && idx < songs.length) songs.splice(idx, 1, newSong);
+              else songs.push(newSong);
+            }
+
+            return { storeName: s.storeName, scheduledAt, songs };
           });
         if (schedulePlaylists.length > 0) {
           await apiFetch('POST', '/api/admin/scheduled-playlists', { schedulePlaylists }, adminToken);
           plToast(`✓ ${schedulePlaylists.length}개 매장 플레이리스트 등록 완료`, 'success');
           plSetLastCreated();
+          // 매장 클릭 시 미리볼 수 있도록 캐시
+          schedulePlaylists.forEach(sp => {
+            plGenerated[sp.storeName] = { mode: 'excel', scheduledAt: sp.scheduledAt, songs: sp.songs };
+          });
         }
       } catch(e) {
         console.warn('스케줄 등록 실패:', e);
@@ -5228,18 +5263,35 @@
     })();
 
     function switchPlMode(mode, btn) {
+      plGenMode = mode;
+      const isRandom = mode === 'random';
+
       document.querySelectorAll('.pl-mode-tab').forEach(t => t.classList.remove('active'));
-      btn.classList.add('active');
-      const excelMode = document.getElementById('pl-excel-mode');
-      const randomMode = document.getElementById('pl-random-mode');
-      if (mode === 'random') {
-        excelMode.classList.add('hidden');
-        randomMode.classList.add('active');
-        apRenderStoreCards();
-      } else {
-        excelMode.classList.remove('hidden');
-        randomMode.classList.remove('active');
-      }
+      if (btn) btn.classList.add('active');
+      else document.getElementById('pl-mode-tab-' + mode)?.classList.add('active');
+
+      // 좌측 입력부 전환
+      document.getElementById('pl-input-excel').style.display  = isRandom ? 'none' : '';
+      document.getElementById('pl-input-random').style.display = isRandom ? '' : 'none';
+      // 우측 통계 전환
+      document.getElementById('pl-stats-excel').style.display  = isRandom ? 'none' : '';
+      document.getElementById('pl-stats-random').style.display = isRandom ? '' : 'none';
+      // 랜덤은 시간대별 자동 적용 → 시각(time) 숨김 / 엑셀은 단일 곡목록 → 시간대 필드 숨김
+      document.getElementById('pl-bulk-time').style.display = isRandom ? 'none' : '';
+      document.getElementById('ap-extra-hour-field').style.display = isRandom ? '' : 'none';
+
+      // 펼침 상태 초기화
+      plSelectedStore = null;
+      apSelectedStore = null;
+      const resultEl = document.getElementById('pl-gen-result');
+      if (resultEl) resultEl.innerHTML = '';
+
+      plInitBulkSchedule();
+      apPopulateExtraStoreDropdown();
+      apRenderExtraList();
+
+      if (isRandom) apRenderStoreCards();
+      else plRenderStoreList();
     }
 
     function getBusinessHourRange(hoursStr) {
@@ -5413,22 +5465,18 @@
     let apSelectedStore = null;
 
     function apRenderStoreCards() {
-      const container = document.getElementById('ap-store-cards');
+      const container = document.getElementById('pl-store-list');
       if (!container) return;
 
-      apInitGenDate();
       apSelectedStore = null;
-
-      const bulkBtn = document.getElementById('ap-bulk-gen-btn');
 
       if (!stores.length) {
         container.innerHTML = '<div class="ap-empty-msg">매장 정보를 불러오는 중입니다...</div>';
-        if (bulkBtn) bulkBtn.disabled = true;
         return;
       }
 
       let mappedStores = 0;
-      const todayStr = new Date().toISOString().slice(0, 10);
+      const todayStr = document.getElementById('pl-bulk-date')?.value || new Date().toISOString().slice(0, 10);
 
       container.innerHTML = stores.map(s => {
         const sm = apData[s.storeName] || {};
@@ -5487,7 +5535,6 @@
       const statMapped = document.getElementById('ap-stat-mapped');
       if (statTotal)  statTotal.textContent  = stores.length;
       if (statMapped) statMapped.textContent = mappedStores;
-      if (bulkBtn) bulkBtn.disabled = mappedStores === 0;
 
       apPopulateExtraStoreDropdown();
     }
@@ -5518,17 +5565,20 @@
       item.classList.add('active', 'expanded');
       expandDiv.innerHTML = '<div style="font-size:12px;color:rgba(255,255,255,0.3);padding:8px 0">현재 플레이리스트 불러오는 중...</div>';
 
+      let songs = [];
       try {
         const data  = await apiFetch('GET', `/api/stores/${storeId}/playlists`, undefined, adminToken);
-        const songs = data.playlist?.songs || [];
-        if (!songs.length) {
-          expandDiv.innerHTML = '<div style="font-size:12px;color:rgba(255,255,255,0.25);padding:8px 0">적용된 플레이리스트가 없습니다.</div>';
-          return;
-        }
+        songs = data.playlist?.songs || [];
+      } catch(e) {
+        // 적용 전(예약만 등록된) 상태 → 404. 오류로 처리하지 않음
+        songs = [];
+      }
+
+      if (songs.length) {
         const durSec = songs.reduce((acc, t) => acc + parsePlayTimeSec(t.playTime), 0);
         plCurrentSongs[storeName] = songs;
         expandDiv.innerHTML = `
-          <div style="font-size:12px;color:rgba(255,255,255,0.35);margin-bottom:6px">${songs.length}곡 · ${fmtDuration(durSec)}</div>
+          <div style="font-size:12px;color:rgba(255,255,255,0.35);margin-bottom:6px">현재 적용 중 · ${songs.length}곡 · ${fmtDuration(durSec)}</div>
           <div class="pl-compare-col-body">
             ${songs.map((song, idx) => `
               <div class="pl-compare-row">
@@ -5537,16 +5587,46 @@
                 <span class="pl-compare-artist">${song.artist || '-'}</span>
               </div>`).join('')}
           </div>`;
-      } catch(e) {
-        expandDiv.innerHTML = '<div style="font-size:12px;color:#ff5c5c;padding:8px 0">불러오지 못했습니다.</div>';
+        return;
       }
+
+      // 적용 중인 플리가 없으면 → 방금 생성/예약한 플리 미리보기
+      const gen = plGenerated[storeName];
+      if (gen && gen.mode === 'random' && gen.slots?.length) {
+        const totalSongs = gen.slots.reduce((a, sl) => a + sl.songs.length, 0);
+        const dt = new Date(gen.slots[0].scheduledAt);
+        const dateStr = `${dt.getFullYear()}.${String(dt.getMonth()+1).padStart(2,'0')}.${String(dt.getDate()).padStart(2,'0')}`;
+        expandDiv.innerHTML = `
+          <div style="font-size:12px;color:rgba(198,241,53,0.85);margin-bottom:8px">예약 등록됨 · ${dateStr} 적용 예정 · ${gen.slots.length}개 시간대 · 총 ${totalSongs}곡</div>
+          ${gen.slots.map((sl, si) => {
+            const t1 = `${String(sl.hour).padStart(2,'0')}:00`;
+            const t2 = `${String((sl.hour+1)%24).padStart(2,'0')}:00`;
+            return `
+              <div style="display:flex;align-items:center;gap:8px;padding:${si===0?'0':'12px'} 0 6px;${si>0?'border-top:1px solid rgba(255,255,255,0.05);margin-top:4px;':''}">
+                <span style="font-size:13px;font-weight:700;color:#fff;">${t1}~${t2}</span>
+                <span style="font-size:12px;color:rgba(255,255,255,0.4);">${sl.mood}</span>
+                <span style="font-size:12px;color:rgba(255,255,255,0.3);margin-left:auto;">${sl.songs.length}곡</span>
+              </div>
+              <div class="pl-compare-col-body">
+                ${sl.songs.map((song, idx) => `
+                  <div class="pl-compare-row">
+                    <span class="pl-compare-num">${idx + 1}</span>
+                    <span class="pl-compare-title">${song.title || '-'}</span>
+                    <span class="pl-compare-artist">${song.artist || '-'}</span>
+                  </div>`).join('')}
+              </div>`;
+          }).join('')}`;
+        return;
+      }
+
+      expandDiv.innerHTML = '<div style="font-size:12px;color:rgba(255,255,255,0.25);padding:8px 0">적용된 플레이리스트가 없습니다.</div>';
     }
 
     async function apBulkGenerate() {
-      const bulkBtn    = document.getElementById('ap-bulk-gen-btn');
-      const resultArea = document.getElementById('ap-bulk-result');
+      const bulkBtn    = document.getElementById('btn-create-pl');
+      const resultArea = document.getElementById('pl-gen-result');
 
-      const todayStr = new Date().toISOString().slice(0, 10);
+      const todayStr = document.getElementById('pl-bulk-date')?.value || new Date().toISOString().slice(0, 10);
       const allPayload = [];
       const storeResults = [];
 
@@ -5614,6 +5694,15 @@
         await apiFetch('POST', '/api/admin/scheduled-playlists', { schedulePlaylists: payload }, adminToken);
         plToast(`✓ ${storeResults.length}개 매장 전체 시간대 플리 생성 완료`, 'success');
         plSetLastCreated();
+
+        // 매장 클릭 시 미리볼 수 있도록 생성 결과 캐시
+        storeResults.forEach(({ storeName, schedulePlaylists }) => {
+          if (!schedulePlaylists.length) return;
+          plGenerated[storeName] = {
+            mode: 'random',
+            slots: schedulePlaylists.map(pl => ({ hour: pl.hour, mood: pl.mood, scheduledAt: pl.scheduledAt, songs: pl.songs })),
+          };
+        });
 
         // ── 결과 렌더링 ──
         resultArea.innerHTML = '';
@@ -5704,7 +5793,7 @@
         plToast('플리 생성 실패. 다시 시도해 주세요.', 'error');
       }
       bulkBtn.disabled = false;
-      bulkBtn.textContent = '전체 매장 플리 생성';
+      bulkBtn.textContent = '플레이리스트 생성';
     }
 
     // ── 초기화 ──
