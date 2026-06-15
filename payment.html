@@ -188,6 +188,59 @@
       text-decoration: none;
     }
 
+    #terms-service .terms-section {
+      background: #fff;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 10px;
+    }
+    #terms-service .terms-section h2 {
+      font-size: 11px;
+      font-weight: 700;
+      color: #aaa;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+    }
+    #terms-service h4 {
+      font-size: 13px;
+      font-weight: 700;
+      color: #1a1a2e;
+      margin: 18px 0 6px;
+    }
+    #terms-service h4:first-of-type { margin-top: 0; }
+    #terms-service p { font-size: 12px; line-height: 1.8; margin: 0 0 4px; }
+    #terms-service ul { margin: 4px 0 0; padding-left: 16px; }
+    #terms-service li { font-size: 12px; line-height: 1.8; }
+    #terms-service .terms-highlight {
+      background: #f0f3ff;
+      border-left: 3px solid var(--blue);
+      border-radius: 0 6px 6px 0;
+      padding: 10px 14px;
+      margin: 10px 0;
+      font-size: 12px;
+      line-height: 1.7;
+    }
+    #terms-service .plan-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 10px 0;
+      font-size: 11px;
+    }
+    #terms-service .plan-table th {
+      background: #f0f3ff;
+      font-weight: 700;
+      padding: 8px 10px;
+      text-align: left;
+      border: 1px solid #e0e5f0;
+    }
+    #terms-service .plan-table td {
+      padding: 8px 10px;
+      border: 1px solid #e0e5f0;
+      vertical-align: top;
+    }
+    #terms-service .plan-table tr:nth-child(even) td { background: #fafbfc; }
+
     .terms-content {
       display: none;
       background: #f8f9fb;
@@ -343,8 +396,9 @@
               <input type="checkbox" id="terms1" />
               <label class="terms-label" for="terms1">(필수) 서비스 이용 약관</label>
             </div>
-            <a class="terms-toggle" href="terms.html" target="_blank" rel="noopener">전문 보기 →</a>
+            <button class="terms-toggle" onclick="toggleTerms('terms-service')">보기 ▾</button>
           </div>
+          <div class="terms-content" id="terms-service"></div>
         </div>
 
         <div class="terms-item">
@@ -550,6 +604,25 @@
       const btn = el.previousElementSibling.querySelector('.terms-toggle');
       const isOpen = el.classList.toggle('open');
       btn.textContent = isOpen ? '닫기 ▴' : '보기 ▾';
+
+      if (isOpen && id === 'terms-service' && !el.dataset.loaded) {
+        el.dataset.loaded = 'true';
+        el.innerHTML = '<p style="text-align:center;padding:16px;color:#aaa;font-size:13px">약관을 불러오는 중...</p>';
+        fetch('terms.html')
+          .then(r => r.text())
+          .then(html => {
+            const doc = new DOMParser().parseFromString(html, 'text/html');
+            const wrap = doc.querySelector('.terms-wrap');
+            if (wrap) {
+              wrap.querySelector('h1')?.remove();
+              wrap.querySelector('.terms-meta')?.remove();
+              el.innerHTML = wrap.innerHTML;
+            }
+          })
+          .catch(() => {
+            el.innerHTML = '<p style="text-align:center;padding:16px;color:#aaa;font-size:13px">약관을 불러오지 못했습니다. <a href="terms.html" target="_blank" style="color:var(--blue)">새 탭에서 보기</a></p>';
+          });
+      }
     }
 
     function checkTerms() {
