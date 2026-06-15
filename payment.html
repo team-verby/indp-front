@@ -730,16 +730,28 @@
           rejectedSongNote: localStorage.getItem('rejectedSongNote') || ''
         };
 
-        console.log('[apply 요청 body]', JSON.stringify(body, null, 2));
-        const result = await apiFetch('POST', '/api/stores/applications', body);
+        let result;
+        if (plan === 'A') {
+          // Plan A: 개인 구독 신청 (매장 없음)
+          const planABody = {
+            loginId: localStorage.getItem('applicantLoginId') || '',
+            name: localStorage.getItem('applicantName') || '',
+            email: localStorage.getItem('applicantEmail') || '',
+            password: sessionStorage.getItem('applicantPw') || '',
+            usagePeriod: selectedMonths,
+          };
+          console.log('[Plan A 신청 body]', JSON.stringify({ ...planABody, password: '****' }));
+          result = await apiFetch('POST', '/api/user/applications', planABody);
+        } else {
+          console.log('[apply 요청 body]', JSON.stringify(body, null, 2));
+          result = await apiFetch('POST', '/api/stores/applications', body);
+          // Plan B/C: 발급된 아이디/비밀번호 저장
+          const account = result.ownerAccount || result;
+          if (account.loginId) sessionStorage.setItem('pendingLoginId', account.loginId);
+          if (account.password) sessionStorage.setItem('pendingPassword', account.password);
+        }
         console.log('[apply 응답]', JSON.stringify(result));
         const { orderId, amount, orderName } = result;
-
-        // 결제 전에 발급된 아이디/비밀번호 저장 (complete.html에서 표시)
-        // sessionStorage 사용: 같은 탭 리다이렉트에서만 유효, 탭 닫히면 자동 삭제
-        const account = result.ownerAccount || result;
-        if (account.loginId) sessionStorage.setItem('pendingLoginId', account.loginId);
-        if (account.password) sessionStorage.setItem('pendingPassword', account.password);
 
         openTossModal();
         await initTossWidget(orderId, amount, orderName);
