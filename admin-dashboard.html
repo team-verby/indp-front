@@ -2062,6 +2062,17 @@
       color: rgba(255,255,255,0.7);
       margin-bottom: 14px;
     }
+    .ap-step-guide { display:flex; flex-direction:column; gap:10px; }
+    .ap-step { display:flex; align-items:flex-start; gap:10px; }
+    .ap-step-no {
+      flex-shrink:0; width:20px; height:20px; border-radius:50%;
+      background:rgba(198,241,53,0.16); color:#c6f135;
+      font-size:11px; font-weight:800; display:flex; align-items:center; justify-content:center;
+      margin-top:1px;
+    }
+    .ap-step-txt { font-size:12.5px; color:rgba(255,255,255,0.62); line-height:1.5; }
+    .ap-step-txt b { color:rgba(255,255,255,0.92); font-weight:700; }
+    .ap-step-sub { color:rgba(255,255,255,0.32); font-size:11px; }
     .ap-gen-date-input {
       width: 100%;
       box-sizing: border-box;
@@ -2851,13 +2862,14 @@
             <!-- 랜덤 입력부 (랜덤 모드) -->
             <div id="pl-input-random" style="display:none">
               <div class="ap-gen-card">
-                <p class="ap-gen-card-title">무드 일괄 초기화</p>
-                <div class="ap-extra-field">
-                  <label class="ap-extra-label">적용할 무드명</label>
-                  <input type="text" class="ap-gen-date-input" id="ap-bulk-init-mood" value="잔잔한 팝" placeholder="무드명 입력" />
+                <p class="ap-gen-card-title">생성 절차</p>
+                <div class="ap-step-guide">
+                  <div class="ap-step"><span class="ap-step-no">1</span><span class="ap-step-txt">매장별 시간대 무드를 확인합니다 <span class="ap-step-sub">(우측 매장 목록)</span></span></div>
+                  <div class="ap-step"><span class="ap-step-no">2</span><span class="ap-step-txt"><b>플레이리스트 생성</b> 버튼으로 즉시 미리보기 생성</span></div>
+                  <div class="ap-step"><span class="ap-step-no">3</span><span class="ap-step-txt">고정곡·개별곡을 추가하고 다시 생성</span></div>
+                  <div class="ap-step"><span class="ap-step-no">4</span><span class="ap-step-txt">적용 날짜·시각 설정 후 <b>프론트 반영</b></span></div>
                 </div>
-                <button class="ap-gen-apply-btn" id="ap-bulk-init-btn" onclick="apBulkInitMood()">전체 매장 운영시간에 적용</button>
-                <p style="font-size:11px;color:rgba(255,255,255,0.25);margin-top:8px;line-height:1.6">매장별 운영시간을 API에서 불러와<br/>해당 시간대를 입력한 무드로 일괄 설정합니다</p>
+                <p style="font-size:11px;color:rgba(255,255,255,0.3);margin-top:10px;line-height:1.6">반영 시 매장별 시간대 무드를 시간순으로 이어붙인 <b>하나의 플레이리스트</b>가 설정한 시각에 프론트에 한 번에 적용됩니다.</p>
               </div>
             </div>
 
@@ -4756,14 +4768,13 @@
           if (time) apScheduledAt[s.storeName].time = time;
         });
         apRenderStoreCards();
-        // 이미 생성된 플리가 있으면 새 적용 시각으로 다시 예약
+        // 생성된 플리를 지정 시각에 프론트 반영
         const rescheduled = await apRescheduleGenerated();
-        plToast(
-          rescheduled
-            ? `✓ 적용 시각을 ${date}${time ? ' ' + time : ''}로 변경하고 ${rescheduled}개 매장 재예약했습니다`
-            : `✓ 전체 매장 적용 시각을 ${date}${time ? ' ' + time : ''}로 설정했습니다`,
-          'success'
-        );
+        if (rescheduled) {
+          plToast(`✓ ${rescheduled}개 매장 플리를 ${date}${time ? ' ' + time : ''}에 프론트 반영 예약했습니다`, 'success');
+        } else {
+          plToast('먼저 [플레이리스트 생성]으로 미리보기를 만들어 주세요.', 'error');
+        }
       } else {
         const time = document.getElementById('pl-bulk-time').value;
         if (!time) { plToast('시각을 선택해 주세요.', 'error'); return; }
@@ -4811,14 +4822,16 @@
       entries.forEach(([storeName, g]) => {
         const aoa = [];
         if (g.mode === 'random' && g.slots?.length) {
-          aoa.push(['시간대', '적용시각', '무드', '순서', '제목', '가수', '재생시간', 'vid']);
+          const rat = g.scheduledAt ? new Date(g.scheduledAt) : null;
+          const ratStr = rat ? `${rat.getFullYear()}-${String(rat.getMonth()+1).padStart(2,'0')}-${String(rat.getDate()).padStart(2,'0')} ${String(rat.getHours()).padStart(2,'0')}:${String(rat.getMinutes()).padStart(2,'0')}` : '미반영';
+          aoa.push(['프론트 반영시각', '시간대(무드)', '재생순서', '제목', '가수', '재생시간', 'vid']);
+          let order = 0;   // 합쳐진 플리 내 전체 재생 순서
           g.slots.forEach(sl => {
             const t1 = `${String(sl.hour).padStart(2,'0')}:00`;
             const t2 = `${String((sl.hour+1)%24).padStart(2,'0')}:00`;
-            const at = new Date(sl.scheduledAt);
-            const atStr = `${at.getFullYear()}-${String(at.getMonth()+1).padStart(2,'0')}-${String(at.getDate()).padStart(2,'0')} ${String(at.getHours()).padStart(2,'0')}:${String(at.getMinutes()).padStart(2,'0')}`;
-            sl.songs.forEach((song, idx) => {
-              aoa.push([`${t1}~${t2}`, atStr, sl.mood || '', idx + 1, song.title || '', song.artist || '', secToMMSS(song.playTime), song.vid || '']);
+            sl.songs.forEach(song => {
+              order++;
+              aoa.push([ratStr, `${t1}~${t2} ${sl.mood || ''}`.trim(), order, song.title || '', song.artist || '', secToMMSS(song.playTime), song.vid || '']);
             });
           });
         } else {
@@ -4847,18 +4860,17 @@
       plToast(`✓ ${entries.length}개 매장 플레이리스트를 엑셀로 내려받았습니다`, 'success');
     }
 
-    // 슬롯별 프론트 적용 시각 계산
-    // 시각(time) 설정 시: 그 시각부터 슬롯 순서대로 1시간 간격 / 미설정 시: 해당 시간대 정각
-    function apSlotScheduledAt(dateVal, timeVal, slotIdx, naturalHour) {
-      if (timeVal) {
-        const base = new Date(`${dateVal}T${timeVal}:00`);
-        base.setHours(base.getHours() + slotIdx);
-        return base.toISOString();
-      }
-      return new Date(`${dateVal}T${String(naturalHour).padStart(2,'0')}:00:00`).toISOString();
+    // 프론트 반영 시각 계산 (날짜 + 단일 시각 → ISO). 시각 미설정 시 자정.
+    function apFrontScheduledAt(dateVal, timeVal) {
+      return new Date(`${dateVal}T${timeVal || '00:00'}:00`).toISOString();
     }
 
-    // 특정 매장의 생성된 랜덤 플리를 현재 적용 시각으로 다시 예약
+    // 생성된 시간대 슬롯들을 시간순으로 이어붙인 하나의 곡목록
+    function apCombinedSongs(g) {
+      return g.slots.flatMap(sl => sl.songs);
+    }
+
+    // 특정 매장: 생성된 플리를 하나로 합쳐 지정 시각에 프론트 반영 (플리 통째 교체)
     async function apRescheduleStore(storeName) {
       const g = plGenerated[storeName];
       if (!g || g.mode !== 'random' || !g.slots?.length) {
@@ -4869,21 +4881,22 @@
       const sched = apScheduledAt[storeName] || {};
       const dateVal = sched.date || todayStr;
       const timeVal = sched.time || document.getElementById('pl-bulk-time')?.value || '';
-      const payload = g.slots.map((sl, i) => {
-        sl.scheduledAt = apSlotScheduledAt(dateVal, timeVal, i, sl.hour);
-        return { storeName, scheduledAt: sl.scheduledAt, songs: sl.songs };
-      });
+      const scheduledAt = apFrontScheduledAt(dateVal, timeVal);
       try {
-        await apiFetch('POST', '/api/admin/scheduled-playlists', { schedulePlaylists: payload }, adminToken);
+        await apiFetch('POST', '/api/admin/scheduled-playlists', {
+          schedulePlaylists: [{ storeName, scheduledAt, songs: apCombinedSongs(g) }]
+        }, adminToken);
+        g.scheduledAt = scheduledAt;
         plSetLastCreated();
-        plToast(`✓ "${storeName}" 적용 시각을 ${dateVal}${timeVal ? ' ' + timeVal : ''}로 변경했습니다`, 'success');
+        plToast(`✓ "${storeName}" — ${dateVal}${timeVal ? ' ' + timeVal : ''} 프론트 반영 예약 완료`, 'success');
+        apRenderStoreCards();
       } catch(e) {
-        console.warn('재예약 실패:', e);
-        plToast('적용 시각 변경에 실패했습니다.', 'error');
+        console.warn('프론트 반영 실패:', e);
+        plToast('프론트 반영에 실패했습니다.', 'error');
       }
     }
 
-    // 이미 생성된 랜덤 플리를 현재 적용 시각으로 다시 예약 (곡은 재생성하지 않음)
+    // 전체 매장: 생성된 플리를 각각 하나로 합쳐 지정 시각에 프론트 반영 (곡은 재생성하지 않음)
     async function apRescheduleGenerated() {
       const entries = Object.entries(plGenerated).filter(([, g]) => g.mode === 'random' && g.slots?.length);
       if (!entries.length) return 0;
@@ -4894,10 +4907,9 @@
         const sched = apScheduledAt[storeName] || {};
         const dateVal = sched.date || todayStr;
         const timeVal = sched.time || document.getElementById('pl-bulk-time')?.value || '';
-        g.slots.forEach((sl, i) => {
-          sl.scheduledAt = apSlotScheduledAt(dateVal, timeVal, i, sl.hour);
-          payload.push({ storeName, scheduledAt: sl.scheduledAt, songs: sl.songs });
-        });
+        const scheduledAt = apFrontScheduledAt(dateVal, timeVal);
+        g.scheduledAt = scheduledAt;
+        payload.push({ storeName, scheduledAt, songs: apCombinedSongs(g) });
       });
       if (!payload.length) return 0;
       try {
@@ -4905,8 +4917,8 @@
         plSetLastCreated();
         return entries.length;
       } catch(e) {
-        console.warn('재예약 실패:', e);
-        plToast('적용 시각 재예약에 실패했습니다.', 'error');
+        console.warn('프론트 반영 실패:', e);
+        plToast('프론트 반영에 실패했습니다.', 'error');
         return 0;
       }
     }
@@ -5141,43 +5153,6 @@
       refresh();
       plToast(`✓ ${dateVal} 고정곡 ${injected}곡을 생성 목록에 반영했습니다. 이제 생성하세요.`, 'success');
     }
-
-    async function apBulkInitMood() {
-      const moodName = (document.getElementById('ap-bulk-init-mood')?.value || '').trim();
-      if (!moodName) { plToast('무드명을 입력해 주세요.', 'error'); return; }
-      if (!stores.length) { plToast('매장 정보가 없습니다. 잠시 후 다시 시도해 주세요.', 'error'); return; }
-
-      const btn = document.getElementById('ap-bulk-init-btn');
-      if (btn) { btn.disabled = true; btn.textContent = `0 / ${stores.length} 처리 중...`; }
-
-      let done = 0, failed = 0;
-      for (const s of stores) {
-        try {
-          const raw = await apiFetch('GET', `/api/admin/stores/${s.id}`, undefined, adminToken);
-          const d = mapStoreDetail(raw);
-          const bizHours = getBusinessHours(d.hours);
-          if (!apData[s.storeName]) apData[s.storeName] = {};
-          bizHours.forEach(h => { apData[s.storeName][String(h)] = moodName; });
-          done++;
-        } catch(e) {
-          console.warn(`[일괄 초기화] ${s.storeName} 실패:`, e.message);
-          failed++;
-        }
-        if (btn) btn.textContent = `${done + failed} / ${stores.length} 처리 중...`;
-      }
-
-      localStorage.setItem(AP_STORAGE_KEY, JSON.stringify(apData));
-      apRenderStoreCards();
-
-      if (btn) { btn.disabled = false; btn.textContent = '전체 매장 운영시간에 적용'; }
-      plToast(
-        failed
-          ? `✓ ${done}개 완료 · ${failed}개 실패`
-          : `✓ ${done}개 매장 전체를 "${moodName}"으로 초기화했습니다`,
-        failed ? 'error' : 'success'
-      );
-    }
-
 
     function apPopulateExtraStoreDropdown() {
       const storeSel = document.getElementById('ap-extra-store');
@@ -5595,6 +5570,12 @@
       document.getElementById('ap-fixed-save-btn').style.display   = '';
       document.getElementById('ap-fixed-card').style.display       = '';
 
+      // 일괄 적용 바: 랜덤=프론트 반영 / 엑셀=일괄 적용
+      const bulkBtn = document.querySelector('#pl-bulk-schedule .pl-bulk-apply-btn');
+      if (bulkBtn) bulkBtn.textContent = isRandom ? '프론트 반영' : '전체 적용';
+      const bulkLabel = document.querySelector('#pl-bulk-schedule .pl-bulk-label');
+      if (bulkLabel) bulkLabel.textContent = isRandom ? '프론트 반영 시각' : '일괄 적용 시각';
+
       // 펼침 상태 초기화
       plSelectedStore = null;
       apSelectedStore = null;
@@ -5924,20 +5905,23 @@
       const gen = plGenerated[storeName];
       if (gen && gen.mode === 'random' && gen.slots?.length) {
         const totalSongs = gen.slots.reduce((a, sl) => a + sl.songs.length, 0);
-        const dt = new Date(gen.slots[0].scheduledAt);
-        const dateStr = `${dt.getFullYear()}.${String(dt.getMonth()+1).padStart(2,'0')}.${String(dt.getDate()).padStart(2,'0')}`;
+        let headStr;
+        if (gen.scheduledAt) {
+          const dt = new Date(gen.scheduledAt);
+          const dateStr = `${dt.getFullYear()}.${String(dt.getMonth()+1).padStart(2,'0')}.${String(dt.getDate()).padStart(2,'0')} ${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')}`;
+          headStr = `프론트 반영 예약됨 · ${dateStr} 적용 예정`;
+        } else {
+          headStr = '생성됨(미반영) · STEP4에서 프론트 반영';
+        }
         expandDiv.innerHTML = `
-          <div style="font-size:12px;color:rgba(198,241,53,0.85);margin-bottom:8px">예약 등록됨 · ${dateStr} 적용 예정 · ${gen.slots.length}개 시간대 · 총 ${totalSongs}곡</div>
+          <div style="font-size:12px;color:rgba(198,241,53,0.85);margin-bottom:8px">${headStr} · ${gen.slots.length}개 시간대 → 1개 플리 · 총 ${totalSongs}곡</div>
           ${gen.slots.map((sl, si) => {
             const t1 = `${String(sl.hour).padStart(2,'0')}:00`;
             const t2 = `${String((sl.hour+1)%24).padStart(2,'0')}:00`;
-            const at = new Date(sl.scheduledAt);
-            const atStr = `${String(at.getHours()).padStart(2,'0')}:${String(at.getMinutes()).padStart(2,'0')}`;
             return `
               <div style="display:flex;align-items:center;gap:8px;padding:${si===0?'0':'12px'} 0 6px;${si>0?'border-top:1px solid rgba(255,255,255,0.05);margin-top:4px;':''}">
                 <span style="font-size:13px;font-weight:700;color:#fff;">${t1}~${t2}</span>
                 <span style="font-size:12px;color:rgba(255,255,255,0.4);">${sl.mood}</span>
-                <span style="font-size:11px;color:rgba(198,241,53,0.7);">▶ ${atStr} 적용</span>
                 <span style="font-size:12px;color:rgba(255,255,255,0.3);margin-left:auto;">${sl.songs.length}곡</span>
               </div>
               <div class="pl-compare-col-body">
@@ -5956,10 +5940,8 @@
     }
 
     async function apBulkGenerate() {
-      const bulkBtn    = document.getElementById('btn-create-pl');
       const resultArea = document.getElementById('pl-gen-result');
 
-      const todayStr = document.getElementById('pl-bulk-date')?.value || new Date().toISOString().slice(0, 10);
       const allPayload = [];
       const storeResults = [];
 
@@ -5968,21 +5950,12 @@
         const slots = Array.from({length:24}, (_,h) => h).filter(h => sm[String(h)]);
         if (!slots.length) continue;
 
-        const sched = apScheduledAt[s.storeName] || {};
-        const dateVal = sched.date || todayStr;
-        const timeVal = sched.time || document.getElementById('pl-bulk-time')?.value || '';
-
         const schedulePlaylists = [];
         const skipped = [];
-        let slotIdx = -1;
         for (const h of slots) {
           const mood = sm[String(h)];
           const pool = mdData[mood] || [];
           if (!pool.length) { skipped.push(`${String(h).padStart(2,'0')}시(${mood})`); continue; }
-          slotIdx++;
-
-          // 프론트 적용 시각: 시각 설정 시 → 그 시각부터 슬롯 순서대로 1시간 간격 / 미설정 시 → 해당 시간대 정각
-          const scheduledAt = apSlotScheduledAt(dateVal, timeVal, slotIdx, h);
 
           // 18곡 랜덤 선택
           let picked = [...pool].sort(() => Math.random()-0.5).slice(0, 18);
@@ -6003,7 +5976,6 @@
 
           schedulePlaylists.push({
             storeName: s.storeName,
-            scheduledAt,
             hour: h,
             mood,
             songs: picked.map(t => ({
@@ -6023,25 +5995,22 @@
         return;
       }
 
-      bulkBtn.disabled = true;
-      bulkBtn.textContent = '생성 중...';
-      try {
-        const payload = allPayload.map(({ mood: _, hour: __, ...rest }) => rest);
-        await apiFetch('POST', '/api/admin/scheduled-playlists', { schedulePlaylists: payload }, adminToken);
-        plToast(`✓ ${storeResults.length}개 매장 전체 시간대 플리 생성 완료`, 'success');
-        plSetLastCreated();
+      // ── 로컬 생성(미리보기)만 수행. 프론트 반영은 STEP4(프론트 반영)에서 POST ──
+      // 매장별: 시간대 무드를 시간순으로 이어붙인 하나의 플리로 캐시
+      storeResults.forEach(({ storeName, schedulePlaylists }) => {
+        if (!schedulePlaylists.length) return;
+        plGenerated[storeName] = {
+          mode: 'random',
+          slots: schedulePlaylists.map(pl => ({ hour: pl.hour, mood: pl.mood, songs: pl.songs })),
+          scheduledAt: null,   // 아직 프론트 미반영
+        };
+      });
+      plSetLastCreated();
+      plToast(`✓ ${storeResults.length}개 매장 플리 생성 완료 — STEP4에서 프론트에 반영하세요`, 'success');
+      plUpdateDownloadBtn();
+      apRenderStoreCards();
 
-        // 매장 클릭 시 미리볼 수 있도록 생성 결과 캐시
-        storeResults.forEach(({ storeName, schedulePlaylists }) => {
-          if (!schedulePlaylists.length) return;
-          plGenerated[storeName] = {
-            mode: 'random',
-            slots: schedulePlaylists.map(pl => ({ hour: pl.hour, mood: pl.mood, scheduledAt: pl.scheduledAt, songs: pl.songs })),
-          };
-        });
-        plUpdateDownloadBtn();
-        apRenderStoreCards(); // '적용' 버튼 노출 등 상태 갱신
-
+      {
         // ── 결과 렌더링 ──
         resultArea.innerHTML = '';
         const wrap = document.createElement('div');
@@ -6049,15 +6018,14 @@
 
         const applyNotice = document.createElement('div');
         applyNotice.style.cssText = 'font-size:13px;color:rgba(255,255,255,0.4);padding:0 2px 4px;';
-        applyNotice.textContent = `✓ ${storeResults.length}개 매장 플레이리스트 등록 완료`;
+        applyNotice.textContent = `✓ ${storeResults.length}개 매장 미리보기 생성 — 적용 날짜·시각 설정 후 [프론트 반영]`;
         wrap.appendChild(applyNotice);
 
         storeResults.forEach(({ storeName, schedulePlaylists, skipped }) => {
           if (!schedulePlaylists.length) return;
           const totalSongs = schedulePlaylists.reduce((s, pl) => s + pl.songs.length, 0);
           const totalSec   = schedulePlaylists.reduce((s, pl) => s + pl.songs.reduce((a, t) => a + (t.playTime || 0), 0), 0);
-          const firstDt    = new Date(schedulePlaylists[0].scheduledAt);
-          const applyStr   = `${firstDt.getFullYear()}.${String(firstDt.getMonth()+1).padStart(2,'0')}.${String(firstDt.getDate()).padStart(2,'0')} 적용`;
+          const applyStr   = '미반영 · STEP4에서 적용';
 
           const item = document.createElement('div');
           item.className = 'pl-store-item';
@@ -6080,7 +6048,7 @@
 
           const badge = document.createElement('span');
           badge.style.cssText = 'font-size:12px;color:rgba(255,255,255,0.4);flex-shrink:0;';
-          badge.textContent = `${schedulePlaylists.length}개 시간대 · 총 ${totalSongs}곡 · ${fmtDuration(totalSec)}`;
+          badge.textContent = `${schedulePlaylists.length}개 시간대 → 1개 플리 · 총 ${totalSongs}곡 · ${fmtDuration(totalSec)}`;
 
           const chevron = document.createElement('span');
           chevron.className = 'pl-store-chevron';
@@ -6126,12 +6094,7 @@
         });
 
         resultArea.appendChild(wrap);
-      } catch(e) {
-        console.warn('랜덤 플리 생성 실패:', e);
-        plToast('플리 생성 실패. 다시 시도해 주세요.', 'error');
       }
-      bulkBtn.disabled = false;
-      bulkBtn.textContent = '플레이리스트 생성';
     }
 
     // ── 초기화 ──
