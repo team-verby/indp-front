@@ -1,0 +1,1371 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DJ 대시보드 - 인디피 뮤직</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="shortcut icon" href="/favicon.ico" />
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192.png" />
+  <link rel="icon" type="image/png" sizes="512x512" href="/favicon-512.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=SUIT:wght@100..900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="shared.css" />
+  <script src="api.js"></script>
+  <style>
+    body { background: var(--light-bg); }
+
+    .dj-wrap {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 48px 24px 100px;
+    }
+
+    /* 프로필 행 */
+    .dj-profile-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+    .dj-avatar-wrap {
+      width: 64px; height: 64px;
+      border-radius: 50%;
+      overflow: hidden;
+      flex-shrink: 0;
+      background: #e8eaf0;
+      display: flex; align-items: center; justify-content: center;
+      border: 2px solid #e5e7eb;
+    }
+    .dj-avatar-wrap img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      border-radius: 50%;
+    }
+    .dj-profile-info { flex: 1; }
+    .dj-profile-name { font-size: 20px; font-weight: 800; color: var(--dark); }
+    .btn-edit-sm {
+      background: #f3f4f6;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-sub);
+      cursor: pointer;
+      font-family: inherit;
+      white-space: nowrap;
+    }
+    .btn-edit-sm:hover { background: #e5e7eb; }
+
+    /* 프로필 모달 섹션 구분 */
+    .profile-section-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-gray);
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      margin: 20px 0 10px;
+    }
+    .profile-section-label:first-of-type { margin-top: 0; }
+    .profile-readonly-card {
+      background: #f8f9fb;
+      border-radius: 10px;
+      padding: 4px 0;
+      margin-bottom: 20px;
+    }
+    .profile-readonly-row {
+      display: flex;
+      align-items: center;
+      padding: 10px 14px;
+      gap: 12px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .profile-readonly-row:last-child { border-bottom: none; }
+    .profile-readonly-key {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-gray);
+      min-width: 72px;
+      flex-shrink: 0;
+    }
+    .profile-readonly-val {
+      font-size: 14px;
+      color: var(--text-sub);
+    }
+
+    /* 프로필 모달 썸네일 */
+    .profile-thumb-edit {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 20px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid #f3f4f6;
+    }
+    .profile-thumb-preview {
+      width: 72px; height: 72px;
+      border-radius: 50%;
+      overflow: hidden;
+      background: #e8eaf0;
+      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      border: 2px solid #e5e7eb;
+    }
+    .profile-thumb-preview img { width: 100%; height: 100%; object-fit: cover; }
+    .profile-thumb-actions { display: flex; flex-direction: column; gap: 6px; }
+    .profile-thumb-btn {
+      background: #f3f4f6;
+      border: none; border-radius: 8px;
+      padding: 7px 14px;
+      font-size: 13px; font-weight: 600;
+      color: var(--text-sub);
+      cursor: pointer; font-family: inherit;
+    }
+    .profile-thumb-btn:hover { background: #e5e7eb; }
+    .profile-thumb-btn.danger { color: #e53e3e; }
+    .profile-thumb-btn.danger:hover { background: #fff5f5; }
+
+    /* 라이브 채널 카드 */
+    .live-card {
+      background: white;
+      border: 1.5px solid #e5e7eb;
+      border-radius: 20px;
+      overflow: hidden;
+      margin-bottom: 28px;
+    }
+    .live-card.on-air {
+      border-color: #bbf7d0;
+      box-shadow: 0 0 0 4px rgba(34,197,94,0.06);
+    }
+    .live-card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 24px 0;
+    }
+    .air-indicator {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+    .air-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #d1d5db;
+    }
+    .air-dot.live {
+      background: #16a34a;
+      animation: pulse-dot 2s infinite;
+    }
+    @keyframes pulse-dot {
+      0%  { box-shadow: 0 0 0 0 rgba(22,163,74,0.4); }
+      70% { box-shadow: 0 0 0 6px rgba(22,163,74,0); }
+      100%{ box-shadow: 0 0 0 0 rgba(22,163,74,0); }
+    }
+    .air-label {
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      color: #9ca3af;
+    }
+    .air-label.live { color: #16a34a; }
+    .track-count-badge {
+      font-size: 12px;
+      color: var(--text-gray);
+    }
+    .track-count-badge strong { color: #16a34a; font-weight: 700; }
+
+    /* OFF 상태 */
+    .live-off-body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      padding: 36px 24px 32px;
+      gap: 6px;
+    }
+    .live-off-icon { font-size: 32px; opacity: .35; margin-bottom: 6px; }
+    .live-off-title { font-size: 15px; font-weight: 700; color: var(--dark); }
+    .live-off-desc  { font-size: 13px; color: var(--text-gray); margin-bottom: 14px; }
+    .btn-start-live {
+      background: var(--dark);
+      color: white;
+      border: none;
+      border-radius: 100px;
+      padding: 12px 28px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      transition: opacity 0.15s;
+    }
+    .btn-start-live:hover { opacity: 0.85; }
+    .btn-start-live:disabled { opacity: 0.35; cursor: not-allowed; }
+
+    /* ON 상태 */
+    .live-on-body {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      padding: 24px;
+    }
+    .live-on-icon {
+      width: 60px; height: 60px;
+      border-radius: 16px;
+      background: #f0fdf4;
+      border: 1.5px solid #bbf7d0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 26px;
+      flex-shrink: 0;
+    }
+    .live-on-info { flex: 1; }
+    .live-on-title { font-size: 16px; font-weight: 800; color: #16a34a; margin-bottom: 3px; }
+    .live-on-desc  { font-size: 13px; color: var(--text-gray); margin-bottom: 12px; }
+    .btn-stop-live {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #fff1f2;
+      color: #e11d48;
+      border: 1.5px solid #fecdd3;
+      border-radius: 8px;
+      padding: 7px 16px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .btn-stop-live:hover { background: #ffe4e6; }
+
+    /* 업로드 영역 */
+    .upload-zone {
+      border: 2px dashed #d1d5db;
+      border-radius: 16px;
+      padding: 28px 20px;
+      text-align: center;
+      cursor: pointer;
+      margin-bottom: 20px;
+      background: white;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .upload-zone:hover, .upload-zone.dragover {
+      border-color: var(--blue);
+      background: #f5f7ff;
+    }
+    .upload-zone-icon  { font-size: 26px; margin-bottom: 8px; }
+    .upload-zone-title { font-size: 14px; font-weight: 700; color: var(--dark); margin-bottom: 4px; }
+    .upload-zone-sub   { font-size: 12px; color: var(--text-gray); margin-bottom: 12px; }
+    .upload-zone-btn {
+      display: inline-block;
+      background: var(--dark);
+      color: white;
+      border: none;
+      border-radius: 100px;
+      padding: 9px 20px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    #file-input { display: none; }
+
+    /* 트랙 목록 */
+    .section-hd {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .section-title { font-size: 15px; font-weight: 700; color: var(--dark); }
+    .section-count { font-size: 13px; color: var(--text-gray); }
+
+    /* 전체 업로드 진행률 */
+    .overall-progress-wrap {
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin-bottom: 10px;
+    }
+    .overall-progress-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      font-size: 13px;
+    }
+    .overall-progress-label { font-weight: 700; color: var(--dark); }
+    .overall-progress-ratio { color: var(--text-gray); }
+    .overall-progress-bar {
+      height: 6px; background: #f3f4f6; border-radius: 100px; overflow: hidden;
+    }
+    .overall-progress-fill {
+      height: 100%; border-radius: 100px;
+      background: var(--blue); transition: width .4s ease;
+    }
+    .overall-progress-fill.done { background: #16a34a; }
+
+    /* 업로드 존 축소 버튼 */
+    .upload-zone-compact {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      background: #f8f9fb;
+      border: 1.5px dashed #d1d5db;
+      border-radius: 12px;
+      padding: 12px 16px;
+      margin-bottom: 12px;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .upload-zone-compact:hover { border-color: var(--blue); background: #f5f7ff; }
+    .upload-zone-compact-icon { font-size: 18px; flex-shrink: 0; }
+    .upload-zone-compact-text { font-size: 14px; font-weight: 600; color: var(--text-sub); }
+    .upload-zone-compact-sub { font-size: 12px; color: var(--text-gray); margin-left: auto; }
+
+    .track-list {
+      display: flex; flex-direction: column; gap: 6px;
+      max-height: 480px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+    .track-list::-webkit-scrollbar { width: 4px; }
+    .track-list::-webkit-scrollbar-track { background: transparent; }
+    .track-list::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
+    .track-item {
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 12px 16px;
+      display: grid;
+      grid-template-columns: 28px 1fr 64px 36px;
+      gap: 0 12px;
+      align-items: center;
+    }
+    .track-item.uploading-item { border-color: #bfdbfe; background: #f8fbff; }
+    .track-item:hover { border-color: #c7d2fe; }
+    .track-num  { font-size: 12px; color: var(--text-light-gray); text-align: center; }
+    .track-name { font-size: 14px; font-weight: 600; color: var(--dark); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .track-name-wrap { min-width: 0; }
+    .track-name-wrap .track-name { display: block; }
+    .track-dur  { font-size: 13px; color: var(--text-gray); white-space: nowrap; }
+    .btn-tr-del {
+      width: 32px; height: 32px;
+      background: none; border: none;
+      border-radius: 8px; cursor: pointer;
+      color: var(--text-light-gray);
+      font-size: 14px; display: flex;
+      align-items: center; justify-content: center;
+    }
+    .btn-tr-del:hover { background: #fee2e2; color: #e11d48; }
+    .upload-progress { height: 3px; background: #e5e7eb; border-radius: 2px; margin-top: 5px; }
+    .upload-progress-fill { height: 100%; border-radius: 2px; background: var(--blue); transition: width .3s; }
+
+    /* 2-column 레이아웃 */
+    .dj-layout {
+      display: grid;
+      grid-template-columns: 300px 1fr;
+      gap: 24px;
+      align-items: start;
+    }
+    @media (max-width: 860px) {
+      .dj-layout { grid-template-columns: 1fr; }
+    }
+
+    /* 왼쪽 패널 (라이브 제어) */
+    .dj-live-panel {
+      position: sticky;
+      top: 80px;
+    }
+    .dj-live-panel-note {
+      font-size: 12px;
+      color: var(--text-gray);
+      text-align: center;
+      margin-top: 10px;
+      line-height: 1.6;
+    }
+    .dj-live-panel-note strong { color: #e53e3e; }
+
+    /* 변경사항 적용 바 */
+    .apply-bar {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      background: #fffbeb;
+      border: 1px solid #fde68a;
+      border-radius: 10px;
+      padding: 10px 14px;
+      margin-bottom: 10px;
+    }
+    .apply-bar.visible { display: flex; }
+    .apply-bar-text {
+      font-size: 13px; font-weight: 600;
+      color: #92400e;
+    }
+    .btn-apply {
+      background: var(--dark);
+      color: #fff;
+      border: none; border-radius: 8px;
+      padding: 7px 16px;
+      font-size: 13px; font-weight: 700;
+      cursor: pointer; font-family: inherit;
+      white-space: nowrap;
+      transition: opacity 0.15s;
+      flex-shrink: 0;
+    }
+    .btn-apply:hover { opacity: 0.85; }
+
+    /* 정산 카드 */
+    .revenue-card {
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 20px;
+      padding: 28px;
+      margin-top: 24px;
+    }
+    .revenue-card-title {
+      font-size: 17px; font-weight: 800;
+      color: var(--dark); margin-bottom: 6px;
+    }
+    .revenue-card-subtitle {
+      font-size: 13px; color: var(--text-gray);
+      margin-bottom: 24px;
+    }
+    .revenue-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    @media (max-width: 700px) { .revenue-grid { grid-template-columns: 1fr 1fr; } }
+    .revenue-item {
+      background: #f8f9fb;
+      border-radius: 14px;
+      padding: 18px 16px;
+    }
+    .revenue-item-label {
+      font-size: 12px; font-weight: 700;
+      color: var(--text-gray);
+      letter-spacing: 0.04em;
+      margin-bottom: 8px;
+    }
+    .revenue-item-value {
+      font-size: 22px; font-weight: 900;
+      color: var(--dark);
+    }
+    .revenue-item-unit {
+      font-size: 13px; font-weight: 500;
+      color: var(--text-gray); margin-left: 2px;
+    }
+    .revenue-pending-notice {
+      background: #f3f4f6;
+      border-radius: 10px;
+      padding: 14px 16px;
+      font-size: 13px;
+      color: var(--text-gray);
+      line-height: 1.6;
+      text-align: center;
+    }
+
+    /* 시청자 수 */
+    .listener-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 24px;
+      border-top: 1px solid #f0fdf4;
+      font-size: 13px;
+      color: #16a34a;
+      font-weight: 700;
+    }
+    .listener-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: #16a34a;
+      animation: pulse-dot 2s infinite;
+      flex-shrink: 0;
+    }
+
+    /* 유의사항 카드 */
+    .notice-card {
+      background: #fffbeb;
+      border: 1px solid #fde68a;
+      border-radius: 16px;
+      padding: 18px 20px;
+      margin-bottom: 0;
+    }
+    .notice-card-title {
+      font-size: 13px; font-weight: 800;
+      color: #92400e;
+      margin-bottom: 12px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .notice-list {
+      list-style: none; padding: 0; margin: 0;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .notice-list li {
+      font-size: 12px; color: #78350f;
+      line-height: 1.6;
+      padding-left: 14px;
+      position: relative;
+    }
+    .notice-list li::before {
+      content: '·';
+      position: absolute; left: 0;
+      font-weight: 900; color: #d97706;
+    }
+    .notice-list li strong {
+      display: inline; font-weight: 700; color: #92400e;
+    }
+    .notice-divider {
+      height: 1px; background: #fde68a;
+      margin: 10px 0;
+    }
+
+    /* 빈 상태 */
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+    }
+    .empty-state-icon  { font-size: 28px; margin-bottom: 8px; }
+    .empty-state-title { font-size: 14px; font-weight: 700; color: var(--dark); margin-bottom: 4px; }
+    .empty-state-desc  { font-size: 13px; color: var(--text-gray); }
+
+    /* 접근 거부 */
+    .access-denied {
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      min-height: 60vh; text-align: center; padding: 24px;
+      gap: 8px;
+    }
+    .access-denied-icon  { font-size: 40px; margin-bottom: 8px; }
+    .access-denied-title { font-size: 22px; font-weight: 800; color: var(--dark); }
+    .access-denied-desc  { font-size: 15px; color: var(--text-gray); margin-bottom: 16px; }
+
+    /* 모달 */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.45); z-index: 200;
+      align-items: center; justify-content: center;
+      padding: 24px;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: white;
+      border-radius: 20px;
+      padding: 28px;
+      width: 100%; max-width: 400px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+    }
+    .modal-hd { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+    .modal-title { font-size: 17px; font-weight: 800; color: var(--dark); }
+    .modal-close { background: none; border: none; font-size: 18px; cursor: pointer; color: var(--text-gray); line-height: 1; }
+    .modal-close:hover { color: var(--dark); }
+    .modal-footer { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
+    .btn-modal-cancel  { background: #f3f4f6; color: var(--text-sub); border: none; border-radius: 10px; padding: 10px 18px; font-size: 14px; cursor: pointer; font-family: inherit; }
+    .btn-modal-confirm { background: var(--dark); color: white; border: none; border-radius: 10px; padding: 10px 18px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; }
+    .btn-modal-cancel:hover  { background: #e5e7eb; }
+    .btn-modal-confirm:hover { opacity: 0.85; }
+
+    /* ── 모바일 ── */
+    @media (max-width: 768px) {
+      .dj-wrap { padding: 24px 16px 80px; }
+      .dj-live-panel { position: static; }
+      .revenue-grid { grid-template-columns: 1fr 1fr; }
+      .revenue-card { padding: 20px 16px; }
+      .live-card { margin-bottom: 16px; }
+      .notice-card { padding: 16px; }
+      .track-list { max-height: 360px; }
+      .overall-progress-wrap { padding: 12px; }
+    }
+
+    @media (max-width: 480px) {
+      .dj-wrap { padding: 16px 14px 80px; }
+      .dj-profile-name { font-size: 17px; }
+      .revenue-grid { grid-template-columns: 1fr; }
+      .revenue-item-value { font-size: 18px; }
+      .revenue-card-title { font-size: 15px; }
+      .apply-bar { flex-direction: column; align-items: flex-start; gap: 8px; }
+      .btn-apply { width: 100%; text-align: center; }
+      .track-item { grid-template-columns: 24px 1fr 48px 28px; gap: 0 8px; }
+      .track-name { font-size: 13px; }
+      .track-dur { font-size: 12px; }
+      .overall-progress-header { flex-wrap: wrap; gap: 4px; }
+      .upload-zone { padding: 20px 14px; }
+      .upload-zone-compact-sub { display: none; }
+      .live-off-body { padding: 24px 16px 20px; }
+      .live-on-body { flex-direction: column; align-items: flex-start; gap: 12px; padding: 16px; }
+      .live-on-icon { width: 48px; height: 48px; font-size: 22px; }
+      .btn-start-live { width: 100%; text-align: center; }
+      .notice-list li { font-size: 11px; }
+      .dj-layout { gap: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">
+      <img src="logo.png" alt="인디피 뮤직" />
+    </a>
+    <ul class="nav-links">
+      <li><a href="index.html">인디피 뮤직</a></li>
+      <li><a href="playlist.html">플레이리스트</a></li>
+      <li><a href="mood-test.html">음악 힙지수 테스트</a></li>
+    </ul>
+    <div class="nav-actions" id="nav-actions">
+      <a href="login.html" class="nav-login">로그인</a>
+      <a href="plan.html" class="nav-cta-blue">도입 문의</a>
+    </div>
+  </div>
+</nav>
+
+<!-- 접근 권한 없음 -->
+<div class="access-denied" id="access-denied" style="display:none">
+  <div class="access-denied-icon">🔒</div>
+  <div class="access-denied-title">접근 권한이 없습니다</div>
+  <div class="access-denied-desc">매장 관리자 또는 DJ 계정으로 로그인한 경우에만 접근할 수 있습니다.</div>
+  <a href="login.html?mode=owner" class="btn-primary" style="text-decoration:none;">로그인하기</a>
+  <a href="login.html" style="margin-top:8px;display:inline-block;background:none;border:1px solid #e5e7eb;color:var(--text-gray);border-radius:100px;padding:10px 20px;font-size:13px;cursor:pointer;text-decoration:none;">로그인하기</a>
+</div>
+
+<!-- 메인 -->
+<div class="dj-wrap" id="dj-main" style="display:none">
+
+  <!-- 프로필 -->
+  <div class="dj-profile-row">
+    <div class="dj-avatar-wrap" id="dj-avatar-wrap">
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="rgba(0,0,0,0.2)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+        <circle cx="12" cy="7" r="4"/>
+      </svg>
+    </div>
+    <div class="dj-profile-info">
+      <div class="dj-profile-name" id="dj-name">DJ 이름</div>
+    </div>
+    <button class="btn-edit-sm" onclick="openProfileModal()">프로필 수정</button>
+  </div>
+
+  <div class="dj-layout">
+
+    <!-- 왼쪽: 트랙 관리 + 업로드 -->
+    <div>
+      <!-- 업로드 존 (파일 없을 때) -->
+      <div class="upload-zone" id="upload-zone"
+        ondragover="handleDragOver(event)" ondragleave="handleDragLeave()"
+        ondrop="handleDrop(event)" onclick="document.getElementById('file-input').click()">
+        <div class="upload-zone-icon">🎵</div>
+        <div class="upload-zone-title">MP3 파일을 드래그하거나 클릭해서 업로드</div>
+        <div class="upload-zone-sub">MP3 · WAV 지원 · 파일당 최대 50MB · 본인 소유 저작권 음악만</div>
+        <button class="upload-zone-btn" onclick="event.stopPropagation(); document.getElementById('file-input').click()">파일 선택</button>
+      </div>
+      <input type="file" id="file-input" multiple accept=".mp3,.wav" onchange="handleFileSelect(event)" />
+
+      <!-- 업로드 존 축소 버튼 (파일 있을 때) -->
+      <div class="upload-zone-compact" id="upload-zone-compact"
+        onclick="document.getElementById('file-input').click()">
+        <span class="upload-zone-compact-icon">➕</span>
+        <span class="upload-zone-compact-text">파일 추가</span>
+        <span class="upload-zone-compact-sub">MP3 · WAV · 파일당 최대 50MB</span>
+      </div>
+
+      <div id="track-list-wrap" style="display:none">
+        <!-- 전체 업로드 진행률 -->
+        <div class="overall-progress-wrap" id="overall-progress-wrap" style="display:none">
+          <div class="overall-progress-header">
+            <span class="overall-progress-label">업로드 진행 중</span>
+            <span class="overall-progress-ratio" id="overall-progress-ratio">0 / 0</span>
+          </div>
+          <div class="overall-progress-bar">
+            <div class="overall-progress-fill" id="overall-progress-fill" style="width:0%"></div>
+          </div>
+        </div>
+
+        <!-- 변경사항 적용 바 -->
+        <div class="apply-bar" id="apply-bar">
+          <span class="apply-bar-text" id="apply-bar-text">변경사항이 있습니다</span>
+          <button class="btn-apply" onclick="applyChanges()">적용하기</button>
+        </div>
+
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <span style="font-size:14px;font-weight:700;color:var(--dark)">업로드된 파일</span>
+          <span style="font-size:13px;color:var(--text-gray)" id="track-count"></span>
+        </div>
+        <div class="track-list" id="track-list"></div>
+      </div>
+    </div>
+
+    <!-- 오른쪽: 라이브 제어 -->
+    <div class="dj-live-panel">
+      <div class="live-card" id="live-card">
+        <div class="live-card-top">
+          <div class="air-indicator">
+            <span class="air-dot" id="air-dot"></span>
+            <span class="air-label" id="air-label">OFF AIR</span>
+          </div>
+          <span class="track-count-badge" id="track-count-badge"></span>
+        </div>
+
+        <div class="live-off-body" id="live-off">
+          <div class="live-off-icon">📻</div>
+          <div class="live-off-title">채널이 꺼져 있습니다</div>
+          <div class="live-off-desc" id="live-off-desc">파일을 업로드하면 라이브를 시작할 수 있습니다.</div>
+          <button class="btn-start-live" id="btn-start-live" onclick="startLive()">▶ 라이브 시작</button>
+        </div>
+
+        <div class="live-on-body" id="live-on" style="display:none">
+          <div class="live-on-icon">📡</div>
+          <div class="live-on-info">
+            <div class="live-on-title">라이브 방송 중</div>
+            <div class="live-on-desc" id="live-on-desc">—</div>
+            <button class="btn-stop-live" onclick="stopLive()">■ 방송 종료</button>
+          </div>
+        </div>
+        <!-- 시청자 수 (ON AIR 시에만 표시) -->
+        <div class="listener-row" id="listener-row" style="display:none">
+          <span class="listener-dot"></span>
+          <span id="listener-count">0명</span> 청취 중
+        </div>
+      </div>
+
+      <p class="dj-live-panel-note">
+        <strong>⚠ 이 페이지를 닫으면 라이브 방송이 종료됩니다.</strong>
+      </p>
+
+    </div>
+
+  </div>
+
+  <!-- 정산 카드 -->
+  <div class="revenue-card">
+    <p class="revenue-card-title">수익 정산</p>
+    <p class="revenue-card-subtitle">청취자 수와 청취 시간에 따라 정산 금액이 결정됩니다. 더 많은 구독자가 더 오래 들을수록 수익이 늘어납니다.</p>
+    <div class="revenue-grid">
+      <div class="revenue-item">
+        <div class="revenue-item-label">이번 달 예상 수익</div>
+        <div class="revenue-item-value">—<span class="revenue-item-unit">원</span></div>
+      </div>
+      <div class="revenue-item">
+        <div class="revenue-item-label">누적 정산 금액</div>
+        <div class="revenue-item-value">—<span class="revenue-item-unit">원</span></div>
+      </div>
+      <div class="revenue-item">
+        <div class="revenue-item-label">다음 정산 예정일</div>
+        <div class="revenue-item-value" style="font-size:16px">—</div>
+      </div>
+    </div>
+    <div class="revenue-pending-notice">
+      정산은 매월 익월 15일에 지급됩니다. 최소 출금 금액은 10,000원이며, 미달 시 다음 달로 이월됩니다.
+    </div>
+  </div>
+
+  <!-- 크리에이터 정책 -->
+  <div class="notice-card" style="margin-top:16px">
+    <div class="notice-card-title">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      크리에이터 정책
+    </div>
+    <ul class="notice-list">
+      <li><strong>음원 기준:</strong> 트랙 길이 2분 이상 · 128kbps 이상 · MP3 또는 WAV</li>
+      <li><strong>활동 유지:</strong> 월 최소 5트랙 이상 업로드를 유지해야 합니다. 3개월 연속 미달 시 라이브 기능이 제한됩니다.</li>
+      <div class="notice-divider"></div>
+      <li><strong>계정 보안:</strong> 계정을 제3자와 공유하거나 양도하는 행위는 금지됩니다.</li>
+      <li><strong>어뷰징 금지:</strong> 봇·자동 재생 등 비정상적인 방법으로 청취 수를 조작하는 행위는 정산 무효 및 계정 제재 사유가 됩니다.</li>
+      <li><strong>부적절 콘텐츠:</strong> 폭력·혐오·성인 콘텐츠가 포함된 음원은 즉시 삭제됩니다.</li>
+      <div class="notice-divider"></div>
+      <li><strong>정산 지급:</strong> 매월 익월 15일 지급 · 최소 출금 금액 10,000원 (미달 시 이월)</li>
+      <li><strong>세금:</strong> 개인 크리에이터는 정산액의 3.3%가 원천징수된 후 지급됩니다.</li>
+      <li><strong>정책 위반 제재:</strong> 경고 → 정산 보류 → 계정 영구 비활성화 순으로 처리됩니다.</li>
+    </ul>
+  </div>
+
+  <!-- 방송 유의사항 -->
+  <div class="notice-card" style="margin-top:16px">
+    <div class="notice-card-title">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      방송 유의사항
+    </div>
+    <ul class="notice-list">
+      <li><strong>방송 시간 연장:</strong> 파일을 추가하면 방송 가능 시간이 자동으로 늘어납니다.</li>
+      <li><strong>변경사항 적용:</strong> 파일을 추가하거나 삭제한 후 반드시 <strong>적용하기</strong> 버튼을 눌러야 방송에 반영됩니다.</li>
+      <div class="notice-divider"></div>
+      <li><strong>저작권 준수:</strong> 반드시 본인이 저작권을 보유하거나 합법적 이용 권한이 있는 음원만 업로드·재생할 수 있습니다.</li>
+      <li><strong>분쟁 책임:</strong> 저작권 침해 등 법적 문제 발생 시 해당 크리에이터가 모든 책임을 집니다.</li>
+      <li><strong>콘텐츠 제거:</strong> 저작권 문제가 확인된 음원은 사전 통보 없이 즉시 재생 목록에서 제외될 수 있습니다.</li>
+      <div class="notice-divider"></div>
+      <li><strong>페이지 유지:</strong> 방송 중 이 페이지를 닫거나 새로고침하면 라이브가 종료됩니다.</li>
+      <li><strong>파일 형식:</strong> MP3 · WAV만 허용되며, 파일당 최대 50MB입니다.</li>
+    </ul>
+  </div>
+
+</div>
+
+<!-- FOOTER -->
+<footer class="site-footer">
+  <div class="footer-inner">
+    <div class="footer-info">
+      <p>대표이사: 박완</p>
+      <p>사업자 등록번호: 666-20-01980</p>
+      <p>통신판매업 번호: 2026-서울서대문-0358</p>
+      <p>주소 03628 서울특별시 서대문구 통일로 484 서대문구창업지원센터 321호 버비컴퍼니</p>
+      <p class="contact">고객 문의: verbykorea@gmail.com</p>
+      <div class="footer-policy-links">
+        <a href="terms.html">서비스 이용약관</a>
+        <span>|</span>
+        <a href="privacy.html">개인정보 처리방침</a>
+      </div>
+    </div>
+  </div>
+  <div class="footer-title-big">INDP MUSIC</div>
+</footer>
+<div class="copyright">Copyright 2026. VERBY Co. all rights reserved.</div>
+
+<!-- MODAL: 프로필 수정 -->
+<div class="modal-overlay" id="profile-modal">
+  <div class="modal" style="max-height:90vh;overflow-y:auto">
+    <div class="modal-hd">
+      <div class="modal-title">프로필 수정</div>
+      <button class="modal-close" onclick="closeProfileModal()">✕</button>
+    </div>
+
+    <!-- 수정 가능 영역 -->
+    <p class="profile-section-label">수정 가능</p>
+
+    <!-- 썸네일 -->
+    <div class="profile-thumb-edit">
+      <div class="profile-thumb-preview" id="profile-thumb-preview">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="rgba(0,0,0,0.2)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+          <circle cx="12" cy="7" r="4"/>
+        </svg>
+      </div>
+      <div class="profile-thumb-actions">
+        <label class="profile-thumb-btn" style="cursor:pointer">
+          사진 변경
+          <input type="file" id="profile-thumb-input" accept="image/*" style="display:none" onchange="handleThumbChange(event)" />
+        </label>
+        <button class="profile-thumb-btn danger" onclick="removeThumb()">사진 삭제</button>
+      </div>
+    </div>
+
+    <div class="form-group" style="margin-bottom:20px">
+      <label class="form-label">크리에이터명 (활동명)</label>
+      <input class="form-input" id="edit-dj-name" type="text" placeholder="예: DJ Parkwan" />
+    </div>
+
+    <!-- 변경 불가 영역 -->
+    <p class="profile-section-label">변경 불가</p>
+    <div class="profile-readonly-card">
+      <div class="profile-readonly-row">
+        <span class="profile-readonly-key">성명</span>
+        <span class="profile-readonly-val" id="edit-real-name">—</span>
+      </div>
+      <div class="profile-readonly-row">
+        <span class="profile-readonly-key">휴대폰</span>
+        <span class="profile-readonly-val" id="edit-phone">—</span>
+      </div>
+      <div class="profile-readonly-row">
+        <span class="profile-readonly-key">이메일</span>
+        <span class="profile-readonly-val" id="edit-email">—</span>
+      </div>
+    </div>
+
+    <!-- 비밀번호 변경 -->
+    <p class="profile-section-label">비밀번호 변경 <span style="font-weight:400;text-transform:none;letter-spacing:0">(선택)</span></p>
+    <div class="form-group" style="margin-bottom:14px">
+      <label class="form-label">현재 비밀번호</label>
+      <input class="form-input" id="edit-pw-current" type="password" placeholder="현재 비밀번호를 입력해 주세요" oninput="toggleNewPwField()" />
+    </div>
+    <div class="form-group" style="margin-bottom:0;display:none" id="new-pw-field">
+      <label class="form-label">새 비밀번호 <span style="font-size:11px;color:var(--text-gray);font-weight:400">(8자 이상)</span></label>
+      <input class="form-input" id="edit-pw-new" type="password" placeholder="새 비밀번호를 입력해 주세요" />
+    </div>
+    <p id="pw-change-error" style="font-size:12px;color:#e53e3e;margin-top:6px;display:none"></p>
+
+    <div class="modal-footer">
+      <button class="btn-modal-cancel" onclick="closeProfileModal()">취소</button>
+      <button class="btn-modal-confirm" onclick="saveProfile()">저장</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ── 인증 ── */
+function logout() {
+  ['djToken', 'djName', 'djGenre'].forEach(k => localStorage.removeItem(k));
+  location.href = 'index.html';
+}
+
+const djToken = localStorage.getItem('djToken') || getOwnerToken() || localStorage.getItem('adminToken');
+let djName     = localStorage.getItem('djName')     || localStorage.getItem('storeName') || 'DJ';
+let djRealName = localStorage.getItem('djRealName') || '';
+let djPhone    = localStorage.getItem('djPhone')    || '';
+let djEmail    = localStorage.getItem('djEmail')    || '';
+let djThumb    = localStorage.getItem('djThumb')    || null;
+
+async function init() {
+  // GNB 스크롤 플로팅
+  const nav = document.querySelector('nav');
+  if (nav) {
+    const update = () => nav.classList.toggle('scrolled', window.scrollY > 10);
+    window.addEventListener('scroll', update, { passive: true });
+    update();
+  }
+
+  if (!djToken) {
+    document.getElementById('access-denied').style.display = 'flex';
+    updateNavAuth();
+    return;
+  }
+
+  // DJ 로그인 상태 → 네브에 로그아웃 노출
+  document.getElementById('nav-actions').innerHTML = `
+    <button onclick="logout()" class="nav-login" style="background:none;border:none;cursor:pointer;font-family:inherit;">로그아웃</button>
+    <span class="nav-cta-dark" style="pointer-events:none;">DJ 대시보드</span>
+  `;
+
+  document.getElementById('dj-main').style.display = 'block';
+  document.getElementById('dj-name').textContent   = djName;
+  applyThumb(djThumb, document.getElementById('dj-avatar-wrap'));
+
+  appliedTrackIds = new Set();
+
+  // 기존 업로드된 트랙 로드
+  try {
+    const data = await apiFetch('GET', '/api/dj/tracks', undefined, djToken);
+    if (data?.tracks?.length) {
+      tracks = data.tracks.map(t => ({
+        id: t.id, filename: t.filename,
+        duration: t.duration, secs: t.secs, uploading: false
+      }));
+      appliedTrackIds = new Set(tracks.map(t => t.id));
+    }
+  } catch(e) { console.warn('트랙 로드 실패:', e); }
+
+  renderTracks();
+  renderChannel();
+}
+
+/* ── 변경사항 적용 관리 ── */
+let appliedTrackIds = new Set(); // 실제 라이브에 적용된 트랙 ID 집합
+
+function markChanged() {
+  const bar     = document.getElementById('apply-bar');
+  const barText = document.getElementById('apply-bar-text');
+  if (!bar) return;
+
+  const currentIds  = new Set(tracks.filter(t => !t.uploading).map(t => t.id));
+  const added       = [...currentIds].filter(id => !appliedTrackIds.has(id)).length;
+  const removed     = [...appliedTrackIds].filter(id => !currentIds.has(id)).length;
+  const hasChanges  = added > 0 || removed > 0;
+
+  bar.classList.toggle('visible', hasChanges);
+  if (hasChanges) {
+    const parts = [];
+    if (added   > 0) parts.push(`추가 ${added}개`);
+    if (removed > 0) parts.push(`삭제 ${removed}개`);
+    barText.textContent = `미적용 변경사항 — ${parts.join(', ')}`;
+  }
+}
+
+function applyChanges() {
+  appliedTrackIds = new Set(tracks.filter(t => !t.uploading).map(t => t.id));
+  document.getElementById('apply-bar').classList.remove('visible');
+  renderChannel();
+  // TODO: 백엔드 연동 후 트랙 목록 변경 API 호출
+}
+
+/* ── 트랙 데이터 ── */
+let tracks = [];
+
+/* ── 채널 상태 ── */
+let isLive = false;
+
+async function startLive() {
+  const readyCount = tracks.filter(t => !t.uploading).length;
+  if (!readyCount) { alert('업로드 완료된 트랙이 없습니다. 먼저 파일을 업로드해 주세요.'); return; }
+  const btn = document.getElementById('btn-start-live');
+  btn.disabled = true;
+  btn.textContent = '시작 중...';
+  try {
+    await apiFetch('POST', '/api/dj/live/start', undefined, djToken);
+    isLive = true;
+    setDjLive(true);
+    renderChannel();
+  } catch(e) {
+    alert('라이브 시작에 실패했습니다: ' + (e.message || ''));
+    btn.disabled = false;
+    btn.textContent = readyCount > 0 ? `▶ 라이브 시작 (${readyCount}개 트랙)` : '▶ 라이브 시작';
+  }
+}
+
+async function stopLive() {
+  if (!confirm('방송을 종료할까요?')) return;
+  try {
+    await apiFetch('POST', '/api/dj/live/stop', undefined, djToken);
+  } catch(e) {
+    console.warn('라이브 종료 API 실패:', e);
+  }
+  isLive = false;
+  setDjLive(false);
+  renderChannel();
+}
+
+function renderChannel() {
+  const card   = document.getElementById('live-card');
+  const dot    = document.getElementById('air-dot');
+  const label  = document.getElementById('air-label');
+  const badge  = document.getElementById('track-count-badge');
+  const offEl  = document.getElementById('live-off');
+  const onEl   = document.getElementById('live-on');
+
+  const readyCount = tracks.filter(t => !t.uploading).length;
+
+  const listenerRow = document.getElementById('listener-row');
+
+  if (!isLive) {
+    card.classList.remove('on-air');
+    dot.classList.remove('live');
+    label.classList.remove('live');
+    label.textContent = 'OFF AIR';
+    badge.innerHTML = '';
+    offEl.style.display = '';
+    onEl.style.display  = 'none';
+    if (listenerRow) listenerRow.style.display = 'none';
+
+    const btn = document.getElementById('btn-start-live');
+    btn.disabled    = readyCount === 0;
+    btn.textContent = readyCount > 0 ? `▶ 라이브 시작 (${readyCount}개 트랙)` : '▶ 라이브 시작';
+  } else {
+    card.classList.add('on-air');
+    dot.classList.add('live');
+    label.classList.add('live');
+    label.textContent = 'ON AIR';
+    badge.innerHTML = `<strong>${readyCount}</strong>개 트랙 방송 중`;
+    offEl.style.display = 'none';
+    onEl.style.display  = 'flex';
+    document.getElementById('live-on-desc').textContent =
+      `${readyCount}개 트랙이 구독자에게 스트리밍되고 있습니다.`;
+    if (listenerRow) {
+      listenerRow.style.display = '';
+      // TODO: 백엔드 API 연동 후 실시간 시청자 수로 교체
+      document.getElementById('listener-count').textContent = '0명';
+    }
+  }
+}
+
+function updateOverallProgress() {
+  const total      = tracks.length;
+  const uploading  = tracks.filter(t => t.uploading).length;
+  const done       = total - uploading;
+  const wrap       = document.getElementById('overall-progress-wrap');
+  const fill       = document.getElementById('overall-progress-fill');
+  const ratio      = document.getElementById('overall-progress-ratio');
+
+  if (uploading === 0) { wrap.style.display = 'none'; return; }
+
+  wrap.style.display = '';
+  const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+  fill.style.width = pct + '%';
+  fill.classList.toggle('done', pct === 100);
+  ratio.textContent = `${done} / ${total}개`;
+
+  const label = document.querySelector('#overall-progress-wrap .overall-progress-label');
+  if (label) label.textContent = pct === 100 ? '업로드 완료' : '업로드 진행 중';
+}
+
+function renderTracks() {
+  const list     = document.getElementById('track-list');
+  const listWrap = document.getElementById('track-list-wrap');
+  const compact  = document.getElementById('upload-zone-compact');
+  const fullZone = document.getElementById('upload-zone');
+  const statEl   = document.getElementById('stat-tr');
+  if (statEl) statEl.textContent = tracks.length;
+
+  if (!tracks.length) {
+    listWrap.style.display = 'none';
+    compact.style.display  = 'none';
+    fullZone.style.display = '';
+    return;
+  }
+
+  // 파일 있으면 업로드 존 축소
+  fullZone.style.display = 'none';
+  compact.style.display  = 'flex';
+  listWrap.style.display = '';
+
+  // 총 길이 및 예상 종료 시간 계산
+  const doneTracks = tracks.filter(t => !t.uploading);
+  const totalSecs  = doneTracks.reduce((a, t) => a + (t.secs || 0), 0);
+  const totalH     = Math.floor(totalSecs / 3600);
+  const totalM     = Math.floor((totalSecs % 3600) / 60);
+  const totalStr   = totalH > 0 ? `${totalH}시간 ${totalM}분` : `${totalM}분`;
+  const endTime    = new Date(Date.now() + totalSecs * 1000);
+  const endStr     = `${String(endTime.getHours()).padStart(2,'0')}:${String(endTime.getMinutes()).padStart(2,'0')}`;
+  document.getElementById('track-count').textContent = doneTracks.length > 0
+    ? `총 ${tracks.length}개 · ${totalStr} · 지금 시작 시 ${endStr} 종료`
+    : `총 ${tracks.length}개`;
+
+  // 전체 진행률 업데이트
+  updateOverallProgress();
+
+  // 변경사항 적용 바 업데이트
+  markChanged();
+
+  // 라이브 카드: 파일 유무에 따른 안내 문구 업데이트
+  const readyCount = doneTracks.length;
+  const offDescEl  = document.getElementById('live-off-desc');
+  if (offDescEl) {
+    offDescEl.textContent = readyCount > 0
+      ? `${readyCount}개 트랙 준비 완료. 라이브를 시작하세요.`
+      : '파일 업로드가 완료되면 라이브를 시작할 수 있습니다.';
+  }
+
+  list.innerHTML = tracks.map((t, i) => `
+    <div class="track-item ${t.uploading ? 'uploading-item' : ''}">
+      <span class="track-num">${i + 1}</span>
+      <div class="track-name-wrap">
+        <span class="track-name">${t.filename}</span>
+        ${t.uploading ? `<div class="upload-progress"><div class="upload-progress-fill" style="width:${t.progress || 0}%"></div></div>` : ''}
+      </div>
+      <span class="track-dur">${t.uploading ? `${t.progress || 0}%` : t.duration}</span>
+      <button class="btn-tr-del" onclick="removeTrack(${t.id})" title="삭제">✕</button>
+    </div>`).join('');
+}
+
+/* ── 파일 업로드 ── */
+function handleDragOver(e) { e.preventDefault(); document.getElementById('upload-zone').classList.add('dragover'); }
+function handleDragLeave()  { document.getElementById('upload-zone').classList.remove('dragover'); }
+function handleDrop(e)      { e.preventDefault(); document.getElementById('upload-zone').classList.remove('dragover'); processFiles([...e.dataTransfer.files]); }
+function handleFileSelect(e){ processFiles([...e.target.files]); e.target.value = ''; }
+
+function processFiles(files) {
+  files.filter(f => f.type.startsWith('audio/')).forEach(file => {
+    const localId = Date.now() + Math.random();
+    tracks.push({ id: localId, filename: file.name, duration: '-', secs: 0, uploading: true, progress: 0 });
+    renderTracks();
+    renderChannel();
+    extractDurationAndUpload(localId, file);
+  });
+}
+
+async function extractDurationAndUpload(localId, file) {
+  let duration = '0:00';
+  let secs = 0;
+
+  // HTML5 Audio API로 실제 길이 추출
+  try {
+    await new Promise(resolve => {
+      const audio = new Audio();
+      const url = URL.createObjectURL(file);
+      audio.onloadedmetadata = () => {
+        const total = Math.floor(audio.duration) || 0;
+        secs = total;
+        duration = `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`;
+        URL.revokeObjectURL(url);
+        resolve();
+      };
+      audio.onerror = () => { URL.revokeObjectURL(url); resolve(); };
+      audio.src = url;
+    });
+  } catch(e) { console.warn('duration 추출 실패:', e); }
+
+  // 진행률 표시 (업로드 중)
+  const updateProgress = p => {
+    const t = tracks.find(t => t.id === localId);
+    if (t) { t.progress = p; renderTracks(); }
+  };
+
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('duration', duration);
+    formData.append('secs', String(secs));
+
+    updateProgress(30);
+
+    const res = await fetch(BASE_URL + '/api/dj/tracks', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${djToken}` },
+      body: formData
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || `업로드 실패 (${res.status})`);
+    }
+
+    const data = await res.json();
+    const t = tracks.find(t => t.id === localId);
+    if (t) {
+      t.id       = data.id;
+      t.duration = data.duration || duration;
+      t.secs     = data.secs || secs;
+      t.uploading = false;
+      delete t.progress;
+      renderTracks();
+      renderChannel();
+    }
+  } catch(e) {
+    console.error('업로드 실패:', e);
+    tracks = tracks.filter(t => t.id !== localId);
+    alert('파일 업로드에 실패했습니다: ' + (e.message || ''));
+    renderTracks();
+    renderChannel();
+  }
+}
+
+function removeTrack(id) {
+  if (!confirm('트랙을 삭제할까요?')) return;
+  tracks = tracks.filter(t => t.id !== id);
+  renderTracks();
+  renderChannel();
+}
+
+/* ── 트랙 수정 모달 ── */
+let editingTrackId = null;
+function openTrackEditModal(id) {
+  const t = tracks.find(t => t.id === id);
+  if (!t) return;
+  editingTrackId = id;
+  document.getElementById('edit-track-title').value  = t.title;
+  document.getElementById('edit-track-artist').value = t.artist;
+  document.getElementById('track-edit-modal').classList.add('open');
+  setTimeout(() => document.getElementById('edit-track-title').focus(), 50);
+}
+function closeTrackEditModal() { document.getElementById('track-edit-modal').classList.remove('open'); }
+function saveTrackEdit() {
+  const title  = document.getElementById('edit-track-title').value.trim();
+  const artist = document.getElementById('edit-track-artist').value.trim();
+  if (!title) { document.getElementById('edit-track-title').focus(); return; }
+  const t = tracks.find(t => t.id === editingTrackId);
+  if (t) { t.title = title; t.artist = artist; }
+  renderTracks();
+  closeTrackEditModal();
+}
+
+/* ── 프로필 수정 ── */
+const DEFAULT_AVATAR_SVG = `<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="rgba(0,0,0,0.2)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
+
+function applyThumb(src, container) {
+  container.innerHTML = src
+    ? `<img src="${src}" alt="썸네일" />`
+    : DEFAULT_AVATAR_SVG;
+}
+
+function handleThumbChange(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    djThumb = ev.target.result;
+    applyThumb(djThumb, document.getElementById('profile-thumb-preview'));
+  };
+  reader.readAsDataURL(file);
+}
+
+function removeThumb() {
+  djThumb = null;
+  document.getElementById('profile-thumb-input').value = '';
+  applyThumb(null, document.getElementById('profile-thumb-preview'));
+}
+
+function toggleNewPwField() {
+  const hasInput = document.getElementById('edit-pw-current').value.length > 0;
+  document.getElementById('new-pw-field').style.display = hasInput ? '' : 'none';
+  if (!hasInput) document.getElementById('edit-pw-new').value = '';
+  document.getElementById('pw-change-error').style.display = 'none';
+}
+
+function openProfileModal() {
+  document.getElementById('edit-dj-name').value       = djName;
+  document.getElementById('edit-real-name').textContent = djRealName || '—';
+  document.getElementById('edit-phone').textContent     = djPhone    || '—';
+  document.getElementById('edit-email').textContent     = djEmail    || '—';
+  document.getElementById('edit-pw-current').value = '';
+  document.getElementById('edit-pw-new').value     = '';
+  document.getElementById('new-pw-field').style.display = 'none';
+  document.getElementById('pw-change-error').style.display = 'none';
+  applyThumb(djThumb, document.getElementById('profile-thumb-preview'));
+  document.getElementById('profile-modal').classList.add('open');
+  setTimeout(() => document.getElementById('edit-dj-name').focus(), 50);
+}
+
+function closeProfileModal() { document.getElementById('profile-modal').classList.remove('open'); }
+
+async function saveProfile() {
+  const name       = document.getElementById('edit-dj-name').value.trim();
+  const currentPw  = document.getElementById('edit-pw-current').value;
+  const newPw      = document.getElementById('edit-pw-new').value;
+  const errEl      = document.getElementById('pw-change-error');
+
+  if (!name) { document.getElementById('edit-dj-name').focus(); return; }
+
+  // 비밀번호 변경 유효성 검사
+  if (currentPw) {
+    if (newPw.length < 8) {
+      errEl.textContent = '새 비밀번호는 8자 이상이어야 합니다.';
+      errEl.style.display = '';
+      return;
+    }
+    // TODO: 백엔드 API 준비 후 실제 현재 비밀번호 검증 및 변경 API 호출로 교체
+    // try {
+    //   await apiFetch('PATCH', '/api/dj/password', { currentPassword: currentPw, newPassword: newPw }, djToken);
+    // } catch(e) {
+    //   errEl.textContent = '현재 비밀번호가 일치하지 않습니다.';
+    //   errEl.style.display = '';
+    //   return;
+    // }
+  }
+  errEl.style.display = 'none';
+
+  djName = name;
+  localStorage.setItem('djName', djName);
+  if (djThumb) localStorage.setItem('djThumb', djThumb);
+  else         localStorage.removeItem('djThumb');
+
+  document.getElementById('dj-name').textContent = djName;
+  applyThumb(djThumb, document.getElementById('dj-avatar-wrap'));
+
+  closeProfileModal();
+}
+
+/* ── 모달 외부 클릭 닫기 ── */
+['track-edit-modal', 'profile-modal'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('click', e => {
+    if (e.target === e.currentTarget) e.currentTarget.classList.remove('open');
+  });
+});
+
+init();
+
+/* ── 페이지 닫기 시 라이브 종료 ── */
+window.addEventListener('beforeunload', (e) => {
+  if (isLive) {
+    e.preventDefault();
+    e.returnValue = '페이지를 닫으면 라이브 방송이 종료됩니다. 정말 닫으시겠습니까?';
+    return e.returnValue;
+  }
+});
+
+window.addEventListener('pagehide', () => {
+  if (isLive) {
+    isLive = false;
+    setDjLive(false);
+    // TODO: 백엔드 API 준비 후 POST /api/dj/live/stop 호출
+  }
+});
+</script>
+</body>
+</html>

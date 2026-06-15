@@ -5,8 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>신청 완료 - 인디피 뮤직</title>
   <meta name="robots" content="noindex, nofollow" />
-  <link rel="shortcut icon" href="https://www.indpmusic.co.kr/favicon-32.png" />
-  <link rel="icon" type="image/png" sizes="32x32" href="https://www.indpmusic.co.kr/favicon-32.png" />
+  <link rel="shortcut icon" href="/favicon.ico" />
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192.png" />
+  <link rel="icon" type="image/png" sizes="512x512" href="/favicon-512.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="https://www.indpmusic.co.kr/apple-touch-icon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -151,21 +154,21 @@
             <div style="flex:1">
               <div style="font-size:14px;color:var(--text-sub);margin-bottom:6px">서비스 이용 기간</div>
               <div id="notice-period" style="font-size:15px;font-weight:700;color:var(--dark);line-height:1.6"></div>
-              <div style="font-size:13px;color:var(--text-gray);margin-top:4px">서비스 이용 기간은 화요일~월요일 기준으로 운영됩니다.</div>
+              <div id="notice-period-desc" style="font-size:13px;color:var(--text-gray);margin-top:4px">서비스 이용 기간은 화요일~월요일 기준으로 운영됩니다.</div>
             </div>
           </li>
           <li style="display:flex;gap:8px;align-items:flex-start;margin-top:16px;border-top:1px solid #e5e7eb;padding-top:16px">
             <span style="flex-shrink:0;font-weight:700;color:var(--blue);">2.</span>
             <div style="flex:1">
-              <div style="font-size:14px;color:var(--text-sub);margin-bottom:4px">아이디 · 비밀번호 보관</div>
-              <div style="font-size:13px;color:var(--text-gray);line-height:1.7">아래 로그인 정보를 반드시 기억해 주세요.<br>분실 시 고객센터를 통해서만 재발급이 가능합니다.</div>
+              <div id="notice-cred-title" style="font-size:14px;color:var(--text-sub);margin-bottom:4px">아이디 · 비밀번호 보관</div>
+              <div id="notice-cred-desc" style="font-size:13px;color:var(--text-gray);line-height:1.7">아래 로그인 정보를 반드시 기억해 주세요.<br>분실 시 고객센터를 통해서만 재발급이 가능합니다.</div>
             </div>
           </li>
           <li style="display:flex;gap:8px;align-items:flex-start;margin-top:16px;border-top:1px solid #e5e7eb;padding-top:16px">
             <span style="flex-shrink:0;font-weight:700;color:var(--blue);">3.</span>
             <div style="flex:1">
-              <div style="font-size:14px;color:var(--text-sub);margin-bottom:4px">신청 정보 확인</div>
-              <div style="font-size:13px;color:var(--text-gray);line-height:1.7">신청하신 매장 정보 및 음악 취향은 로그인 후 마이페이지에서 확인하고 수정하실 수 있습니다.</div>
+              <div id="notice-next-title" style="font-size:14px;color:var(--text-sub);margin-bottom:4px">신청 정보 확인</div>
+              <div id="notice-next-desc" style="font-size:13px;color:var(--text-gray);line-height:1.7">신청하신 매장 정보 및 음악 취향은 로그인 후 마이페이지에서 확인하고 수정하실 수 있습니다.</div>
             </div>
           </li>
         </ol>
@@ -224,25 +227,31 @@
       return `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')} (${DAY_KO_CP[d.getDay()]})`;
     }
 
-    function showSubscriptionInfo(sub, paidAmount) {
+    function showSubscriptionInfo(sub, paidAmount, isPlanA) {
       if (!sub || !sub.startDate) return;
       const sd = new Date(sub.startDate);
       if (sub.endDate) {
-        const usagePeriod = sub.usagePeriod;
-        let weeks, months;
-        if (usagePeriod) {
-          months = usagePeriod;
-          weeks = MONTHS_TO_WEEKS_CP[months] || months * 4;
-        } else {
-          const days = Math.round((new Date(sub.endDate) - sd) / (1000*60*60*24));
-          const rawW = Math.round(days / 7);
-          const known = [4,12,24,48];
-          weeks = known.reduce((a, b) => Math.abs(b - rawW) < Math.abs(a - rawW) ? b : a);
-          months = WEEKS_TO_MONTHS_CP[weeks] || null;
-        }
         const ed = new Date(sub.endDate);
-        const periodStr = months ? `${months}개월 (${weeks}주)` : `${weeks}주`;
         const rangeStr = `${fmtDay(sd)} ~ ${fmtDay(ed)}`;
+        let periodStr;
+        if (isPlanA) {
+          const months = sub.usagePeriod || 1;
+          periodStr = `${months}개월`;
+        } else {
+          const usagePeriod = sub.usagePeriod;
+          let weeks, months;
+          if (usagePeriod) {
+            months = usagePeriod;
+            weeks = MONTHS_TO_WEEKS_CP[months] || months * 4;
+          } else {
+            const days = Math.round((ed - sd) / (1000*60*60*24));
+            const rawW = Math.round(days / 7);
+            const known = [4,12,24,48];
+            weeks = known.reduce((a, b) => Math.abs(b - rawW) < Math.abs(a - rawW) ? b : a);
+            months = WEEKS_TO_MONTHS_CP[weeks] || null;
+          }
+          periodStr = months ? `${months}개월 (${weeks}주)` : `${weeks}주`;
+        }
         document.getElementById('subscription-period-label').innerHTML =
           `<span style="font-weight:800;color:var(--dark)">${periodStr}</span><br><span style="font-size:13px;color:var(--text-sub);font-weight:500">${rangeStr}</span>`;
         document.getElementById('notice-period').innerHTML =
@@ -251,6 +260,15 @@
       const amt = paidAmount || sub.amount || sub.totalAmount;
       if (amt) document.getElementById('subscription-amount').textContent = Number(amt).toLocaleString() + '원';
       document.getElementById('subscription-box').style.display = 'block';
+    }
+
+    function applyPlanANotices() {
+      document.getElementById('notice-period-desc').textContent = '결제 완료 즉시 서비스가 시작됩니다.';
+      document.getElementById('notice-cred-title').textContent = '로그인 정보';
+      document.getElementById('notice-cred-desc').textContent = '가입 시 입력하신 아이디와 비밀번호로 로그인하세요.';
+      document.getElementById('notice-next-title').textContent = 'DJ 플레이리스트 바로 이용';
+      document.getElementById('notice-next-desc').innerHTML =
+        '로그인 후 <strong>플레이리스트 &gt; DJ 탭</strong>에서 원하는 DJ의 음악을 바로 들을 수 있습니다.';
     }
 
     function showCredentials(credId, credPw) {
@@ -282,14 +300,45 @@
       console.log('[complete] paymentKey:', paymentKey, '| pendingLoginId:', sessionStorage.getItem('pendingLoginId') ? '있음' : '없음', '| pendingPassword:', sessionStorage.getItem('pendingPassword') ? '있음' : '없음');
       if (!paymentKey || !orderId) return;
 
+      const isPlanA = (localStorage.getItem('selectedPlan') === 'A');
+
       try {
+        const paymentType = isPlanA ? 'USER_SUBSCRIPTION' : 'SUBSCRIPTION';
         const confirmRes = await apiFetch('POST', '/api/payments/confirm', {
-          paymentType: 'SUBSCRIPTION',
+          paymentType,
           paymentKey,
           orderId,
           amount
         });
         console.log('[결제 확인 응답]', JSON.stringify(confirmRes));
+
+        if (isPlanA) {
+          applyPlanANotices();
+          const loginId = localStorage.getItem('applicantLoginId') || '';
+          const pw = sessionStorage.getItem('applicantPw') || '';
+          sessionStorage.removeItem('applicantPw');
+
+          try {
+            const loginRes = await apiFetch('POST', '/api/auth/login', { loginId, password: pw });
+            if (loginRes.accessToken) {
+              localStorage.setItem('userToken', loginRes.accessToken);
+              if (loginRes.refreshToken) localStorage.setItem('userRefreshToken', loginRes.refreshToken);
+              localStorage.setItem('userLoginId', loginId);
+              console.log('[Plan A] 자동 로그인 성공 → DJ 플레이리스트로 이동');
+
+              try {
+                const subRes = await apiFetch('GET', '/api/user/subscription', undefined, loginRes.accessToken);
+                if (subRes?.startDate) showSubscriptionInfo(subRes, amount, true);
+              } catch(e) { console.warn('구독 정보 로드 실패:', e); }
+
+              setTimeout(() => { window.location.href = 'playlist.html?tab=dj'; }, 3000);
+            }
+          } catch(e) { console.warn('[Plan A] 자동 로그인 실패:', e); }
+
+          localStorage.removeItem('pendingOrderId');
+          localStorage.removeItem('pendingAmount');
+          return;
+        }
 
         let token = getOwnerToken();
 
@@ -312,7 +361,7 @@
         // confirm 응답에 구독 정보가 포함된 경우 바로 사용
         const confirmSub = confirmRes?.subscription || confirmRes?.subscriptionInfo;
         if (confirmSub?.startDate) {
-          showSubscriptionInfo(confirmSub, confirmRes?.amount ?? amount);
+          showSubscriptionInfo(confirmSub, confirmRes?.amount ?? amount, false);
         }
 
         // 구독 정보 로드 (로그인 성공 여부와 독립적으로 시도)
@@ -340,7 +389,7 @@
                 const primary = sorted[0];
                 const combinedStart = subList.reduce((min, s) => (!min || s.startDate < min ? s.startDate : min), null);
                 const combinedEnd   = subList.reduce((max, s) => (!max || s.endDate   > max ? s.endDate   : max), null);
-                showSubscriptionInfo({ ...primary, startDate: combinedStart, endDate: combinedEnd }, confirmRes?.amount ?? amount);
+                showSubscriptionInfo({ ...primary, startDate: combinedStart, endDate: combinedEnd }, confirmRes?.amount ?? amount, false);
               }
             }
           } catch(e) {
@@ -387,7 +436,7 @@
           );
           const combinedStart = subList.reduce((min, s) => (!min || s.startDate < min ? s.startDate : min), null);
           const combinedEnd   = subList.reduce((max, s) => (!max || s.endDate   > max ? s.endDate   : max), null);
-          showSubscriptionInfo({ ...sorted[0], startDate: combinedStart, endDate: combinedEnd }, null);
+          showSubscriptionInfo({ ...sorted[0], startDate: combinedStart, endDate: combinedEnd }, null, false);
         }
       } catch(e) { console.warn('구독 정보 재로드 실패:', e); }
     }

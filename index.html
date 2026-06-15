@@ -69,8 +69,11 @@
     "url": "https://www.indpmusic.co.kr/"
   }
   </script>
-  <link rel="shortcut icon" href="https://www.indpmusic.co.kr/favicon-32.png" />
-  <link rel="icon" type="image/png" sizes="32x32" href="https://www.indpmusic.co.kr/favicon-32.png" />
+  <link rel="shortcut icon" href="/favicon.ico" />
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192.png" />
+  <link rel="icon" type="image/png" sizes="512x512" href="/favicon-512.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="https://www.indpmusic.co.kr/apple-touch-icon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -679,51 +682,76 @@
     }
 
     .plan-cards-wrap {
-      display: flex;
-      gap: 24px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
       flex: 1;
     }
 
     .plan-card {
       background: var(--white);
-      border-radius: 24px;
-      padding: 36px 32px;
-      flex: 1;
+      border-radius: 20px;
+      padding: 28px 22px;
       display: flex;
       flex-direction: column;
     }
 
-    .plan-title {
-      font-size: 16px;
-      font-weight: 700;
-      color: var(--text-gray);
-      margin-bottom: 8px;
+    .plan-price-block {
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      gap: 3px;
+      margin-bottom: 20px;
     }
 
-    .plan-offer {
-      font-size: 20px;
-      font-weight: 700;
-      color: var(--blue);
+    .plan-header {
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+      flex-wrap: wrap;
       margin-bottom: 14px;
     }
 
+    .plan-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-gray);
+      margin: 0;
+    }
+
+    .plan-name {
+      font-size: 17px;
+      font-weight: 800;
+      color: var(--dark);
+      margin: 0;
+      line-height: 1.3;
+    }
+
+    .plan-offer {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--blue);
+      margin: 0;
+    }
+
     .plan-original-price {
-      font-size: 20px;
+      font-size: 13px;
       font-weight: 700;
       color: var(--text-light-gray);
       text-decoration: line-through;
-      margin-bottom: 2px;
+      margin: 0;
     }
 
     .plan-price-row {
       display: flex;
       align-items: baseline;
-      gap: 6px;
-      margin-bottom: 20px;
+      gap: 4px;
+      margin: 0;
+      flex-wrap: wrap;
     }
 
     .plan-price {
-      font-size: 36px;
+      font-size: 28px;
       font-weight: 900;
       color: var(--dark);
       line-height: 1;
@@ -731,7 +759,7 @@
     }
 
     .plan-price-desc {
-      font-size: 16px;
+      font-size: 13px;
       font-weight: 400;
       color: var(--text-gray);
     }
@@ -739,20 +767,20 @@
     .plan-divider {
       height: 1px;
       background: #e5e7eb;
-      margin-bottom: 18px;
+      margin-bottom: 14px;
     }
 
     .plan-features {
       list-style: none;
       display: flex;
       flex-direction: column;
-      gap: 10px;
-      margin-bottom: 28px;
+      gap: 8px;
+      margin-bottom: 20px;
       flex: 1;
     }
 
     .plan-features li {
-      font-size: 15px;
+      font-size: 13px;
       font-weight: 500;
       color: var(--text-gray);
       display: flex;
@@ -1488,8 +1516,14 @@
       .pricing-header { margin-bottom: 40px; }
       .pricing-title { font-size: 30px; }
       .pricing-grid { flex-direction: column; align-items: center; }
-      .plan-cards-wrap { flex-direction: column; align-items: center; width: 100%; }
-      .plan-card { width: 100%; max-width: 400px; }
+      .plan-cards-wrap { grid-template-columns: 1fr; row-gap: 16px; }
+      .plan-card { width: 100%; max-width: 400px; grid-row: auto; display: flex; flex-direction: column; grid-template-rows: none; padding: 32px 24px; }
+      .plan-header { margin-bottom: 8px; }
+      .plan-name { font-size: 20px; }
+      .plan-price-block { gap: 8px; margin-bottom: 20px; }
+      .plan-divider { margin-bottom: 20px; }
+      .plan-features { gap: 14px; margin-bottom: 28px; }
+      .plan-features li { font-size: 15px; }
       .qr-section { flex: none; flex-direction: column; }
       .plan-price { font-size: 36px; }
 
@@ -1914,31 +1948,25 @@
         <div class="plan-cards-wrap" id="index-plan-cards">
           <!-- API로 동적 렌더링 -->
         </div>
-
-        <!-- QR INFO -->
-        <div class="qr-section">
-          <div class="qr-icon"><img src="qr-icon.png" alt="QR 아이콘" style="width:140px;height:auto;display:block;" /></div>
-          <h3 class="qr-title">QR 매장 음악 추천 기능이<br>무엇인가요?</h3>
-          <p class="qr-text">PLAN B를 신청하면<br>매장으로 <span class="qr-sticker-trigger qr-sticker-trigger-on-dark">QR 스티커<span class="trigger-icon">🖼</span></span>가 배송됩니다.<br>QR을 통해 접속하면<br>매장에서 플레이리스트를 바로 확인 가능하고<br>손님들은 QR을 통해<br>노래를 신청할 수 있습니다.</p>
-        </div>
       </div>
     </div>
   </section>
+
 
   <!-- QR FEATURE -->
   <section class="qr-feature-section">
     <div class="qr-feature-inner">
       <div class="qr-feature-header">
-        <span class="qr-feature-badge">PLAN B EXCLUSIVE</span>
+        <span class="qr-feature-badge">PLAN C EXCLUSIVE</span>
         <h2 class="qr-feature-heading">QR CODE 매장 음악 추천 기능</h2>
-        <p class="qr-feature-desc">PLAN B 신청 시 매장으로 <span class="qr-sticker-trigger" id="qrStickerTrigger">QR 스티커<span class="trigger-icon">🖼</span></span>가 배송됩니다.<br>손님이 QR 코드를 스캔하면 매장의 플레이리스트를 바로 확인하고, 원하는 노래를 직접 신청할 수 있습니다.</p>
-        <a href="plan.html" class="qr-feature-cta">PLAN B 신청하기 →</a>
+        <p class="qr-feature-desc">PLAN C 신청 시 매장으로 <span class="qr-sticker-trigger" id="qrStickerTrigger">QR 리플렛<span class="trigger-icon">🖼</span></span>이 배송됩니다.<br>손님이 QR 코드를 스캔하면 매장의 플레이리스트를 바로 확인하고, 원하는 노래를 직접 신청할 수 있습니다.</p>
+        <a href="plan.html" class="qr-feature-cta">PLAN C 신청하기 →</a>
       </div>
       <div class="qr-flow">
         <div class="qr-flow-card qr-flow-card-blue">
           <div class="qr-flow-icon">📦</div>
-          <p class="qr-flow-label">QR 스티커 배송</p>
-          <p class="qr-flow-desc">신청 완료 후<br>매장으로 QR 스티커가<br>배송됩니다</p>
+          <p class="qr-flow-label">QR 리플렛 배송</p>
+          <p class="qr-flow-desc">신청 완료 후<br>매장으로 QR 리플렛이<br>배송됩니다</p>
         </div>
         <div class="qr-flow-arrow">→</div>
         <div class="qr-flow-card">
@@ -2206,23 +2234,54 @@
 
   <script>
     // ── 메인 플랜 카드 API 렌더링 ──
+    // API 코드(PLAN_A, PLAN_B)는 각각 Plan B, Plan C로 표시
     const INDEX_PLAN_INFO = {
       'PLAN_A': {
-        label: 'PLAN A',
-        features: ['매장 맞춤형 플레이리스트 제공', '월 4회 업데이트(매주 월요일)', '플레이리스트 결과 보고서 제공']
+        label: 'PLAN B',
+        name: '기본 요금제',
+        features: ['매장 맞춤형 브랜딩 플레이리스트 제공', '매주 플레이리스트 업데이트', '프렌차이즈, 브랜드 매장 추천 플랜']
       },
       'PLAN_B': {
-        label: 'PLAN B',
-        features: ['매장 맞춤형 플레이리스트 제공', '월 4회 업데이트(매주 월요일)', '플레이리스트 결과 보고서 제공', 'QR 매장 음악 추천 기능 제공']
+        label: 'PLAN C',
+        name: '프리미엄 요금제',
+        features: ['매장 맞춤형 브랜딩 플레이리스트 제공', '매주 플레이리스트 업데이트', 'QR 음악 추천 기능 추가', 'QR 리플렛 제공']
       }
     };
+
+    const INDEX_API_CODE_MAP = ['B', 'C'];
 
     function renderIndexPlans(plans) {
       const wrap = document.getElementById('index-plan-cards');
       if (!wrap) return;
-      wrap.innerHTML = plans.map((plan, idx) => {
+
+      const liteHtml = `
+        <div class="plan-card" style="opacity:0.55;cursor:not-allowed;pointer-events:none;position:relative;">
+          <div class="plan-header">
+            <span class="plan-title">PLAN A</span>
+            <span class="plan-name">라이트 요금제</span>
+          </div>
+          <div style="display:inline-block;background:#9ca3af;color:#fff;font-size:11px;font-weight:700;padding:3px 10px;border-radius:100px;margin-bottom:8px">준비중</div>
+          <div class="plan-price-block">
+            <div class="plan-price-row">
+              <span class="plan-price">4,400원</span>
+              <span class="plan-price-desc">/월 (VAT 포함)</span>
+            </div>
+          </div>
+          <div class="plan-divider"></div>
+          <ul class="plan-features">
+            <li><span class="check">✓</span> 24시간 원하는 DJ의 음악 선택 가능</li>
+            <li><span class="check">✓</span> 개인 카페 추천 플랜</li>
+          </ul>
+          <div class="plan-btn-row">
+            <span class="plan-apply-btn" style="background:#9ca3af">준비중</span>
+          </div>
+        </div>`;
+
+      // PLAN_C(Plan A 라이트)는 상단 하드코딩 카드로 표시하므로 API 목록에서 제외
+      const filteredPlans = plans.filter(p => (p.type || p.code || '') !== 'PLAN_C');
+      const apiHtml = filteredPlans.map((plan, idx) => {
         const planType = plan.type || plan.code || '';
-        const codeShort = idx === 0 ? 'A' : 'B';
+        const codeShort = INDEX_API_CODE_MAP[idx] || String.fromCharCode(67 + idx);
         const info = INDEX_PLAN_INFO[planType] || { label: 'PLAN ' + codeShort, features: [] };
 
         const discountRate = plan.discountRate != null ? plan.discountRate : 0;
@@ -2234,23 +2293,27 @@
         const originalHtml = discountRate > 0
           ? `<p class="plan-original-price">${monthlyPrice.toLocaleString()}원</p>` : '';
         const offerHtml = discountRate > 0
-          ? `<p class="plan-offer">신규 오픈 기념 ${discountRate}% 할인</p>` : '';
+          ? `<p class="plan-offer">신규 오픈 기념 6월 30일까지 할인</p>` : '';
 
         const featuresHtml = info.features.map((f, fi) => {
-          const isLast = fi === info.features.length - 1;
-          const isBold = isLast && idx > 0;
+          const isBold = fi === info.features.length - 1 && idx > 0;
           return `<li${isBold ? ' class="bold-feat"' : ''}><span class="check">✓</span> ${f}</li>`;
         }).join('');
 
         return `
           <div class="plan-card">
-            <p class="plan-title">${info.label}</p>
-            ${originalHtml}
-            <div class="plan-price-row">
-              <span class="plan-price">${priceVal.toLocaleString()}원</span>
-              <span class="plan-price-desc">/월 (VAT 포함)</span>
+            <div class="plan-header">
+              <span class="plan-title">${info.label}</span>
+              <span class="plan-name">${info.name || ''}</span>
             </div>
-            ${offerHtml}
+            <div class="plan-price-block">
+              ${originalHtml}
+              <div class="plan-price-row">
+                <span class="plan-price">${priceVal.toLocaleString()}원</span>
+                <span class="plan-price-desc">/월 (VAT 포함)</span>
+              </div>
+              ${offerHtml}
+            </div>
             <div class="plan-divider"></div>
             <ul class="plan-features">${featuresHtml}</ul>
             <div class="plan-btn-row">
@@ -2259,15 +2322,23 @@
             </div>
           </div>`;
       }).join('');
+
+      wrap.innerHTML = liteHtml + apiHtml;
     }
+
+    const FALLBACK_PLANS = [
+      { type: 'PLAN_A', monthlyPrice: 11000, discountRate: 60 },
+      { type: 'PLAN_B', monthlyPrice: 22000, discountRate: 60 }
+    ];
 
     (async function loadIndexPlans() {
       try {
         const data = await apiFetch('GET', '/api/plans');
         const plans = data.plans || data || [];
-        if (plans.length > 0) renderIndexPlans(plans);
+        renderIndexPlans(plans.length > 0 ? plans : FALLBACK_PLANS);
       } catch(e) {
         console.warn('메인 플랜 로드 실패:', e);
+        renderIndexPlans(FALLBACK_PLANS);
       }
     })();
 

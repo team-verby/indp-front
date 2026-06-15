@@ -5,8 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>로그인 - 인디피 뮤직</title>
   <meta name="robots" content="noindex, nofollow" />
-  <link rel="shortcut icon" href="https://www.indpmusic.co.kr/favicon-32.png" />
-  <link rel="icon" type="image/png" sizes="32x32" href="https://www.indpmusic.co.kr/favicon-32.png" />
+  <link rel="shortcut icon" href="/favicon.ico" />
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192.png" />
+  <link rel="icon" type="image/png" sizes="512x512" href="/favicon-512.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="https://www.indpmusic.co.kr/apple-touch-icon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -180,28 +183,31 @@
 
         <img src="vinyl.png" alt="인디피 뮤직" class="login-vinyl" />
 
-        <h1 class="login-title">매장 관리자 로그인</h1>
-        <p class="login-subtitle">인디피 뮤직 매장 관리 시스템</p>
-
-        <div class="form-group">
-          <label class="form-label" for="username">아이디</label>
-          <input type="text" id="username" class="form-input" placeholder="아이디를 입력해 주세요" />
-        </div>
-
-        <div class="form-group">
-          <label class="form-label" for="password">비밀번호</label>
-          <div class="pw-wrap">
-            <input type="password" id="password" class="form-input" placeholder="비밀번호를 입력해 주세요" />
-            <button class="pw-toggle" type="button" onclick="togglePw()" aria-label="비밀번호 표시/숨기기">
-              <svg id="eye-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                <circle cx="12" cy="12" r="3"/>
-              </svg>
-            </button>
+        <!-- 통합 로그인 폼 -->
+        <div id="form-unified">
+          <h1 class="login-title">로그인</h1>
+          <p class="login-subtitle">인디피 뮤직</p>
+          <div class="form-group">
+            <label class="form-label" for="login-id">아이디 / 이메일</label>
+            <input type="text" id="login-id" class="form-input" placeholder="아이디 또는 이메일을 입력해 주세요"
+              onkeydown="if(event.key==='Enter') document.getElementById('login-pw').focus()" />
           </div>
+          <div class="form-group">
+            <label class="form-label" for="login-pw">비밀번호</label>
+            <div class="pw-wrap">
+              <input type="password" id="login-pw" class="form-input" placeholder="비밀번호를 입력해 주세요"
+                onkeydown="if(event.key==='Enter') handleUnifiedLogin()" />
+              <button class="pw-toggle" type="button" onclick="togglePw('login-pw','eye-icon')" aria-label="비밀번호 표시/숨기기">
+                <svg id="eye-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+          <p id="login-error" style="font-size:13px;color:#e53e3e;margin-bottom:8px;display:none">아이디/이메일 또는 비밀번호를 확인해 주세요.</p>
+          <button class="btn-login" id="btn-login" onclick="handleUnifiedLogin()">로그인</button>
         </div>
-
-        <button class="btn-login" onclick="handleLogin()">로그인</button>
 
       </div>
     </div>
@@ -210,9 +216,9 @@
 
   <script src="api.js"></script>
   <script>
-    function togglePw() {
-      const pw = document.getElementById('password');
-      const icon = document.getElementById('eye-icon');
+    function togglePw(inputId, iconId) {
+      const pw = document.getElementById(inputId);
+      const icon = document.getElementById(iconId);
       if (pw.type === 'password') {
         pw.type = 'text';
         icon.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
@@ -222,25 +228,51 @@
       }
     }
 
-    async function handleLogin() {
-      const loginId = document.getElementById('username').value.trim();
-      const password = document.getElementById('password').value;
-      if (!loginId || !password) { alert('아이디와 비밀번호를 입력해 주세요.'); return; }
+    async function handleUnifiedLogin() {
+      const id       = document.getElementById('login-id').value.trim();
+      const password = document.getElementById('login-pw').value;
+      const errEl    = document.getElementById('login-error');
+      const btn      = document.getElementById('btn-login');
+
+      if (!id || !password) { errEl.textContent = '아이디와 비밀번호를 입력해 주세요.'; errEl.style.display = ''; return; }
+      errEl.style.display = 'none';
+      btn.disabled = true;
+      btn.textContent = '로그인 중...';
+
       try {
-        const data = await apiFetch('POST', '/api/owner/login', { loginId, password });
-        setOwnerToken(data.accessToken, data.refreshToken);
-        try {
-          const storeList = await apiFetch('GET', '/api/owner/stores', undefined, data.accessToken);
-          const storesArr = Array.isArray(storeList) ? storeList
-            : Array.isArray(storeList.stores) ? storeList.stores
-            : storeList.storeId ? [storeList]
-            : storeList.store ? [storeList.store] : [];
-          const first = storesArr[0];
-          if (first && first.storeId) setOwnerStoreId(first.storeId);
-        } catch(e) {}
-        window.location.href = 'playlist.html';
+        const data = await apiFetch('POST', '/api/auth/login', { loginId: id, password });
+
+        switch (data.planType) {
+          case 'PLAN_A':
+            setUserToken(data.accessToken, data.refreshToken);
+            window.location.href = 'playlist.html?tab=dj';
+            break;
+          case 'PLAN_B':
+          case 'PLAN_C':
+            setOwnerToken(data.accessToken, data.refreshToken);
+            if (data.storeId) setOwnerStoreId(data.storeId);
+            window.location.href = 'playlist.html';
+            break;
+          case 'DJ':
+            // 기존 user/owner 토큰 충돌 방지
+            localStorage.removeItem('userToken');
+            localStorage.removeItem('userRefreshToken');
+            localStorage.removeItem('ownerToken');
+            localStorage.removeItem('ownerRefreshToken');
+            localStorage.setItem('djToken', data.accessToken);
+            if (data.refreshToken) localStorage.setItem('djRefreshToken', data.refreshToken);
+            localStorage.setItem('djName', data.djName || 'DJ');
+            window.location.href = 'dj-dashboard.html';
+            break;
+          default:
+            throw new Error('알 수 없는 계정 유형입니다.');
+        }
+
       } catch(e) {
-        alert('로그인에 실패했습니다. 아이디와 비밀번호를 확인해 주세요.');
+        errEl.textContent = '아이디 또는 비밀번호를 확인해 주세요.';
+        errEl.style.display = '';
+        btn.disabled = false;
+        btn.textContent = '로그인';
       }
     }
   </script>

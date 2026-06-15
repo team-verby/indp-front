@@ -5,8 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>정보 입력 - 인디피 뮤직</title>
   <meta name="robots" content="noindex, nofollow" />
-  <link rel="shortcut icon" href="https://www.indpmusic.co.kr/favicon-32.png" />
-  <link rel="icon" type="image/png" sizes="32x32" href="https://www.indpmusic.co.kr/favicon-32.png" />
+  <link rel="shortcut icon" href="/favicon.ico" />
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192.png" />
+  <link rel="icon" type="image/png" sizes="512x512" href="/favicon-512.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="https://www.indpmusic.co.kr/apple-touch-icon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -15,6 +18,35 @@
   <script src="api.js"></script>
   <style>
     body { background: var(--light-bg); }
+
+    .email-check-row {
+      display: flex;
+      gap: 8px;
+    }
+    .email-check-row .form-input { flex: 1; }
+    .btn-email-check {
+      flex-shrink: 0;
+      background: var(--dark);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 0 16px;
+      font-size: 14px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: opacity 0.15s;
+    }
+    .btn-email-check:hover { opacity: 0.8; }
+    .btn-email-check:disabled { opacity: 0.5; cursor: not-allowed; }
+    .field-success {
+      font-size: 12px;
+      color: #16a34a;
+      margin-top: 4px;
+      display: none;
+    }
+    .field-success.show { display: block; }
   </style>
 </head>
 <body>
@@ -38,8 +70,8 @@
   <!-- PAGE -->
   <div class="page-wrap">
 
-    <h1 class="page-title">매장/플레이리스트 정보 입력</h1>
-    <p class="page-subtitle">매장과 재생할 플레이리스트 정보를 입력해 주세요</p>
+    <h1 class="page-title" id="page-title">매장/플레이리스트 정보 입력</h1>
+    <p class="page-subtitle" id="page-subtitle">매장과 재생할 플레이리스트 정보를 입력해 주세요</p>
 
     <!-- Stepper -->
     <div class="stepper">
@@ -72,8 +104,8 @@
       </div>
     </div>
 
-    <!-- Sub-stepper -->
-    <div class="sub-stepper">
+    <!-- Sub-stepper: 라이트 외 요금제 전용 -->
+    <div class="sub-stepper" id="sub-stepper">
       <div class="sub-step active">
         <div class="sub-step-num">1</div>
         <div class="sub-step-label">신청 정보</div>
@@ -90,8 +122,8 @@
       </div>
     </div>
 
-    <!-- Form Card: 신청 정보 -->
-    <div class="form-card">
+    <!-- Form Card: 기본/프리미엄 -->
+    <div class="form-card" id="form-standard">
       <h2 class="form-card-title">신청 정보</h2>
 
       <div class="form-group">
@@ -105,8 +137,45 @@
         <input type="tel" id="applicant-phone" class="form-input" placeholder="회신을 위해 연락 가능한 휴대폰번호를 작성해 주세요" />
         <p class="field-error" id="err-phone">연락처를 입력해 주세요.</p>
       </div>
+    </div>
 
+    <!-- Form Card: 라이트 전용 -->
+    <div class="form-card" id="form-lite" style="display:none">
+      <h2 class="form-card-title">계정 생성</h2>
 
+      <div class="form-group">
+        <label class="form-label" for="lite-name">성함 <span class="required">*</span></label>
+        <input type="text" id="lite-name" class="form-input" placeholder="성함을 입력해 주세요" />
+        <p class="field-error" id="err-lite-name">성함을 입력해 주세요.</p>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="lite-id">아이디 <span class="required">*</span></label>
+        <div class="email-check-row">
+          <input type="text" id="lite-id" class="form-input" placeholder="영문·숫자 조합 4자 이상" oninput="resetIdCheck()" />
+          <button type="button" class="btn-email-check" id="btn-id-check" onclick="checkIdDuplicate()">중복 확인</button>
+        </div>
+        <p class="field-error" id="err-lite-id"></p>
+        <p class="field-success" id="ok-lite-id">사용 가능한 아이디입니다.</p>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="lite-email">이메일 <span class="required">*</span></label>
+        <input type="email" id="lite-email" class="form-input" placeholder="공지 및 정산 수신에 사용됩니다" />
+        <p class="field-error" id="err-lite-email">올바른 이메일 형식을 입력해 주세요.</p>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="lite-pw">비밀번호 <span class="required">*</span></label>
+        <input type="password" id="lite-pw" class="form-input" placeholder="8자 이상 입력해 주세요" />
+        <p class="field-error" id="err-lite-pw">비밀번호는 8자 이상이어야 합니다.</p>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="lite-pw2">비밀번호 확인 <span class="required">*</span></label>
+        <input type="password" id="lite-pw2" class="form-input" placeholder="비밀번호를 한 번 더 입력해 주세요" />
+        <p class="field-error" id="err-lite-pw2">비밀번호가 일치하지 않습니다.</p>
+      </div>
     </div>
 
     <!-- Actions -->
@@ -140,18 +209,79 @@
 
   <script>
     // 페이지 진입 시 URL 파라미터 → 즉시 localStorage 저장
-    (function() {
-      const p = new URLSearchParams(location.search).get('plan');
+    const plan = (function() {
+      const p = new URLSearchParams(location.search).get('plan') || localStorage.getItem('selectedPlan') || 'B';
       if (p) localStorage.setItem('selectedPlan', p);
+      return p;
     })();
 
-    function setError(inputId, errId, show) {
+    const isLite = plan === 'A';
+
+    // 라이트 플랜이면 UI 전환
+    if (isLite) {
+      document.getElementById('page-title').textContent = '계정 생성';
+      document.getElementById('page-subtitle').textContent = '서비스 이용을 위한 계정 정보를 입력해 주세요';
+      document.getElementById('sub-stepper').style.display = 'none';
+      document.getElementById('form-standard').style.display = 'none';
+      document.getElementById('form-lite').style.display = 'block';
+    }
+
+    let idChecked = false;
+
+    function setError(inputId, errId, show, msg) {
       document.getElementById(inputId).classList.toggle('error', show);
-      document.getElementById(errId).classList.toggle('show', show);
+      const el = document.getElementById(errId);
+      if (msg) el.textContent = msg;
+      el.classList.toggle('show', show);
+    }
+
+    function resetIdCheck() {
+      idChecked = false;
+      document.getElementById('ok-lite-id').classList.remove('show');
+      const btn = document.getElementById('btn-id-check');
+      btn.textContent = '중복 확인';
+      btn.disabled = false;
+    }
+
+    async function checkIdDuplicate() {
+      const loginId = document.getElementById('lite-id').value.trim();
+      const btn = document.getElementById('btn-id-check');
+
+      if (loginId.length < 4) {
+        setError('lite-id', 'err-lite-id', true, '아이디는 4자 이상이어야 합니다.');
+        return;
+      }
+      if (!/^[a-zA-Z0-9_]+$/.test(loginId)) {
+        setError('lite-id', 'err-lite-id', true, '영문·숫자·언더바(_)만 사용 가능합니다.');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = '확인 중...';
+      try {
+        await apiFetch('GET', `/api/user/check-id?loginId=${encodeURIComponent(loginId)}`);
+        idChecked = true;
+        setError('lite-id', 'err-lite-id', false);
+        document.getElementById('ok-lite-id').classList.add('show');
+        btn.textContent = '확인완료';
+      } catch(e) {
+        idChecked = false;
+        setError('lite-id', 'err-lite-id', true, e.message || '이미 사용 중인 아이디입니다.');
+        btn.textContent = '중복 확인';
+        btn.disabled = false;
+      }
     }
 
     function goNext() {
-      const name = document.getElementById('applicant-name').value.trim();
+      if (isLite) {
+        goNextLite();
+      } else {
+        goNextStandard();
+      }
+    }
+
+    function goNextStandard() {
+      const name  = document.getElementById('applicant-name').value.trim();
       const phone = document.getElementById('applicant-phone').value.trim();
       let valid = true;
 
@@ -163,8 +293,42 @@
       if (valid) {
         localStorage.setItem('applicantName', name);
         localStorage.setItem('applicantPhone', phone);
-        const plan = new URLSearchParams(location.search).get('plan') || localStorage.getItem('selectedPlan') || 'B';
         window.location.href = 'apply-store.html?plan=' + plan;
+      }
+    }
+
+    function goNextLite() {
+      const name    = document.getElementById('lite-name').value.trim();
+      const loginId = document.getElementById('lite-id').value.trim();
+      const email   = document.getElementById('lite-email').value.trim();
+      const pw      = document.getElementById('lite-pw').value;
+      const pw2     = document.getElementById('lite-pw2').value;
+      let valid = true;
+
+      const idOk    = loginId.length >= 4 && /^[a-zA-Z0-9_]+$/.test(loginId);
+      const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+      setError('lite-name', 'err-lite-name', !name, '성함을 입력해 주세요.');
+      if (!idOk) {
+        setError('lite-id', 'err-lite-id', true, '영문·숫자·언더바(_) 조합 4자 이상으로 입력해 주세요.');
+      } else if (!idChecked) {
+        setError('lite-id', 'err-lite-id', true, '아이디 중복 확인을 해주세요.');
+      } else {
+        setError('lite-id', 'err-lite-id', false);
+      }
+      setError('lite-email', 'err-lite-email', !emailOk);
+      setError('lite-pw',  'err-lite-pw',  pw.length < 8, '비밀번호는 8자 이상이어야 합니다.');
+      setError('lite-pw2', 'err-lite-pw2', pw !== pw2,    '비밀번호가 일치하지 않습니다.');
+
+      if (!name || !idOk || !idChecked || !emailOk || pw.length < 8 || pw !== pw2) valid = false;
+
+      document.getElementById('submit-error').classList.toggle('show', !valid);
+      if (valid) {
+        localStorage.setItem('applicantName', name);
+        localStorage.setItem('applicantLoginId', loginId);
+        localStorage.setItem('applicantEmail', email);
+        sessionStorage.setItem('applicantPw', pw);
+        window.location.href = 'payment.html?plan=' + plan;
       }
     }
   </script>

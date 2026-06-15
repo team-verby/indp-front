@@ -21,8 +21,11 @@
   <meta name="twitter:title" content="플레이리스트 - 인디피 뮤직" />
   <meta name="twitter:description" content="카페, 헬스장, 클라이밍장, 레스토랑 등 매장별 맞춤 플레이리스트를 확인하세요." />
   <meta name="twitter:image" content="https://www.indpmusic.co.kr/og-image.png" />
-  <link rel="shortcut icon" href="https://www.indpmusic.co.kr/favicon-32.png" />
-  <link rel="icon" type="image/png" sizes="32x32" href="https://www.indpmusic.co.kr/favicon-32.png" />
+  <link rel="shortcut icon" href="/favicon.ico" />
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192.png" />
+  <link rel="icon" type="image/png" sizes="512x512" href="/favicon-512.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="https://www.indpmusic.co.kr/apple-touch-icon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -357,10 +360,93 @@
       .footer-title-big { margin: 0 -24px; }
     }
 
+    /* ── Playlist Sub Tabs ── */
+    .pl-tab-bar {
+      display: flex;
+      background: #e8eaed;
+      border-radius: 12px;
+      padding: 4px;
+      margin-top: 32px;
+      margin-bottom: 0;
+      max-width: 360px;
+    }
+    .pl-tab-btn {
+      flex: 1;
+      padding: 10px 16px;
+      border-radius: 9px;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-gray);
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+      white-space: nowrap;
+    }
+    .pl-tab-btn.active {
+      background: #fff;
+      color: var(--dark);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+    }
+
     /* ── My Store Section ── */
     #my-store-section {
       display: none;
       margin-top: 40px;
+    }
+
+    /* ── DJ Section ── */
+    #dj-section {
+      display: none;
+      margin-top: 40px;
+    }
+    .dj-dashboard-banner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      background: linear-gradient(135deg, #0e0e12 0%, #1a1030 100%);
+      border-radius: 16px;
+      padding: 28px 32px;
+      margin-bottom: 36px;
+    }
+    .dj-banner-text h3 {
+      font-size: 17px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 6px;
+    }
+    .dj-banner-text p {
+      font-size: 13px;
+      color: rgba(255,255,255,0.55);
+      line-height: 1.5;
+    }
+    .dj-dashboard-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #7c3aed;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 700;
+      padding: 12px 22px;
+      border-radius: 10px;
+      text-decoration: none;
+      white-space: nowrap;
+      transition: background 0.15s, transform 0.1s;
+      flex-shrink: 0;
+    }
+    .dj-dashboard-btn:hover {
+      background: #6d28d9;
+      transform: translateY(-1px);
+    }
+    @media (max-width: 580px) {
+      .dj-dashboard-banner {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 22px 22px;
+      }
+      .dj-dashboard-btn { width: 100%; justify-content: center; }
     }
 
     .my-store-label {
@@ -427,15 +513,39 @@
     <h1 class="page-title">플레이리스트</h1>
     <p class="page-subtitle" style="margin-bottom:0">지금, 인디피와 함께하는 매장들을 방문하여 흘러나오는 노래를 청취해 보세요</p>
 
+    <!-- 탭 바 -->
+    <div class="pl-tab-bar">
+      <button class="pl-tab-btn active" onclick="switchPlTab('dj', this)">DJ 플레이리스트</button>
+      <button class="pl-tab-btn" onclick="switchPlTab('brand', this)">브랜드 플레이리스트</button>
+    </div>
+
+    <!-- DJ 탭 전용 섹션 -->
+    <div id="dj-section" style="display:block;margin-top:40px">
+      <div class="my-store-label">DJ 큐레이션 플레이리스트</div>
+      <div class="store-grid" id="dj-store-grid"></div>
+      <!-- DJ 대시보드 배너 (항상 노출, 미로그인 시 입장 클릭 → 로그인으로 이동) -->
+      <div id="dj-dashboard-banner" class="dj-dashboard-banner" style="margin-top:32px">
+        <div class="dj-banner-text">
+          <h3>DJ 플레이리스트 관리</h3>
+          <p>플레이리스트 업로드, 트랙 관리, 매장 배포 현황을<br>DJ 대시보드에서 확인하세요.</p>
+        </div>
+        <a href="#" class="dj-dashboard-btn" onclick="enterDjDashboard(event)">
+          🎧 DJ 대시보드 입장
+        </a>
+      </div>
+    </div>
+
     <!-- 내 매장 (로그인 시에만 표시) -->
-    <div id="my-store-section">
+    <div id="my-store-section" style="display:none">
       <div class="my-store-label">나의 공간</div>
       <div id="my-store-grid"></div>
     </div>
 
-    <!-- 3×2 Store Grid -->
-    <div class="my-store-label" id="all-stores-label" style="margin-top:40px">인디피 뮤직을 사용하고 있는 공간</div>
-    <div class="store-grid" id="store-grid"></div>
+    <!-- 브랜드 탭 섹션 -->
+    <div id="brand-section" style="display:none">
+      <div class="my-store-label" id="all-stores-label" style="margin-top:40px">인디피 뮤직을 사용하고 있는 공간</div>
+      <div class="store-grid" id="store-grid"></div>
+    </div>
 
   </div>
 
@@ -467,6 +577,81 @@
   <div class="copyright">Copyright 2026. VERBY Co. all rights reserved.</div>
 
   <script>
+    function buildDjCard(pl) {
+      const badge = pl.isLive
+        ? `<div class="playing-badge"><div class="playing-dot"></div>지금 재생 중</div>`
+        : `<div class="standby-badge"><div class="standby-dot"></div>대기 중</div>`;
+      const wave = pl.isLive ? `<div class="blob-bottom"><div class="soundwave-wrap"></div></div>` : '';
+      return `
+        <img src="lp.png" alt="" class="card-vinyl" />
+        <div class="blob-card" style="background:linear-gradient(135deg,#1a1a2e 0%,#0f3460 100%);">
+          <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:72px;opacity:0.55;">${pl.emoji}</div>
+          <div class="blob-overlay"></div>
+          <div class="blob-top">${badge}</div>
+          ${wave}
+        </div>
+        <div class="card-info">
+          <p class="card-info-name">${pl.name}</p>
+          <p class="card-info-addr">${pl.djName}</p>
+        </div>`;
+    }
+
+    let djRendered = false;
+    async function renderDjPlaylists() {
+      if (djRendered) return;
+      djRendered = true;
+      const grid = document.getElementById('dj-store-grid');
+      if (!grid) return;
+      const emptyHtml = `<div style="grid-column:1/-1;text-align:center;padding:48px 0;color:var(--text-gray);">
+        <p style="font-size:36px;margin-bottom:12px">📻</p>
+        <p style="font-size:16px;font-weight:700;color:var(--dark);margin-bottom:6px">현재 방송 중인 DJ가 없습니다</p>
+        <p style="font-size:14px">DJ가 라이브를 시작하면 여기에 표시됩니다.</p>
+      </div>`;
+      try {
+        const data = await apiFetch('GET', '/api/dj/playlists');
+        const playlists = data.playlists || data || [];
+        const livePlaylists = playlists.filter(pl => pl.isLive);
+        if (!livePlaylists.length) { grid.innerHTML = emptyHtml; return; }
+        livePlaylists.forEach(pl => {
+          const wrap = document.createElement('a');
+          wrap.href = `dj-playlist-detail.html?id=${pl.id}`;
+          wrap.className = 'store-card-wrap';
+          wrap.innerHTML = buildDjCard(pl);
+          grid.appendChild(wrap);
+        });
+        buildSoundwaves();
+      } catch(e) {
+        console.warn('DJ 플레이리스트 로드 실패:', e);
+        grid.innerHTML = emptyHtml;
+      }
+    }
+
+    function enterDjDashboard(e) {
+      e.preventDefault();
+      const djToken = localStorage.getItem('djToken');
+      if (!djToken) {
+        location.href = 'login.html';
+        return;
+      }
+      location.href = 'dj-dashboard.html';
+    }
+
+    let brandRendered = false;
+    function switchPlTab(name, btn) {
+      document.querySelectorAll('.pl-tab-btn').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+
+      const isBrand = name === 'brand';
+      document.getElementById('brand-section').style.display = isBrand ? '' : 'none';
+      document.getElementById('dj-section').style.display    = isBrand ? 'none' : 'block';
+
+      if (isBrand) {
+        if (!brandRendered) { brandRendered = true; renderDynamicStores(); }
+      } else {
+        renderDjPlaylists();
+      }
+    }
+
     function resolveImgUrl(url) {
       if (!url) return '';
       return url.startsWith('/') ? BASE_URL + url : url;
@@ -525,21 +710,26 @@
       }
     }
 
+
     async function renderDynamicStores() {
       try {
         const data = await apiFetch('GET', '/api/stores?page=0&size=20');
         const grid = document.getElementById('store-grid');
-        const stores = data.stores || data || [];
+        let stores = data.stores || data || [];
 
         // 1차: currentSong 기준으로 렌더
         const cards = stores.map(store => {
           const card = document.createElement('a');
-          card.href = `playlist-detail.html?storeId=${store.storeId}`;
+          card.href = store.storeId?.toString().startsWith('s')
+            ? 'plan.html'
+            : `playlist-detail.html?storeId=${store.storeId}`;
           card.className = 'store-card-wrap';
           card.dataset.storeId = store.storeId;
-          card.addEventListener('click', () => {
-            localStorage.setItem('storeCache_' + store.storeId, JSON.stringify(store));
-          });
+          if (!store.storeId?.toString().startsWith('s')) {
+            card.addEventListener('click', () => {
+              localStorage.setItem('storeCache_' + store.storeId, JSON.stringify(store));
+            });
+          }
           const isPlaying = !!(store.currentSong);
           card.innerHTML = buildCard(store, isPlaying);
           grid.appendChild(card);
@@ -548,9 +738,10 @@
 
         buildSoundwaves();
 
-        // 2차: 재생 중 여부 재확인
+        // 2차: 재생 중 여부 재확인 (실제 storeId만)
         await Promise.all(cards.map(async ({ card, store, isPlaying }) => {
           if (isPlaying) return;
+          if (store.storeId?.toString().startsWith('s')) return;
           const playing = await checkPlaying(store.storeId);
           if (playing) {
             card.innerHTML = buildCard(store, true);
@@ -559,6 +750,12 @@
         }));
       } catch(e) {
         console.warn('매장 목록 로드 실패:', e);
+        const grid = document.getElementById('store-grid');
+        if (grid && !grid.children.length) {
+          grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:48px 0;color:var(--text-gray);">
+            <p style="font-size:14px">매장 목록을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.</p>
+          </div>`;
+        }
       }
     }
 
@@ -670,7 +867,19 @@
 
     updateNavAuth();
     renderMyStore();
-    renderDynamicStores();
+
+    // DJ가 기본 탭 — URL 파라미터로 브랜드 탭 전환 가능
+    (function() {
+      const tab = new URLSearchParams(location.search).get('tab');
+      if (tab === 'brand') {
+        const brandBtn = document.querySelector('.pl-tab-btn:nth-child(2)');
+        switchPlTab('brand', brandBtn);
+      } else {
+        // 기본: DJ 탭 활성화
+        const djBtn = document.querySelector('.pl-tab-btn:nth-child(1)');
+        switchPlTab('dj', djBtn);
+      }
+    })();
 
     // GNB 스크롤 floating
     (function() {

@@ -5,8 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>결제 진행 - 인디피 뮤직</title>
   <meta name="robots" content="noindex, nofollow" />
-  <link rel="shortcut icon" href="https://www.indpmusic.co.kr/favicon-32.png" />
-  <link rel="icon" type="image/png" sizes="32x32" href="https://www.indpmusic.co.kr/favicon-32.png" />
+  <link rel="shortcut icon" href="/favicon.ico" />
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192.png" />
+  <link rel="icon" type="image/png" sizes="512x512" href="/favicon-512.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="https://www.indpmusic.co.kr/apple-touch-icon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -20,6 +23,10 @@
       display: grid;
       grid-template-columns: repeat(4, 1fr);
       gap: 12px;
+    }
+
+    .duration-options.plan-a {
+      grid-template-columns: repeat(2, 1fr);
     }
 
     .duration-box {
@@ -178,7 +185,61 @@
       white-space: nowrap;
       padding: 0;
       flex-shrink: 0;
+      text-decoration: none;
     }
+
+    #terms-service .terms-section {
+      background: #fff;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 10px;
+    }
+    #terms-service .terms-section h2 {
+      font-size: 11px;
+      font-weight: 700;
+      color: #aaa;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+    }
+    #terms-service h4 {
+      font-size: 13px;
+      font-weight: 700;
+      color: #1a1a2e;
+      margin: 18px 0 6px;
+    }
+    #terms-service h4:first-of-type { margin-top: 0; }
+    #terms-service p { font-size: 12px; line-height: 1.8; margin: 0 0 4px; }
+    #terms-service ul { margin: 4px 0 0; padding-left: 16px; }
+    #terms-service li { font-size: 12px; line-height: 1.8; }
+    #terms-service .terms-highlight {
+      background: #f0f3ff;
+      border-left: 3px solid var(--blue);
+      border-radius: 0 6px 6px 0;
+      padding: 10px 14px;
+      margin: 10px 0;
+      font-size: 12px;
+      line-height: 1.7;
+    }
+    #terms-service .plan-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 10px 0;
+      font-size: 11px;
+    }
+    #terms-service .plan-table th {
+      background: #f0f3ff;
+      font-weight: 700;
+      padding: 8px 10px;
+      text-align: left;
+      border: 1px solid #e0e5f0;
+    }
+    #terms-service .plan-table td {
+      padding: 8px 10px;
+      border: 1px solid #e0e5f0;
+      vertical-align: top;
+    }
+    #terms-service .plan-table tr:nth-child(even) td { background: #fafbfc; }
 
     .terms-content {
       display: none;
@@ -271,7 +332,7 @@
   <div class="page-wrap">
 
     <h1 class="page-title">결제 진행</h1>
-    <p class="page-subtitle">이용 기간을 선택하고 결제를 진행해 주세요</p>
+    <p class="page-subtitle" id="page-subtitle">이용 기간을 선택하고 결제를 진행해 주세요</p>
 
     <!-- Stepper -->
     <div class="stepper">
@@ -309,7 +370,7 @@
 
       <!-- Duration -->
       <div class="form-group">
-        <p class="section-label">이용 기간 <span class="required" style="color:var(--blue)">*</span></p>
+        <p class="section-label" id="duration-label">이용 기간 <span class="required" style="color:var(--blue)">*</span></p>
         <div class="duration-options" id="durationOptions"></div>
         <div id="periodPreview"></div>
       </div>
@@ -337,48 +398,7 @@
             </div>
             <button class="terms-toggle" onclick="toggleTerms('terms-service')">보기 ▾</button>
           </div>
-          <div class="terms-content" id="terms-service">
-            <h4>제1조 (목적)</h4>
-            본 약관은 버비컴퍼니(이하 "회사")가 제공하는 인디피 뮤직 플레이리스트 구독 서비스(이하 "서비스")의 이용과 관련하여, 결제 및 이용 조건을 규정함을 목적으로 합니다.
-
-            <h4>제2조 (용어의 정의)</h4>
-            "플레이리스트 주차"란 매주 화요일 00시부터 다음 주 월요일 24시까지의 기간을 의미하며, 해당 기간을 1주차로 정의합니다.<br>
-            "구독 상품"이란 일정 기간 동안 플레이리스트를 이용할 수 있는 유료 이용권을 의미합니다.<br>
-            "구독 시작일"이란 유료 구독 이용이 시작되는 시점을 의미하며, 매주 화요일 00시를 기준으로 합니다.
-
-            <h4>제3조 (구독 상품 및 이용 기간)</h4>
-            서비스는 도입 문의 페이지에서 확인 가능한 구독 상품을 제공합니다.<br>
-            구독 시작일은 결제일이 속한 주(일요일~토요일)와 관계없이 다음 주 화요일 00시로 설정됩니다.<br>
-            구독 기간은 구독 시작일 기준으로 주차 단위로 계산되며, 각 주차는 화요일부터 다음 주 월요일까지를 기준으로 산정됩니다.
-
-            <h4>제4조 (플레이리스트 제공 기준)</h4>
-            서비스는 매주 화요일 새로운 플레이리스트를 제공합니다.<br>
-            사용자는 구독 기간 동안 각 주차에 해당하는 플레이리스트를 이용할 수 있습니다.<br>
-            플레이리스트는 주차 단위로 운영되며, 화요일을 기준으로 갱신됩니다.
-
-            <h4>제5조 (이용 범위)</h4>
-            사용자는 구독 기간 동안 제공되는 플레이리스트를 자유롭게 이용할 수 있습니다.<br>
-            구독 종료 후에는 서비스 이용이 제한될 수 있습니다.<br>
-            회사는 운영 정책에 따라 일부 이전 주차 플레이리스트에 대한 접근을 제한할 수 있습니다.
-
-            <h4>제6조 (중도 해지 및 환불)</h4>
-            사용자는 결제일로부터 7일 이내이며, 구독 시작일 이전인 경우 전액 환불을 요청할 수 있습니다.<br>
-            구독 시작 이후에는 이용한 주차를 기준으로 환불 금액이 산정됩니다.<br>
-            환불 금액은 다음 기준에 따라 계산됩니다: 결제 금액 ÷ 총 주차 수 × 이용 주차
-
-            <h4>제7조 (구독 상품 변경)</h4>
-            사용자는 구독 기간 중 상위 상품으로 변경할 수 있습니다.<br>
-            변경 시 기존 잔여 기간은 비율에 따라 반영됩니다.<br>
-            변경된 상품은 다음 주차(화요일)부터 적용될 수 있습니다.
-
-            <h4>제8조 (서비스 변경 및 중단)</h4>
-            회사는 서비스 운영을 위해 플레이리스트 구성 및 제공 방식을 변경할 수 있습니다.<br>
-            시스템 점검 또는 기타 사유로 서비스 제공이 일시 중단될 수 있습니다.<br>
-            이 경우 회사는 사전 또는 사후 공지를 통해 안내합니다.
-
-            <h4>제9조 (기타)</h4>
-            본 약관에서 정하지 않은 사항은 관련 법령 및 회사 정책에 따릅니다.
-          </div>
+          <div class="terms-content" id="terms-service"></div>
         </div>
 
         <div class="terms-item">
@@ -464,12 +484,12 @@
   <script src="api.js"></script>
   <script>
     const plan = localStorage.getItem('selectedPlan') || 'B';
-    const monthlyRate = parseInt(localStorage.getItem('selectedPlanMonthlyRate') || '0') || (plan === 'A' ? 8800 : 13200);
-    if (plan === 'B') {
+    const monthlyRate = parseInt(localStorage.getItem('selectedPlanMonthlyRate') || '0') || (plan === 'A' ? 4400 : plan === 'B' ? 8800 : 13200);
+    if (plan === 'C') {
       const qrNote = document.getElementById('qr-delivery-note');
       if (qrNote) qrNote.style.display = '';
     }
-    const PLAN_NAMES = { A: 'Plan A (기본)', B: 'Plan B (프리미엄)' };
+    const PLAN_NAMES = { A: 'Plan A (라이트 요금제)', B: 'Plan B (기본 요금제)', C: 'Plan C (프리미엄 요금제)' };
 
     const DURATIONS = [1, 3, 6, 12];
     const WEEKS_MAP = { 1: 4, 3: 12, 6: 24, 12: 48 };
@@ -488,20 +508,43 @@
     const fmtWithDay = d =>
       `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')} (${DAY_KO[d.getDay()]})`;
 
+    const PLAN_A_DURATIONS = [
+      { months: 1,  label: '월간', sublabel: '1개월',  unit: '/월' },
+      { months: 12, label: '연간', sublabel: '12개월', unit: '/년', badge: '절약' },
+    ];
+
     function buildDurations() {
       const container = document.getElementById('durationOptions');
       container.innerHTML = '';
-      DURATIONS.forEach(m => {
-        const total = monthlyRate * m;
-        const weeks = WEEKS_MAP[m];
-        const box = document.createElement('div');
-        box.className = 'duration-box' + (m === 1 ? ' selected' : '');
-        const badge = m === 6 ? '<span class="duration-badge">추천</span>' : '';
-        box.innerHTML = `${badge}<div class="duration-months">${m}개월</div><div class="duration-weeks">(${weeks}주)</div><div class="duration-price">${total.toLocaleString()}원</div>`;
-        box.onclick = () => selectDuration(box, m, total);
-        container.appendChild(box);
-      });
-      updateSummary(1, monthlyRate * 1);
+
+      if (plan === 'A') {
+        container.classList.add('plan-a');
+        PLAN_A_DURATIONS.forEach(({ months, label, sublabel, unit, badge }, idx) => {
+          const total = monthlyRate * months;
+          const box = document.createElement('div');
+          box.className = 'duration-box' + (idx === 0 ? ' selected' : '');
+          const badgeHtml = badge ? `<span class="duration-badge">${badge}</span>` : '';
+          box.innerHTML = `${badgeHtml}
+            <div class="duration-months">${label}</div>
+            <div class="duration-weeks">${sublabel}</div>
+            <div class="duration-price">${total.toLocaleString()}원${unit}</div>`;
+          box.onclick = () => selectDuration(box, months, total);
+          container.appendChild(box);
+        });
+        updateSummary(1, monthlyRate);
+      } else {
+        DURATIONS.forEach(m => {
+          const total = monthlyRate * m;
+          const weeks = WEEKS_MAP[m];
+          const box = document.createElement('div');
+          box.className = 'duration-box' + (m === 1 ? ' selected' : '');
+          const badge = m === 6 ? '<span class="duration-badge">추천</span>' : '';
+          box.innerHTML = `${badge}<div class="duration-months">${m}개월</div><div class="duration-weeks">(${weeks}주)</div><div class="duration-price">${total.toLocaleString()}원</div>`;
+          box.onclick = () => selectDuration(box, m, total);
+          container.appendChild(box);
+        });
+        updateSummary(1, monthlyRate * 1);
+      }
     }
 
     function selectDuration(el, months, total) {
@@ -512,16 +555,35 @@
     }
 
     function updateSummary(months, total) {
+      const isLite = plan === 'A';
       const weeks = WEEKS_MAP[months] || months * 4;
-      document.getElementById('summaryLabel').textContent =
-        `${PLAN_NAMES[plan] || ('Plan ' + plan)} · 월 ${monthlyRate.toLocaleString()}원 × ${months}개월`;
+
+      if (isLite) {
+        const periodLabel = months === 1 ? '월간' : '연간';
+        document.getElementById('summaryLabel').textContent =
+          `${PLAN_NAMES[plan]} · ${periodLabel} (${months}개월)`;
+      } else {
+        document.getElementById('summaryLabel').textContent =
+          `${PLAN_NAMES[plan] || ('Plan ' + plan)} · 월 ${monthlyRate.toLocaleString()}원 × ${months}개월`;
+      }
       document.getElementById('summaryAmount').textContent =
         total.toLocaleString() + '원';
 
-      const ref = new Date();
-      ref.setHours(0, 0, 0, 0);
-      const serviceStart = nextTuesdayOnOrAfter(ref);
-      const serviceEnd = new Date(serviceStart.getTime() + weeks * 7 * 24 * 60 * 60 * 1000 - 24 * 60 * 60 * 1000);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const serviceStart = isLite ? today : nextTuesdayOnOrAfter(today);
+      let serviceEnd;
+      if (isLite) {
+        // Plan A: setMonth으로 정확한 월 계산 (12개월 = 정확히 1년)
+        serviceEnd = new Date(serviceStart);
+        serviceEnd.setMonth(serviceEnd.getMonth() + months);
+        serviceEnd.setDate(serviceEnd.getDate() - 1);
+      } else {
+        serviceEnd = new Date(serviceStart.getTime() + weeks * 7 * 24 * 60 * 60 * 1000 - 24 * 60 * 60 * 1000);
+      }
+      const startNote = isLite
+        ? '결제 완료 즉시 서비스가 시작됩니다.'
+        : '인디피 뮤직은 매주 화요일 새로운 플레이리스트가 시작됩니다.';
 
       document.getElementById('periodPreview').innerHTML = `
         <div class="service-period-preview">
@@ -529,11 +591,11 @@
             <span>서비스 시작</span>
             <div style="text-align:right">
               <strong>${fmtWithDay(serviceStart)}</strong>
-              <div style="font-size:11px;color:var(--text-light-gray);margin-top:2px">인디피 뮤직은 매주 화요일 새로운 플레이리스트가 시작됩니다.</div>
+              <div style="font-size:11px;color:var(--text-light-gray);margin-top:2px">${startNote}</div>
             </div>
           </div>
           <div class="period-row"><span>서비스 종료</span><strong>${fmtWithDay(serviceEnd)}</strong></div>
-          <div class="period-row"><span>이용 기간</span><strong>${months}개월 (${weeks}주)</strong></div>
+          <div class="period-row"><span>이용 기간</span><strong>${months}개월${isLite ? '' : ` (${weeks}주)`}</strong></div>
         </div>`;
     }
 
@@ -542,6 +604,25 @@
       const btn = el.previousElementSibling.querySelector('.terms-toggle');
       const isOpen = el.classList.toggle('open');
       btn.textContent = isOpen ? '닫기 ▴' : '보기 ▾';
+
+      if (isOpen && id === 'terms-service' && !el.dataset.loaded) {
+        el.dataset.loaded = 'true';
+        el.innerHTML = '<p style="text-align:center;padding:16px;color:#aaa;font-size:13px">약관을 불러오는 중...</p>';
+        fetch('terms.html')
+          .then(r => r.text())
+          .then(html => {
+            const doc = new DOMParser().parseFromString(html, 'text/html');
+            const wrap = doc.querySelector('.terms-wrap');
+            if (wrap) {
+              wrap.querySelector('h1')?.remove();
+              wrap.querySelector('.terms-meta')?.remove();
+              el.innerHTML = wrap.innerHTML;
+            }
+          })
+          .catch(() => {
+            el.innerHTML = '<p style="text-align:center;padding:16px;color:#aaa;font-size:13px">약관을 불러오지 못했습니다. <a href="terms.html" target="_blank" style="color:var(--blue)">새 탭에서 보기</a></p>';
+          });
+      }
     }
 
     function checkTerms() {
@@ -646,9 +727,17 @@
         const body = {
           applicantName: localStorage.getItem('applicantName') || '',
           applicantPhone: localStorage.getItem('applicantPhone') || '',
+          loginId: localStorage.getItem('applicantLoginId') || '',
+          email: localStorage.getItem('applicantEmail') || '',
           inquiryContent: '',
           planId: parseInt(localStorage.getItem('selectedPlanId') || '1'),
           usagePeriod: selectedMonths,
+          serviceStartDate: (() => {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const d = plan === 'A' ? today : nextTuesdayOnOrAfter(today);
+            return d.toISOString().slice(0, 10);
+          })(),
           name: localStorage.getItem('storeName') || '',
           industry: localStorage.getItem('storeType') || '',
           address: localStorage.getItem('storeAddress') || '',
@@ -673,16 +762,28 @@
           rejectedSongNote: localStorage.getItem('rejectedSongNote') || ''
         };
 
-        console.log('[apply 요청 body]', JSON.stringify(body, null, 2));
-        const result = await apiFetch('POST', '/api/stores/applications', body);
+        let result;
+        if (plan === 'A') {
+          // Plan A: 개인 구독 신청 (매장 없음)
+          const planABody = {
+            loginId: localStorage.getItem('applicantLoginId') || '',
+            name: localStorage.getItem('applicantName') || '',
+            email: localStorage.getItem('applicantEmail') || '',
+            password: sessionStorage.getItem('applicantPw') || '',
+            usagePeriod: selectedMonths,
+          };
+          console.log('[Plan A 신청 body]', JSON.stringify({ ...planABody, password: '****' }));
+          result = await apiFetch('POST', '/api/user/applications', planABody);
+        } else {
+          console.log('[apply 요청 body]', JSON.stringify(body, null, 2));
+          result = await apiFetch('POST', '/api/stores/applications', body);
+          // Plan B/C: 발급된 아이디/비밀번호 저장
+          const account = result.ownerAccount || result;
+          if (account.loginId) sessionStorage.setItem('pendingLoginId', account.loginId);
+          if (account.password) sessionStorage.setItem('pendingPassword', account.password);
+        }
         console.log('[apply 응답]', JSON.stringify(result));
         const { orderId, amount, orderName } = result;
-
-        // 결제 전에 발급된 아이디/비밀번호 저장 (complete.html에서 표시)
-        // sessionStorage 사용: 같은 탭 리다이렉트에서만 유효, 탭 닫히면 자동 삭제
-        const account = result.ownerAccount || result;
-        if (account.loginId) sessionStorage.setItem('pendingLoginId', account.loginId);
-        if (account.password) sessionStorage.setItem('pendingPassword', account.password);
 
         openTossModal();
         await initTossWidget(orderId, amount, orderName);
@@ -700,6 +801,11 @@
         alert('결제가 취소되었거나 오류가 발생했습니다. 다시 시도해 주세요.');
       }
     })();
+
+    if (plan === 'A') {
+      document.getElementById('page-subtitle').textContent = '결제 주기를 선택하고 결제를 진행해 주세요';
+      document.getElementById('duration-label').innerHTML = '결제 주기 <span class="required" style="color:var(--blue)">*</span>';
+    }
 
     buildDurations();
   </script>
