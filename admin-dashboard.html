@@ -2511,6 +2511,15 @@
         </svg>
         음원 데이터 관리
       </a>
+      <a class="nav-item" onclick="switchPanel('subscribers', this)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+        </svg>
+        구독자 관리
+      </a>
       <a class="nav-item" onclick="switchPanel('accounts', this)">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
@@ -2800,6 +2809,34 @@
           </div>
         </div>
 
+      </div>
+
+      <!-- 구독자 관리 -->
+      <div class="section-panel" id="panel-subscribers">
+        <div class="panel-header">
+          <div>
+            <h2 class="panel-title">구독자 관리</h2>
+            <p class="panel-subtitle">Plan A 라이트 요금제 신청자 목록입니다</p>
+          </div>
+          <button class="btn-refresh" onclick="loadSubscribers()" style="background:#23272e;color:#fff;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;">새로고침</button>
+        </div>
+
+        <div class="store-table-wrap">
+          <table class="store-table" id="subscriber-table">
+            <thead>
+              <tr>
+                <th>아이디</th>
+                <th>성함</th>
+                <th>이메일</th>
+                <th>구독 상태</th>
+                <th>구독 만료일</th>
+              </tr>
+            </thead>
+            <tbody id="subscriber-tbody">
+              <tr><td colspan="5" style="text-align:center;color:#888;padding:32px 0">불러오는 중...</td></tr>
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <!-- 계정 생성 -->
@@ -3924,7 +3961,7 @@
     }
 
     // ── 패널 전환 ──
-    const panelTitles = { stores: '매장 관리', playlists: '플레이리스트 관리', 'music-data': '음원 데이터 관리', accounts: '계정 생성' };
+    const panelTitles = { stores: '매장 관리', playlists: '플레이리스트 관리', 'music-data': '음원 데이터 관리', subscribers: '구독자 관리', accounts: '계정 생성' };
 
     function switchPanel(panelId, el) {
       document.querySelectorAll('.section-panel').forEach(p => p.classList.remove('active'));
@@ -3935,6 +3972,7 @@
       if (panelId === 'playlists') plRenderStoreList();
       if (panelId === 'music-data') mdInit();
       if (panelId === 'accounts') acLoadList();
+      if (panelId === 'subscribers') loadSubscribers();
       // 모바일: 메뉴 선택 시 사이드바 닫기
       document.querySelector('.sidebar').classList.remove('mobile-open');
       document.getElementById('sidebar-overlay').classList.remove('open');
@@ -3993,6 +4031,43 @@
       } finally {
         btn.disabled = false;
         btn.textContent = '계정 생성하기';
+      }
+    }
+
+    /* ── 구독자 관리 ── */
+    const SUB_STATUS_KO = {
+      ACTIVE: '이용 중', PENDING_PAYMENT: '결제 대기', PENDING_ACTIVE: '시작 대기',
+      EXPIRED: '만료', REFUNDED: '환불', CANCELLED: '취소', NO_SUBSCRIPTION: '구독 없음'
+    };
+    const SUB_STATUS_COLOR = {
+      ACTIVE: '#16a34a', PENDING_PAYMENT: '#d97706', PENDING_ACTIVE: '#2563eb',
+      EXPIRED: '#6b7280', REFUNDED: '#9ca3af', CANCELLED: '#9ca3af', NO_SUBSCRIPTION: '#9ca3af'
+    };
+
+    async function loadSubscribers() {
+      const tbody = document.getElementById('subscriber-tbody');
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#888;padding:32px 0">불러오는 중...</td></tr>';
+      try {
+        const data = await apiFetch('GET', '/api/admin/users', undefined, adminToken);
+        const users = data.users || [];
+        if (!users.length) {
+          tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#888;padding:32px 0">구독자가 없습니다.</td></tr>';
+          return;
+        }
+        tbody.innerHTML = users.map(u => {
+          const statusKo = SUB_STATUS_KO[u.subscriptionStatus] || u.subscriptionStatus;
+          const statusColor = SUB_STATUS_COLOR[u.subscriptionStatus] || '#888';
+          const endDate = u.subscriptionEndDate || '-';
+          return `<tr>
+            <td style="font-weight:600">${u.loginId || '-'}</td>
+            <td>${u.name || '-'}</td>
+            <td style="color:#6b7280">${u.email || '-'}</td>
+            <td><span style="color:${statusColor};font-weight:700">${statusKo}</span></td>
+            <td>${endDate}</td>
+          </tr>`;
+        }).join('');
+      } catch(e) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:#e53e3e;padding:32px 0">불러오기 실패: ${e.message || ''}</td></tr>`;
       }
     }
 

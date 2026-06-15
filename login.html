@@ -254,7 +254,13 @@
             window.location.href = 'playlist.html';
             break;
           case 'DJ':
+            // 기존 user/owner 토큰 충돌 방지
+            localStorage.removeItem('userToken');
+            localStorage.removeItem('userRefreshToken');
+            localStorage.removeItem('ownerToken');
+            localStorage.removeItem('ownerRefreshToken');
             localStorage.setItem('djToken', data.accessToken);
+            if (data.refreshToken) localStorage.setItem('djRefreshToken', data.refreshToken);
             localStorage.setItem('djName', data.djName || 'DJ');
             window.location.href = 'dj-dashboard.html';
             break;
