@@ -2831,11 +2831,13 @@
                 <th>구독 상태</th>
                 <th>이용 기간</th>
                 <th>결제 금액</th>
+                <th>결제 일시</th>
+                <th>구독 시작일</th>
                 <th>구독 만료일</th>
               </tr>
             </thead>
             <tbody id="subscriber-tbody">
-              <tr><td colspan="7" style="text-align:center;color:#888;padding:32px 0">불러오는 중...</td></tr>
+              <tr><td colspan="9" style="text-align:center;color:#888;padding:32px 0">불러오는 중...</td></tr>
             </tbody>
           </table>
         </div>
@@ -4048,20 +4050,25 @@
 
     async function loadSubscribers() {
       const tbody = document.getElementById('subscriber-tbody');
-      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#888;padding:32px 0">불러오는 중...</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#888;padding:32px 0">불러오는 중...</td></tr>';
       try {
         const data = await apiFetch('GET', '/api/admin/users', undefined, adminToken);
         const users = data.users || [];
         if (!users.length) {
-          tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#888;padding:32px 0">구독자가 없습니다.</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#888;padding:32px 0">구독자가 없습니다.</td></tr>';
           return;
         }
+        const fmtDate = s => s ? s.slice(0, 10).replace(/-/g, '.') : '-';
+        const fmtDateTime = s => {
+          if (!s) return '-';
+          const d = new Date(s);
+          return `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+        };
         tbody.innerHTML = users.map(u => {
           const statusKo = SUB_STATUS_KO[u.subscriptionStatus] || u.subscriptionStatus;
           const statusColor = SUB_STATUS_COLOR[u.subscriptionStatus] || '#888';
           const period = u.usagePeriod ? (u.usagePeriod === 12 ? '연간 (12개월)' : `월간 (${u.usagePeriod}개월)`) : '-';
           const amount = u.paidAmount ? u.paidAmount.toLocaleString() + '원' : '-';
-          const endDate = u.subscriptionEndDate || '-';
           return `<tr>
             <td style="font-weight:600">${u.loginId || '-'}</td>
             <td>${u.name || '-'}</td>
@@ -4069,11 +4076,13 @@
             <td><span style="color:${statusColor};font-weight:700">${statusKo}</span></td>
             <td>${period}</td>
             <td style="font-weight:600;color:#233eff">${amount}</td>
-            <td>${endDate}</td>
+            <td style="color:#6b7280;font-size:12px">${fmtDateTime(u.paidAt)}</td>
+            <td>${fmtDate(u.subscriptionStartDate)}</td>
+            <td>${fmtDate(u.subscriptionEndDate)}</td>
           </tr>`;
         }).join('');
       } catch(e) {
-        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:#e53e3e;padding:32px 0">불러오기 실패: ${e.message || ''}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:#e53e3e;padding:32px 0">불러오기 실패: ${e.message || ''}</td></tr>`;
       }
     }
 
