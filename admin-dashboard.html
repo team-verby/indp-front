@@ -2897,16 +2897,39 @@
                 </div>
                 <div class="ap-extra-field">
                   <label class="ap-extra-label">삽입 순서</label>
-                  <input type="number" class="ap-extra-input" id="ap-extra-pos" min="1" value="1" />
+                  <input type="number" class="ap-extra-input" id="ap-extra-pos" min="1" max="18" value="1" />
                 </div>
               </div>
-              <button class="ap-extra-add-btn" onclick="apAddExtraSong()">+ 곡 추가</button>
+              <!-- 고정곡 기간 (랜덤 모드 전용) -->
+              <div class="ap-extra-row" id="ap-fixed-period-row">
+                <div class="ap-extra-field">
+                  <label class="ap-extra-label">시작일</label>
+                  <input type="date" class="ap-extra-input" id="ap-fixed-start" />
+                </div>
+                <div class="ap-extra-field">
+                  <label class="ap-extra-label">종료일</label>
+                  <input type="date" class="ap-extra-input" id="ap-fixed-end" />
+                </div>
+              </div>
+              <div style="display:flex;gap:8px">
+                <button class="ap-extra-add-btn" style="flex:1" onclick="apAddExtraSong()">+ 1회만 추가</button>
+                <button class="ap-extra-add-btn" id="ap-fixed-save-btn" style="flex:1;background:rgba(99,102,241,0.18);border-color:rgba(99,102,241,0.45)" onclick="apSaveFixedSong()">📌 고정곡 저장</button>
+              </div>
+              <p style="font-size:11px;color:rgba(255,255,255,0.3);margin-top:6px;line-height:1.5">고정곡은 지정한 기간 동안 매일 "특정곡 불러오기" 클릭만으로 자동 삽입됩니다.</p>
 
               <!-- 추가된 곡 목록 -->
               <div class="ap-extra-list" id="ap-extra-list" style="display:none">
                 <p class="ap-extra-list-label">추가된 개별 곡</p>
                 <div id="ap-extra-items"></div>
               </div>
+            </div>
+
+            <!-- 저장된 고정곡 (기간 자동 적용) -->
+            <div class="ap-gen-card" id="ap-fixed-card">
+              <p class="ap-gen-card-title">📌 저장된 고정곡</p>
+              <button class="ap-extra-add-btn" style="width:100%;background:rgba(34,197,94,0.16);border-color:rgba(34,197,94,0.45)" onclick="apLoadFixedForDate()">선택한 날짜의 특정곡 불러오기</button>
+              <p style="font-size:11px;color:rgba(255,255,255,0.3);margin:6px 0 10px;line-height:1.5">우측 "일괄 적용 시각"의 날짜를 기준으로, 해당 기간에 포함된 고정곡을 생성 목록에 삽입합니다.</p>
+              <div id="ap-fixed-list"></div>
             </div>
 
           </div>
@@ -4971,6 +4994,140 @@
       }).join('');
     }
 
+    // ── 고정곡 (기간 자동 적용) ──
+    // 한 번 저장해두면 지정 기간 동안 매일 "특정곡 불러오기" 클릭만으로 생성 목록에 자동 삽입된다.
+    let apFixedSongs = [];   // 백엔드 저장 고정곡 캐시
+
+    async function apLoadFixedList() {
+      if (!adminToken) return;
+      try {
+        const res = await apiFetch('GET', '/api/admin/fixed-songs', undefined, adminToken);
+        apFixedSongs = res?.fixedSongs || [];
+      } catch(e) {
+        console.warn('고정곡 목록 로드 실패:', e);
+        apFixedSongs = [];
+      }
+      apRenderFixedList();
+    }
+
+    function apRenderFixedList() {
+      const wrap = document.getElementById('ap-fixed-list');
+      if (!wrap) return;
+      if (!apFixedSongs.length) {
+        wrap.innerHTML = '<p style="font-size:12px;color:rgba(255,255,255,0.3);padding:4px 0">저장된 고정곡이 없습니다.</p>';
+        return;
+      }
+      wrap.innerHTML = apFixedSongs.map(f => `
+        <div class="ap-extra-song-item">
+          <div style="flex:1;min-width:0">
+            <span class="ap-extra-song-name">${f.title}</span>
+            <span class="ap-extra-song-meta">${f.storeName} · ${String(f.hour).padStart(2,'0')}시 ${f.position}번째 · ${f.startDate} ~ ${f.endDate}</span>
+          </div>
+          <button class="ap-extra-del-btn" onclick="apDeleteFixed(${f.id})">✕</button>
+        </div>`).join('');
+    }
+
+    async function apSaveFixedSong() {
+      const artist   = document.getElementById('ap-extra-artist').value.trim();
+      const title    = document.getElementById('ap-extra-title').value.trim();
+      const duration = document.getElementById('ap-extra-duration').value.trim();
+      const vidInput = document.getElementById('ap-extra-vid').value.trim();
+      const storeName= document.getElementById('ap-extra-store').value;
+      const hour     = parseInt(document.getElementById('ap-extra-hour').value);
+      const pos      = parseInt(document.getElementById('ap-extra-pos').value) || 1;
+      const startDate= document.getElementById('ap-fixed-start').value;
+      const endDate  = document.getElementById('ap-fixed-end').value;
+
+      if (!artist || !title)      { plToast('가수와 제목은 필수 항목입니다.', 'error'); return; }
+      if (!storeName)             { plToast('매장을 선택해 주세요.', 'error'); return; }
+      if (isNaN(hour))            { plToast('시간대를 선택해 주세요.', 'error'); return; }
+      if (!startDate || !endDate) { plToast('시작일과 종료일을 입력해 주세요.', 'error'); return; }
+      if (endDate < startDate)    { plToast('종료일은 시작일보다 빠를 수 없습니다.', 'error'); return; }
+
+      const playTime = parsePlayTimeSec(duration);
+      if (!playTime || playTime <= 0) { plToast('재생시간(mm:ss)을 입력해 주세요.', 'error'); return; }
+
+      // YouTube URL → 11자리 ID 파싱
+      const vidMatch = vidInput.match(/(?:v=|youtu\.be\/|embed\/)([A-Za-z0-9_-]{11})/);
+      const vid = vidMatch ? vidMatch[1] : (vidInput.length === 11 ? vidInput : '');
+      if (!vid) { plToast('유효한 YouTube ID 또는 URL을 입력해 주세요.', 'error'); return; }
+
+      const position = Math.max(1, Math.min(pos, 18));
+      try {
+        await apiFetch('POST', '/api/admin/fixed-songs', {
+          storeName, startDate, endDate, hour, position, title, artist, vid, playTime
+        }, adminToken);
+        plToast(`✓ 고정곡 저장됨 — ${storeName} ${String(hour).padStart(2,'0')}시 ${position}번째 (${startDate}~${endDate})`, 'success');
+        ['ap-extra-artist','ap-extra-title','ap-extra-duration','ap-extra-vid'].forEach(id => {
+          document.getElementById(id).value = '';
+        });
+        await apLoadFixedList();
+      } catch(e) {
+        console.warn('고정곡 저장 실패:', e);
+        plToast('고정곡 저장에 실패했습니다.', 'error');
+      }
+    }
+
+    async function apDeleteFixed(id) {
+      try {
+        await apiFetch('DELETE', `/api/admin/fixed-songs/${id}`, undefined, adminToken);
+        apFixedSongs = apFixedSongs.filter(f => f.id !== id);
+        apRenderFixedList();
+        plToast('고정곡을 삭제했습니다.', 'success');
+      } catch(e) {
+        console.warn('고정곡 삭제 실패:', e);
+        plToast('고정곡 삭제에 실패했습니다.', 'error');
+      }
+    }
+
+    // 선택한 날짜(일괄 적용 시각의 날짜)에 적용되는 고정곡을 생성 목록(extras)에 주입
+    async function apLoadFixedForDate() {
+      const dateVal = document.getElementById('pl-bulk-date')?.value;
+      if (!dateVal) { plToast('먼저 우측 "일괄 적용 시각"의 날짜를 선택해 주세요.', 'error'); return; }
+
+      let active = [];
+      try {
+        const res = await apiFetch('GET', `/api/admin/fixed-songs/active?date=${dateVal}`, undefined, adminToken);
+        active = res?.fixedSongs || [];
+      } catch(e) {
+        console.warn('특정곡 불러오기 실패:', e);
+        plToast('특정곡을 불러오지 못했습니다.', 'error');
+        return;
+      }
+
+      // 이전에 불러온 고정곡 extras(fromFixed) 제거 → 중복 방지
+      Object.keys(apExtraSongs).forEach(store => {
+        Object.keys(apExtraSongs[store]).forEach(h => {
+          apExtraSongs[store][h] = apExtraSongs[store][h].filter(x => !x.fromFixed);
+          if (!apExtraSongs[store][h].length) delete apExtraSongs[store][h];
+        });
+        if (!Object.keys(apExtraSongs[store]).length) delete apExtraSongs[store];
+      });
+
+      if (!active.length) {
+        apRenderExtraList();
+        apRenderStoreCards();
+        plToast(`${dateVal}에 적용할 고정곡이 없습니다.`, 'error');
+        return;
+      }
+
+      let injected = 0;
+      active.forEach(f => {
+        if (!apExtraSongs[f.storeName])           apExtraSongs[f.storeName] = {};
+        if (!apExtraSongs[f.storeName][f.hour])   apExtraSongs[f.storeName][f.hour] = [];
+        apExtraSongs[f.storeName][f.hour].push({
+          position: f.position,
+          fromFixed: true,
+          song: { title: f.title, artist: f.artist, vid: f.vid, playTime: f.playTime }
+        });
+        injected++;
+      });
+
+      apRenderExtraList();
+      apRenderStoreCards();
+      plToast(`✓ ${dateVal} 고정곡 ${injected}곡을 생성 목록에 반영했습니다. 이제 생성하세요.`, 'success');
+    }
+
     async function apBulkInitMood() {
       const moodName = (document.getElementById('ap-bulk-init-mood')?.value || '').trim();
       if (!moodName) { plToast('무드명을 입력해 주세요.', 'error'); return; }
@@ -5419,6 +5576,10 @@
       // 시각(time)은 두 방식 모두 사용 (랜덤=프론트 적용 시각) / 엑셀은 단일 곡목록 → 시간대 필드 숨김
       document.getElementById('pl-bulk-time').style.display = '';
       document.getElementById('ap-extra-hour-field').style.display = isRandom ? '' : 'none';
+      // 고정곡(기간 자동) 기능은 시간대 슬롯이 있는 랜덤 모드 전용
+      document.getElementById('ap-fixed-period-row').style.display = isRandom ? '' : 'none';
+      document.getElementById('ap-fixed-save-btn').style.display   = isRandom ? '' : 'none';
+      document.getElementById('ap-fixed-card').style.display       = isRandom ? '' : 'none';
 
       // 펼침 상태 초기화
       plSelectedStore = null;
@@ -5431,7 +5592,7 @@
       apRenderExtraList();
       plUpdateDownloadBtn();
 
-      if (isRandom) apRenderStoreCards();
+      if (isRandom) { apRenderStoreCards(); apLoadFixedList(); }
       else plRenderStoreList();
     }
 
