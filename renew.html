@@ -454,9 +454,11 @@
   <div class="copyright">Copyright 2026. VERBY Co. all rights reserved.</div>
 
   <script>
+    const isPlanA = new URLSearchParams(location.search).get('plan') === 'A';
+
     const PLAN_RATES = { A: 4400, B: 8800, C: 13200, PLAN_A: 8800, PLAN_B: 13200 };
     const PLAN_NAMES = {
-      A: 'Plan A (라이트 요금제)', B: 'Plan B (기본 요금제)', C: 'Plan C (프리미엄 요금제)',
+      A: 'Plan A 라이트 요금제', B: 'Plan B (기본 요금제)', C: 'Plan C (프리미엄 요금제)',
       PLAN_A: 'Plan B (기본 요금제)', PLAN_B: 'Plan C (프리미엄 요금제)'
     };
 
@@ -465,9 +467,9 @@
 
     let expireDate = null;   // 실제 만료일 (Date 객체)
     let isRefundedState = false;
-    let plan = localStorage.getItem('selectedPlan') || 'B';
-    let monthlyRate = PLAN_RATES[plan] || 13200;
-    let selectedMonths = 1;
+    let plan = isPlanA ? 'A' : (localStorage.getItem('selectedPlan') || 'B');
+    let monthlyRate = isPlanA ? 4400 : (PLAN_RATES[plan] || 13200);
+    let selectedMonths = isPlanA ? 1 : 1;
 
     const fmtDateTime = raw => {
       if (!raw) return null;
@@ -478,6 +480,7 @@
 
     /* 구독 API에서 현재 이용 기간·플랜 로드 */
     async function loadCurrentSubscription() {
+      if (isPlanA) { await loadPlanASubscription(); return; }
       const token = getOwnerToken();
       const storeId = getOwnerStoreId();
       if (!token || !storeId) return;
@@ -585,19 +588,53 @@
     const fmtWithDay = d =>
       `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')} (${DAY_KO[d.getDay()]})`;
 
+    /* Plan A 전용: user 토큰으로 구독 정보 로드 */
+    async function loadPlanASubscription() {
+      document.getElementById('currentPlanName').textContent = 'Plan A 라이트 요금제';
+      document.getElementById('currentPlanPrice').textContent = '월 4,400원';
+
+      try {
+        const sub = await apiFetch('GET', '/api/user/subscription', undefined, getUserToken());
+        if (sub?.startDate && sub?.endDate) {
+          document.getElementById('currentPeriod').textContent =
+            `${fmtStr(sub.startDate)} ~ ${fmtStr(sub.endDate)}`;
+          expireDate = new Date(sub.endDate);
+          const today = new Date(); today.setHours(0, 0, 0, 0);
+          const diff = Math.ceil((expireDate - today) / (1000 * 60 * 60 * 24));
+          document.getElementById('daysLeft').textContent = diff > 0 ? `${diff}일 남음` : '만료됨';
+        } else {
+          document.getElementById('currentPeriod').textContent = '구독 정보 없음';
+          document.getElementById('daysLeft').textContent = '-';
+        }
+      } catch(e) {
+        document.getElementById('currentPeriod').textContent = '-';
+        document.getElementById('daysLeft').textContent = '-';
+      }
+      buildDurations();
+    }
+
     /* 연장 기간 옵션 */
     function buildDurations() {
       const container = document.getElementById('durationOptions');
       container.innerHTML = '';
-      [1, 3, 6, 12].forEach(m => {
+      const options = isPlanA ? [1, 12] : [1, 3, 6, 12];
+      options.forEach(m => {
         const total = monthlyRate * m;
-        const weeks = WEEKS_MAP[m];
         const box = document.createElement('div');
         box.className = 'duration-box' + (m === 1 ? ' selected' : '');
-        box.innerHTML = `
-          <div class="duration-months">${m}개월</div>
-          <div class="duration-weeks">(${weeks}주)</div>
-          <div class="duration-price">${total.toLocaleString()}원</div>`;
+        if (isPlanA) {
+          const label = m === 1 ? '월간' : '연간';
+          box.innerHTML = `
+            <div class="duration-months">${label}</div>
+            <div class="duration-weeks">${m}개월</div>
+            <div class="duration-price">${total.toLocaleString()}원</div>`;
+        } else {
+          const weeks = WEEKS_MAP[m];
+          box.innerHTML = `
+            <div class="duration-months">${m}개월</div>
+            <div class="duration-weeks">(${weeks}주)</div>
+            <div class="duration-price">${total.toLocaleString()}원</div>`;
+        }
         box.onclick = () => selectDuration(box, m, total);
         container.appendChild(box);
       });
@@ -612,30 +649,44 @@
     }
 
     function updateSummary(months, total) {
-      const weeks = WEEKS_MAP[months] || months * 4;
       const planName = PLAN_NAMES[plan] || 'Plan C (프리미엄 요금제)';
       document.getElementById('summaryLabel').textContent =
         `${planName} · 월 ${monthlyRate.toLocaleString()}원 × ${months}개월`;
       document.getElementById('summaryAmount').textContent = total.toLocaleString() + '원';
 
-      /* 서비스 시작: 환불 또는 구독 없으면 오늘 기준 다음 화요일, 이용 중이면 만료일 다음날 */
-      let serviceStart;
-      if (expireDate && !isRefundedState) {
-        serviceStart = new Date(expireDate.getTime() + 24 * 60 * 60 * 1000);
+      let serviceStart, serviceEnd;
+      if (isPlanA) {
+        // Plan A: 결제 즉시 시작, 달력 기준 월 단위
+        serviceStart = expireDate && !isRefundedState
+          ? new Date(expireDate.getTime() + 24 * 60 * 60 * 1000)
+          : new Date();
         serviceStart.setHours(0, 0, 0, 0);
+        serviceEnd = new Date(serviceStart);
+        serviceEnd.setMonth(serviceEnd.getMonth() + months);
+        serviceEnd.setDate(serviceEnd.getDate() - 1);
+        document.getElementById('newPeriodPreview').innerHTML = `
+          <div class="service-period-preview">
+            <div class="period-row"><span>서비스 시작</span><strong>${fmtWithDay(serviceStart)}</strong></div>
+            <div class="period-row"><span>서비스 종료</span><strong>${fmtWithDay(serviceEnd)}</strong></div>
+            <div class="period-row"><span>이용 기간</span><strong>${months === 12 ? '연간 (12개월)' : '월간 (1개월)'}</strong></div>
+          </div>`;
       } else {
-        const ref = new Date();
-        ref.setHours(0, 0, 0, 0);
-        serviceStart = nextTuesdayOnOrAfter(ref);
+        const weeks = WEEKS_MAP[months] || months * 4;
+        if (expireDate && !isRefundedState) {
+          serviceStart = new Date(expireDate.getTime() + 24 * 60 * 60 * 1000);
+          serviceStart.setHours(0, 0, 0, 0);
+        } else {
+          const ref = new Date(); ref.setHours(0, 0, 0, 0);
+          serviceStart = nextTuesdayOnOrAfter(ref);
+        }
+        serviceEnd = new Date(serviceStart.getTime() + weeks * 7 * 24 * 60 * 60 * 1000 - 24 * 60 * 60 * 1000);
+        document.getElementById('newPeriodPreview').innerHTML = `
+          <div class="service-period-preview">
+            <div class="period-row"><span>서비스 시작</span><strong>${fmtWithDay(serviceStart)}</strong></div>
+            <div class="period-row"><span>서비스 종료</span><strong>${fmtWithDay(serviceEnd)}</strong></div>
+            <div class="period-row"><span>이용 기간</span><strong>${months}개월 (${weeks}주)</strong></div>
+          </div>`;
       }
-      const serviceEnd = new Date(serviceStart.getTime() + weeks * 7 * 24 * 60 * 60 * 1000 - 24 * 60 * 60 * 1000);
-
-      document.getElementById('newPeriodPreview').innerHTML = `
-        <div class="service-period-preview">
-          <div class="period-row"><span>서비스 시작</span><strong>${fmtWithDay(serviceStart)}</strong></div>
-          <div class="period-row"><span>서비스 종료</span><strong>${fmtWithDay(serviceEnd)}</strong></div>
-          <div class="period-row"><span>이용 기간</span><strong>${months}개월 (${weeks}주)</strong></div>
-        </div>`;
     }
 
     function toggleTerms(id) {
@@ -680,12 +731,29 @@
       if (!t1 || !t2) { err.classList.add('show'); return; }
       err.classList.remove('show');
 
+      const btn = document.querySelector('.form-actions .btn-primary');
+
+      if (isPlanA) {
+        const token = getUserToken();
+        if (!token) { alert('로그인이 필요합니다.'); return; }
+        try {
+          if (btn) { btn.disabled = true; btn.textContent = '처리 중...'; }
+          const res = await apiFetch('POST', '/api/user/subscriptions/renew',
+            { usagePeriod: selectedMonths }, token);
+          openTossModal();
+          await initTossWidget(res.orderId, res.amount, res.orderName);
+        } catch(e) {
+          alert('오류가 발생했습니다: ' + e.message);
+          if (btn) { btn.disabled = false; btn.textContent = '결제하기'; }
+        }
+        return;
+      }
+
       const storeId = getOwnerStoreId();
       const token = getOwnerToken();
       if (!storeId || !token) { alert('로그인이 필요합니다.'); return; }
 
       const planId = parseInt(localStorage.getItem('selectedPlanId') || '1');
-      const btn = document.querySelector('.form-actions .btn-primary');
 
       try {
         if (btn) { btn.disabled = true; btn.textContent = '처리 중...'; }
@@ -701,7 +769,7 @@
       }
     }
 
-    buildDurations();
+    if (!isPlanA) buildDurations();
     loadCurrentSubscription();
   </script>
 

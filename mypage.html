@@ -858,7 +858,7 @@
               <strong>구독을 계속 유지하시겠어요?</strong>
               구독 갱신은 만료일 이전에 진행하면 이어서 적용됩니다.
             </div>
-            <a href="plan.html" class="btn-primary" style="white-space:nowrap;flex-shrink:0">구독 갱신</a>
+            <a href="renew.html?plan=A" class="btn-primary" style="white-space:nowrap;flex-shrink:0">구독 갱신</a>
           </div>
         </div>
 
@@ -2129,8 +2129,8 @@
       document.getElementById('page-main-title').textContent = '마이페이지';
       document.getElementById('page-main-subtitle').textContent = 'Plan A 라이트 구독 정보를 확인하세요';
 
-      const email = localStorage.getItem('userEmail') || '—';
-      document.getElementById('sub-email-display').textContent = email;
+      const accountId = localStorage.getItem('userLoginId') || localStorage.getItem('userEmail') || '';
+      document.getElementById('sub-email-display').textContent = accountId || '구독자 계정';
 
       const fmtD = d => {
         const dt = new Date(d);
