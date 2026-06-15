@@ -2719,8 +2719,8 @@
             <select class="pl-schedule-input time-input" id="ap-bulk-time"></select>
             <button class="pl-bulk-apply-btn" onclick="apApplyBulkSchedule()">전체 적용</button>
           </div>
-          <!-- 매장 카드 목록 -->
-          <div id="ap-store-cards" class="ap-store-cards">
+          <!-- 매장 목록 -->
+          <div id="ap-store-cards" class="pl-store-list">
             <div class="ap-empty-msg">매장 정보를 불러오는 중...</div>
           </div>
           <div id="ap-bulk-result"></div>
@@ -5053,12 +5053,14 @@
       }
     }
 
+    let apSelectedStore = null;
+
     function apRenderStoreCards() {
       const container = document.getElementById('ap-store-cards');
       if (!container) return;
-      container.innerHTML = '';
 
       apInitBulkSchedule();
+      apSelectedStore = null;
 
       const bulkBtn = document.getElementById('ap-bulk-gen-btn');
 
@@ -5069,109 +5071,112 @@
       }
 
       let mappedStores = 0;
-      stores.forEach(s => {
+
+      container.innerHTML = stores.map(s => {
         const sm = apData[s.storeName] || {};
         const mappedCount = Array.from({length:24}, (_,h) => h).filter(h => sm[String(h)]).length;
         if (mappedCount) mappedStores++;
 
-        const card = document.createElement('div');
-        card.className = 'ap-store-card';
-
-        const header = document.createElement('div');
-        header.className = 'ap-card-header';
-        header.innerHTML = `
-          <span class="ap-card-name">${s.storeName}</span>
-          <span class="ap-mood-badge${mappedCount ? ' active' : ''}">
-            ${mappedCount ? `${mappedCount}개 시간대 매핑됨` : '매핑 없음'}
-          </span>`;
-        card.appendChild(header);
-
-        // 매장별 적용 시각 입력
         const sched = apScheduledAt[s.storeName] || {};
-        const schedDate = sched.date || '';
+        const todayStr = new Date().toISOString().slice(0, 10);
+        const schedDate = sched.date || todayStr;
         const schedTime = sched.time || '';
-        const schedRow = document.createElement('div');
-        schedRow.className = 'pl-store-item-schedule';
-        schedRow.innerHTML = `
-          <span class="pl-schedule-label">적용 시각</span>
-          <div class="pl-schedule-inputs">
-            <input type="date" class="pl-schedule-input date-input"
-              value="${schedDate}"
-              onchange="apSetSchedule('${s.storeName}', 'date', this.value)" />
-            <select class="pl-schedule-input time-input"
-              onchange="apSetSchedule('${s.storeName}', 'time', this.value)">
-              ${Array.from({length: 48}, (_, i) => {
-                const h = String(Math.floor(i/2)).padStart(2,'0');
-                const m = i%2 === 0 ? '00' : '30';
-                const val = `${h}:${m}`;
-                return `<option value="${val}"${val === schedTime ? ' selected' : ''}>${val}</option>`;
-              }).join('')}
-            </select>
+
+        const badgeHtml = mappedCount
+          ? `<span class="pl-match-badge matched">${mappedCount}개 시간대 매핑됨</span>`
+          : `<span class="pl-match-badge unmatched">매핑 없음</span>`;
+
+        const schedHtml = `
+          <div class="pl-store-item-schedule" onclick="event.stopPropagation()">
+            <span class="pl-schedule-label">적용 시각</span>
+            <div class="pl-schedule-inputs">
+              <input type="date" class="pl-schedule-input date-input"
+                value="${schedDate}"
+                onchange="apSetSchedule('${s.storeName}', 'date', this.value)" />
+              <select class="pl-schedule-input time-input"
+                onchange="apSetSchedule('${s.storeName}', 'time', this.value)">
+                ${Array.from({length: 48}, (_, i) => {
+                  const h = String(Math.floor(i/2)).padStart(2,'0');
+                  const m = i%2 === 0 ? '00' : '30';
+                  const val = `${h}:${m}`;
+                  return `<option value="${val}"${val === schedTime ? ' selected' : ''}>${val}</option>`;
+                }).join('')}
+              </select>
+            </div>
           </div>`;
-        card.appendChild(schedRow);
 
-        // 현재 플리 보기 토글
-        const plToggleBtn = document.createElement('button');
-        plToggleBtn.style.cssText = 'display:flex;align-items:center;gap:5px;background:none;border:none;color:rgba(255,255,255,0.35);font-size:12px;font-weight:600;font-family:inherit;cursor:pointer;padding:0;margin-top:8px;transition:color 0.15s;';
-        plToggleBtn.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>현재 플리 보기`;
-
-        const plArea = document.createElement('div');
-        plArea.style.display = 'none';
-        plArea.style.marginTop = '10px';
-
-        let plLoaded = false;
-        plToggleBtn.addEventListener('click', async () => {
-          const isOpen = plArea.style.display !== 'none';
-          if (isOpen) {
-            plArea.style.display = 'none';
-            plToggleBtn.style.color = 'rgba(255,255,255,0.35)';
-            return;
-          }
-          plArea.style.display = 'block';
-          plToggleBtn.style.color = '#c6f135';
-          if (plLoaded) return;
-          plLoaded = true;
-          plArea.innerHTML = '<div style="font-size:12px;color:rgba(255,255,255,0.3);padding:8px 0">불러오는 중...</div>';
-          try {
-            const data = await apiFetch('GET', `/api/stores/${s.id}/playlists`, undefined, adminToken);
-            const songs = data.playlist?.songs || [];
-            if (!songs.length) {
-              plArea.innerHTML = '<div style="font-size:12px;color:rgba(255,255,255,0.25);padding:8px 0">적용된 플레이리스트가 없습니다.</div>';
-              return;
-            }
-            const durSec = songs.reduce((acc, t) => acc + parsePlayTimeSec(t.playTime), 0);
-            const meta = document.createElement('div');
-            meta.style.cssText = 'font-size:12px;color:rgba(255,255,255,0.35);margin-bottom:6px;';
-            meta.textContent = `${songs.length}곡 · ${fmtDuration(durSec)}`;
-            const body = document.createElement('div');
-            body.className = 'pl-compare-col-body';
-            songs.forEach((song, idx) => {
-              const row = document.createElement('div'); row.className = 'pl-compare-row';
-              const num    = document.createElement('span'); num.className    = 'pl-compare-num';    num.textContent    = idx + 1;
-              const title  = document.createElement('span'); title.className  = 'pl-compare-title';  title.textContent  = song.title  || '-';
-              const artist = document.createElement('span'); artist.className = 'pl-compare-artist'; artist.textContent = song.artist || '-';
-              row.appendChild(num); row.appendChild(title); row.appendChild(artist);
-              body.appendChild(row);
-            });
-            plArea.innerHTML = '';
-            plArea.appendChild(meta);
-            plArea.appendChild(body);
-            plCurrentSongs[s.storeName] = songs;
-          } catch(e) {
-            plArea.innerHTML = '<div style="font-size:12px;color:#ff5c5c;padding:8px 0">불러오지 못했습니다.</div>';
-          }
-        });
-
-        card.appendChild(plToggleBtn);
-        card.appendChild(plArea);
-        container.appendChild(card);
-      });
+        const safeId = s.storeName.replace(/[^a-zA-Z0-9가-힣]/g, '_');
+        return `
+          <div class="pl-store-item" id="ap-item-${safeId}"
+            onclick="apToggleExpand('${s.storeName}', '${safeId}', ${s.id})">
+            <div class="pl-store-item-top">
+              <div style="flex:1;min-width:0">
+                <p class="pl-store-name">${s.storeName}</p>
+                <p class="pl-store-count">${mappedCount ? mappedCount + '개 시간대 무드 설정됨' : '음원 데이터 매핑 없음'}</p>
+              </div>
+              ${badgeHtml}
+              <span class="pl-store-chevron">▼</span>
+            </div>
+            ${schedHtml}
+            <div class="pl-store-expand" id="ap-expand-${safeId}"></div>
+          </div>`;
+      }).join('');
 
       const statTotal  = document.getElementById('ap-stat-total');
       const statMapped = document.getElementById('ap-stat-mapped');
       if (statTotal)  statTotal.textContent  = stores.length;
       if (statMapped) statMapped.textContent = mappedStores;
       if (bulkBtn) bulkBtn.disabled = mappedStores === 0;
+    }
+
+    async function apToggleExpand(storeName, safeId, storeId) {
+      const expandDiv = document.getElementById('ap-expand-' + safeId);
+      const item      = document.getElementById('ap-item-'   + safeId);
+      if (!expandDiv || !item) return;
+
+      // 같은 매장 재클릭 → 접기
+      if (apSelectedStore === storeName) {
+        apSelectedStore = null;
+        expandDiv.innerHTML = '';
+        item.classList.remove('active', 'expanded');
+        return;
+      }
+
+      // 이전 펼침 닫기
+      if (apSelectedStore) {
+        const prevSafe = apSelectedStore.replace(/[^a-zA-Z0-9가-힣]/g, '_');
+        const prevDiv  = document.getElementById('ap-expand-' + prevSafe);
+        const prevItem = document.getElementById('ap-item-'   + prevSafe);
+        if (prevDiv)  prevDiv.innerHTML = '';
+        if (prevItem) prevItem.classList.remove('active', 'expanded');
+      }
+
+      apSelectedStore = storeName;
+      item.classList.add('active', 'expanded');
+      expandDiv.innerHTML = '<div style="font-size:12px;color:rgba(255,255,255,0.3);padding:8px 0">현재 플레이리스트 불러오는 중...</div>';
+
+      try {
+        const data  = await apiFetch('GET', `/api/stores/${storeId}/playlists`, undefined, adminToken);
+        const songs = data.playlist?.songs || [];
+        if (!songs.length) {
+          expandDiv.innerHTML = '<div style="font-size:12px;color:rgba(255,255,255,0.25);padding:8px 0">적용된 플레이리스트가 없습니다.</div>';
+          return;
+        }
+        const durSec = songs.reduce((acc, t) => acc + parsePlayTimeSec(t.playTime), 0);
+        plCurrentSongs[storeName] = songs;
+        expandDiv.innerHTML = `
+          <div style="font-size:12px;color:rgba(255,255,255,0.35);margin-bottom:6px">${songs.length}곡 · ${fmtDuration(durSec)}</div>
+          <div class="pl-compare-col-body">
+            ${songs.map((song, idx) => `
+              <div class="pl-compare-row">
+                <span class="pl-compare-num">${idx + 1}</span>
+                <span class="pl-compare-title">${song.title || '-'}</span>
+                <span class="pl-compare-artist">${song.artist || '-'}</span>
+              </div>`).join('')}
+          </div>`;
+      } catch(e) {
+        expandDiv.innerHTML = '<div style="font-size:12px;color:#ff5c5c;padding:8px 0">불러오지 못했습니다.</div>';
+      }
     }
 
     async function apBulkGenerate() {
