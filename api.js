@@ -120,6 +120,10 @@ function clearUserToken() {
 function updateNavAuth() {
   const navActions = document.querySelector('.nav-actions');
   if (!navActions) return;
+  if (localStorage.getItem('djToken')) {
+    // DJ 대시보드에서 자체적으로 nav를 설정하므로 덮어쓰지 않음
+    return;
+  }
   if (getOwnerToken()) {
     navActions.innerHTML = `
       <a href="index.html" class="nav-login" onclick="clearOwnerToken()">로그아웃</a>

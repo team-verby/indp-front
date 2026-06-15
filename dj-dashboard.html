@@ -658,46 +658,7 @@
 
   <div class="dj-layout">
 
-    <!-- 왼쪽: 라이브 제어 -->
-    <div class="dj-live-panel">
-      <div class="live-card" id="live-card">
-        <div class="live-card-top">
-          <div class="air-indicator">
-            <span class="air-dot" id="air-dot"></span>
-            <span class="air-label" id="air-label">OFF AIR</span>
-          </div>
-          <span class="track-count-badge" id="track-count-badge"></span>
-        </div>
-
-        <div class="live-off-body" id="live-off">
-          <div class="live-off-icon">📻</div>
-          <div class="live-off-title">채널이 꺼져 있습니다</div>
-          <div class="live-off-desc" id="live-off-desc">파일을 업로드하면 라이브를 시작할 수 있습니다.</div>
-          <button class="btn-start-live" id="btn-start-live" onclick="startLive()">▶ 라이브 시작</button>
-        </div>
-
-        <div class="live-on-body" id="live-on" style="display:none">
-          <div class="live-on-icon">📡</div>
-          <div class="live-on-info">
-            <div class="live-on-title">라이브 방송 중</div>
-            <div class="live-on-desc" id="live-on-desc">—</div>
-            <button class="btn-stop-live" onclick="stopLive()">■ 방송 종료</button>
-          </div>
-        </div>
-        <!-- 시청자 수 (ON AIR 시에만 표시) -->
-        <div class="listener-row" id="listener-row" style="display:none">
-          <span class="listener-dot"></span>
-          <span id="listener-count">0명</span> 청취 중
-        </div>
-      </div>
-
-      <p class="dj-live-panel-note">
-        <strong>⚠ 이 페이지를 닫으면 라이브 방송이 종료됩니다.</strong>
-      </p>
-
-    </div>
-
-    <!-- 오른쪽: 트랙 관리 -->
+    <!-- 왼쪽: 트랙 관리 + 업로드 -->
     <div>
       <!-- 업로드 존 (파일 없을 때) -->
       <div class="upload-zone" id="upload-zone"
@@ -742,6 +703,45 @@
         </div>
         <div class="track-list" id="track-list"></div>
       </div>
+    </div>
+
+    <!-- 오른쪽: 라이브 제어 -->
+    <div class="dj-live-panel">
+      <div class="live-card" id="live-card">
+        <div class="live-card-top">
+          <div class="air-indicator">
+            <span class="air-dot" id="air-dot"></span>
+            <span class="air-label" id="air-label">OFF AIR</span>
+          </div>
+          <span class="track-count-badge" id="track-count-badge"></span>
+        </div>
+
+        <div class="live-off-body" id="live-off">
+          <div class="live-off-icon">📻</div>
+          <div class="live-off-title">채널이 꺼져 있습니다</div>
+          <div class="live-off-desc" id="live-off-desc">파일을 업로드하면 라이브를 시작할 수 있습니다.</div>
+          <button class="btn-start-live" id="btn-start-live" onclick="startLive()">▶ 라이브 시작</button>
+        </div>
+
+        <div class="live-on-body" id="live-on" style="display:none">
+          <div class="live-on-icon">📡</div>
+          <div class="live-on-info">
+            <div class="live-on-title">라이브 방송 중</div>
+            <div class="live-on-desc" id="live-on-desc">—</div>
+            <button class="btn-stop-live" onclick="stopLive()">■ 방송 종료</button>
+          </div>
+        </div>
+        <!-- 시청자 수 (ON AIR 시에만 표시) -->
+        <div class="listener-row" id="listener-row" style="display:none">
+          <span class="listener-dot"></span>
+          <span id="listener-count">0명</span> 청취 중
+        </div>
+      </div>
+
+      <p class="dj-live-panel-note">
+        <strong>⚠ 이 페이지를 닫으면 라이브 방송이 종료됩니다.</strong>
+      </p>
+
     </div>
 
   </div>
@@ -913,7 +913,7 @@ let djPhone    = localStorage.getItem('djPhone')    || '';
 let djEmail    = localStorage.getItem('djEmail')    || '';
 let djThumb    = localStorage.getItem('djThumb')    || null;
 
-function init() {
+async function init() {
   // GNB 스크롤 플로팅
   const nav = document.querySelector('nav');
   if (nav) {
@@ -939,6 +939,18 @@ function init() {
   applyThumb(djThumb, document.getElementById('dj-avatar-wrap'));
 
   appliedTrackIds = new Set();
+
+  // 기존 업로드된 트랙 로드
+  try {
+    const data = await apiFetch('GET', '/api/dj/tracks', undefined, djToken);
+    if (data?.tracks?.length) {
+      tracks = data.tracks.map(t => ({
+        id: t.id, filename: t.filename,
+        duration: t.duration, secs: t.secs, uploading: false
+      }));
+      appliedTrackIds = new Set(tracks.map(t => t.id));
+    }
+  } catch(e) { console.warn('트랙 로드 실패:', e); }
 
   renderTracks();
   renderChannel();
@@ -1139,31 +1151,78 @@ function handleFileSelect(e){ processFiles([...e.target.files]); e.target.value 
 
 function processFiles(files) {
   files.filter(f => f.type.startsWith('audio/')).forEach(file => {
-    const id = Date.now() + Math.random();
-    tracks.push({ id, filename: file.name, duration: '-', secs: 0, uploading: true, progress: 0 });
+    const localId = Date.now() + Math.random();
+    tracks.push({ id: localId, filename: file.name, duration: '-', secs: 0, uploading: true, progress: 0 });
     renderTracks();
     renderChannel();
-    simulateUpload(id);
+    extractDurationAndUpload(localId, file);
   });
 }
 
-function simulateUpload(id) {
-  let p = 0;
-  const iv = setInterval(() => {
-    p += Math.random() * 15;
-    if (p >= 100) { p = 100; clearInterval(iv); }
-    const t = tracks.find(t => t.id === id);
+async function extractDurationAndUpload(localId, file) {
+  let duration = '0:00';
+  let secs = 0;
+
+  // HTML5 Audio API로 실제 길이 추출
+  try {
+    await new Promise(resolve => {
+      const audio = new Audio();
+      const url = URL.createObjectURL(file);
+      audio.onloadedmetadata = () => {
+        const total = Math.floor(audio.duration) || 0;
+        secs = total;
+        duration = `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`;
+        URL.revokeObjectURL(url);
+        resolve();
+      };
+      audio.onerror = () => { URL.revokeObjectURL(url); resolve(); };
+      audio.src = url;
+    });
+  } catch(e) { console.warn('duration 추출 실패:', e); }
+
+  // 진행률 표시 (업로드 중)
+  const updateProgress = p => {
+    const t = tracks.find(t => t.id === localId);
+    if (t) { t.progress = p; renderTracks(); }
+  };
+
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('duration', duration);
+    formData.append('secs', String(secs));
+
+    updateProgress(30);
+
+    const res = await fetch(BASE_URL + '/api/dj/tracks', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${djToken}` },
+      body: formData
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || `업로드 실패 (${res.status})`);
+    }
+
+    const data = await res.json();
+    const t = tracks.find(t => t.id === localId);
     if (t) {
-      t.progress = Math.round(p);
-      if (p >= 100) {
-        t.uploading = false;
-        t.duration  = `${2 + Math.floor(Math.random() * 3)}:${String(Math.floor(Math.random() * 60)).padStart(2,'0')}`;
-        delete t.progress;
-      }
+      t.id       = data.id;
+      t.duration = data.duration || duration;
+      t.secs     = data.secs || secs;
+      t.uploading = false;
+      delete t.progress;
       renderTracks();
       renderChannel();
     }
-  }, 300);
+  } catch(e) {
+    console.error('업로드 실패:', e);
+    tracks = tracks.filter(t => t.id !== localId);
+    alert('파일 업로드에 실패했습니다: ' + (e.message || ''));
+    renderTracks();
+    renderChannel();
+  }
 }
 
 function removeTrack(id) {
