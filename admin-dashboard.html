@@ -4885,7 +4885,7 @@
             const t2 = `${String((sl.hour+1)%24).padStart(2,'0')}:00`;
             sl.songs.forEach(song => {
               order++;
-              aoa.push([ratStr, `${t1}~${t2} ${sl.mood || ''}`.trim(), order, song.title || '', song.artist || '', secToMMSS(song.playTime), song.vid || '']);
+              aoa.push([ratStr, `${t1}~${t2} ${sl.mood || ''}`.trim(), order, song.title || '', song.artist || '', secToMMSS(parsePlayTimeSec(song.playTime)), song.vid || '']);
             });
           });
         } else {
@@ -4894,7 +4894,7 @@
           const atStr = at ? `${at.getFullYear()}-${String(at.getMonth()+1).padStart(2,'0')}-${String(at.getDate()).padStart(2,'0')} ${String(at.getHours()).padStart(2,'0')}:${String(at.getMinutes()).padStart(2,'0')}` : '';
           aoa.push(['적용시각', '순서', '제목', '가수', '재생시간', 'vid']);
           songs.forEach((song, idx) => {
-            aoa.push([atStr, idx + 1, song.title || '', song.artist || '', secToMMSS(song.playTime), song.vid || '']);
+            aoa.push([atStr, idx + 1, song.title || '', song.artist || '', secToMMSS(parsePlayTimeSec(song.playTime)), song.vid || '']);
           });
         }
 
@@ -5323,7 +5323,7 @@
                 title:    extra.song.title,
                 artist:   extra.song.artist,
                 vid:      extra.song.vid || genVid(),
-                playTime: extra.song.playTime,
+                playTime: parsePlayTimeSec(extra.song.playTime),
               };
               const idx = extra.position - 1;
               if (idx >= 0 && idx < songs.length) songs.splice(idx, 1, newSong);
@@ -6114,6 +6114,34 @@
       apPopulateExtraStoreDropdown();
     }
 
+    // 매장의 시간대 슬롯 정보(시간·무드·곡수) — plGenerated 우선, 없으면 음원 매핑(apData) 기준 18곡
+    function apHourSlotsFor(storeName) {
+      const g = plGenerated[storeName];
+      if (g && g.mode === 'random' && g.slots?.length) {
+        return g.slots.map(sl => ({ hour: sl.hour, mood: sl.mood, count: sl.songs.length || 18 }));
+      }
+      const sm = apData[storeName] || {};
+      return Array.from({ length: 24 }, (_, h) => h)
+        .filter(h => sm[String(h)])
+        .map(h => ({ hour: h, mood: sm[String(h)], count: 18 }));
+    }
+
+    // 서버에서 받은 합본 플리(평면 곡목록)를 시간대 블록으로 다시 분할
+    function apGroupSongsByHour(storeName, songs) {
+      const slots = apHourSlotsFor(storeName);
+      if (!slots.length) return null;
+      const groups = [];
+      let i = 0;
+      for (const sl of slots) {
+        const chunk = songs.slice(i, i + (sl.count || 18));
+        if (!chunk.length) break;
+        groups.push({ hour: sl.hour, mood: sl.mood, songs: chunk });
+        i += (sl.count || 18);
+      }
+      if (i < songs.length) groups.push({ hour: null, mood: '', songs: songs.slice(i) });
+      return groups.length ? groups : null;
+    }
+
     async function apToggleExpand(storeName, safeId, storeId) {
       const expandDiv = document.getElementById('ap-expand-' + safeId);
       const item      = document.getElementById('ap-item-'   + safeId);
@@ -6152,16 +6180,30 @@
       if (songs.length) {
         const durSec = songs.reduce((acc, t) => acc + parsePlayTimeSec(t.playTime), 0);
         plCurrentSongs[storeName] = songs;
+        const groups = apGroupSongsByHour(storeName, songs);
+        const rowsHtml = (list) => list.map((song, idx) => `
+          <div class="pl-compare-row">
+            <span class="pl-compare-num">${idx + 1}</span>
+            <span class="pl-compare-title">${song.title || '-'}</span>
+            <span class="pl-compare-artist">${song.artist || '-'}</span>
+          </div>`).join('');
+        const bodyHtml = groups
+          ? groups.map((grp, gi) => {
+              const timeLabel = (grp.hour === null || grp.hour === undefined)
+                ? '기타'
+                : `${String(grp.hour).padStart(2,'0')}:00~${String((grp.hour+1)%24).padStart(2,'0')}:00`;
+              return `
+                <div style="display:flex;align-items:center;gap:8px;padding:${gi===0?'0':'12px'} 0 6px;${gi>0?'border-top:1px solid rgba(255,255,255,0.05);margin-top:4px;':''}">
+                  <span style="font-size:13px;font-weight:700;color:#fff;">${timeLabel}</span>
+                  ${grp.mood ? `<span style="font-size:12px;color:rgba(255,255,255,0.4);">${grp.mood}</span>` : ''}
+                  <span style="font-size:12px;color:rgba(255,255,255,0.3);margin-left:auto;">${grp.songs.length}곡</span>
+                </div>
+                <div class="pl-compare-col-body">${rowsHtml(grp.songs)}</div>`;
+            }).join('')
+          : `<div class="pl-compare-col-body">${rowsHtml(songs)}</div>`;
         expandDiv.innerHTML = `
           <div style="font-size:12px;color:rgba(255,255,255,0.35);margin-bottom:6px">현재 적용 중 · ${songs.length}곡 · ${fmtDuration(durSec)}</div>
-          <div class="pl-compare-col-body">
-            ${songs.map((song, idx) => `
-              <div class="pl-compare-row">
-                <span class="pl-compare-num">${idx + 1}</span>
-                <span class="pl-compare-title">${song.title || '-'}</span>
-                <span class="pl-compare-artist">${song.artist || '-'}</span>
-              </div>`).join('')}
-          </div>`;
+          ${bodyHtml}`;
         return;
       }
 
