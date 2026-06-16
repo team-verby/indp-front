@@ -963,6 +963,8 @@
     .pl-left > div { flex: 1 1 300px; min-width: 280px; }
     .pl-left > div > .ap-gen-card,
     .pl-left > .ap-gen-card { margin-bottom: 0; }
+    /* 곡 추가 카드는 매장 목록과 좌우 폭을 맞추도록 전체 너비 한 줄 */
+    .pl-left > .ap-gen-card { flex: 1 1 100%; width: 100%; }
 
     .pl-right {
       display: flex;
@@ -2071,12 +2073,13 @@
       color: rgba(255,255,255,0.7);
       margin-bottom: 14px;
     }
-    /* 곡 추가 폼 — 입력 필드를 2열 그리드로 */
+    /* 곡 추가 폼 — 입력 필드를 가로로 흐르게 (full-width 카드 기준) */
     .ap-extra-form-grid {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
       gap: 10px 12px;
       margin-bottom: 12px;
+      align-items: end;
     }
     /* 저장된 곡 체크박스 목록 */
     .ap-fixed-listbox {
@@ -2926,18 +2929,18 @@
                   <label class="ap-extra-label">삽입 순서</label>
                   <input type="number" class="ap-extra-input" id="ap-extra-pos" min="1" max="18" value="1" />
                 </div>
-                <div class="ap-extra-field" id="ap-fixed-period-row" style="grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:10px">
-                  <div class="ap-extra-field" style="padding:0;border:0;background:none">
-                    <label class="ap-extra-label">시작일</label>
-                    <input type="date" class="ap-extra-input" id="ap-fixed-start" />
-                  </div>
-                  <div class="ap-extra-field" style="padding:0;border:0;background:none">
-                    <label class="ap-extra-label">종료일</label>
-                    <input type="date" class="ap-extra-input" id="ap-fixed-end" />
-                  </div>
+                <div class="ap-extra-field" id="ap-fixed-period-row">
+                  <label class="ap-extra-label">시작일</label>
+                  <input type="date" class="ap-extra-input" id="ap-fixed-start" />
+                </div>
+                <div class="ap-extra-field">
+                  <label class="ap-extra-label">종료일</label>
+                  <input type="date" class="ap-extra-input" id="ap-fixed-end" />
+                </div>
+                <div class="ap-extra-field" style="justify-content:flex-end">
+                  <button class="ap-extra-add-btn" id="ap-fixed-save-btn" style="width:100%;background:rgba(99,102,241,0.18);border-color:rgba(99,102,241,0.45)" onclick="apSaveFixedSong()">+ 목록에 추가</button>
                 </div>
               </div>
-              <button class="ap-extra-add-btn" id="ap-fixed-save-btn" style="width:100%;margin-top:4px;background:rgba(99,102,241,0.18);border-color:rgba(99,102,241,0.45)" onclick="apSaveFixedSong()">+ 목록에 추가</button>
 
               <!-- 저장된 곡 목록 (체크박스 선택 → 매장에 추가) -->
               <div class="ap-fixed-listbox">
