@@ -1739,6 +1739,21 @@
       margin-bottom: 20px;
       flex-wrap: wrap;
     }
+    .md-save-bar {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin: -6px 0 20px;
+      padding: 12px 16px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 10px;
+      flex-wrap: wrap;
+    }
+    .md-save-status {
+      font-size: 12.5px;
+      color: rgba(255,255,255,0.6);
+    }
     .md-upload-btn {
       display: inline-flex;
       align-items: center;
@@ -3041,6 +3056,12 @@
             <span id="md-file-name"></span>
             <button onclick="mdClearFile()" title="초기화">✕</button>
           </div>
+        </div>
+
+        <!-- 저장 바 (서버 저장 + 저장 시각) -->
+        <div class="md-save-bar" id="md-save-bar" style="display:none">
+          <button class="btn-create-pl" id="md-save-btn" onclick="mdSave()">서버에 저장</button>
+          <span class="md-save-status" id="md-save-status"></span>
         </div>
 
         <!-- 무드 선택 -->
@@ -5334,6 +5355,8 @@
     let mdActiveTab = null;
     let mdRowCounter = 0;
     let mdInitialized = false;
+    let mdSavedAt = null;      // 서버에 마지막으로 저장된 시각(ISO) — 저장된 적 없으면 null
+    let mdDirty = false;       // 서버 미반영 변경사항 존재 여부
     const MD_STORAGE_KEY = 'adminMusicData_v2';
 
     // mdData( { mood: [{title,artist,playTime,vid}] } ) ↔ 백엔드 카탈로그 변환
@@ -5366,16 +5389,42 @@
       return Object.values(data || {}).reduce((sum, arr) => sum + (arr ? arr.length : 0), 0);
     }
 
-    // localStorage(즉시 캐시) + 백엔드(영속) 동시 저장. 백엔드 성공 여부 반환.
+    // localStorage(즉시 캐시) + 백엔드(영속) 저장. 서버 저장 시각(ISO) 반환, 실패 시 throw.
     async function mdPersist() {
       localStorage.setItem(MD_STORAGE_KEY, JSON.stringify(mdData));
-      try {
-        await apiFetch('PUT', '/api/admin/music-catalog', mdToCatalogPayload(), adminToken);
-        return true;
-      } catch (e) {
-        console.error('음원 카탈로그 백엔드 저장 실패:', e);
-        return false;
+      const resp = await apiFetch('PUT', '/api/admin/music-catalog', mdToCatalogPayload(), adminToken);
+      return resp?.savedAt ?? null;
+    }
+
+    function mdFmtSavedAt(iso) {
+      if (!iso) return null;
+      const d = new Date(iso);
+      if (isNaN(d.getTime())) return null;
+      const p = n => String(n).padStart(2, '0');
+      return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+    }
+
+    // 저장 바(저장 버튼 + 저장 시각/미저장 표시) 갱신
+    function mdRenderSaveStatus() {
+      const hasData = Object.keys(mdData).length > 0;
+      const bar = document.getElementById('md-save-bar');
+      if (bar) bar.style.display = hasData ? '' : 'none';
+      const el = document.getElementById('md-save-status');
+      if (!el) return;
+      const savedStr = mdFmtSavedAt(mdSavedAt);
+      if (mdDirty) {
+        el.innerHTML = `<span style="color:#ffb454;font-weight:700">● 미저장 변경사항</span>`
+          + (savedStr ? ` <span style="opacity:0.5">· 마지막 저장 ${savedStr}</span>` : ` <span style="opacity:0.5">· 저장된 적 없음</span>`);
+      } else {
+        el.innerHTML = savedStr
+          ? `<span style="color:rgba(198,241,53,0.9);font-weight:700">✓ 저장됨</span> <span style="opacity:0.6">· ${savedStr}</span>`
+          : `<span style="opacity:0.5">저장된 적 없음</span>`;
       }
+    }
+
+    function mdMarkDirty() {
+      mdDirty = true;
+      mdRenderSaveStatus();
     }
 
     function mdRenderInit() {
@@ -5386,6 +5435,7 @@
       } else {
         mdShowEmpty(true);
       }
+      mdRenderSaveStatus();
     }
 
     async function mdInit() {
@@ -5404,13 +5454,17 @@
         const resp = await apiFetch('GET', '/api/admin/music-catalog', undefined, adminToken);
         const fromServer = mdFromCatalogResponse(resp);
         if (mdTotalCount(fromServer) === 0 && mdTotalCount(mdData) > 0) {
-          // 마이그레이션: 서버는 비었는데 로컬에 기존 데이터가 있으면 로컬을 서버로 올림
-          await mdPersist();
+          // 마이그레이션: 서버는 비었는데 로컬에 기존 데이터가 있으면 미저장 상태로 둠(사용자가 저장 클릭)
+          mdDirty = true;
+          mdSavedAt = null;
         } else {
           mdData = fromServer;
           localStorage.setItem(MD_STORAGE_KEY, JSON.stringify(mdData));
+          mdSavedAt = resp?.savedAt ?? null;
+          mdDirty = false;
           mdRenderInit();
         }
+        mdRenderSaveStatus();
       } catch (e) {
         console.error('음원 카탈로그 백엔드 로드 실패(localStorage 사용):', e);
       }
@@ -5502,11 +5556,11 @@
         if (total === 0) {
           plToast('곡을 찾지 못했습니다. 헤더명(제목, 가수 등)을 확인해 주세요.', 'error');
         } else {
-          // 업로드 즉시 자동 저장 (재로그인/기기 변경에도 유지)
-          mdPersist().then(ok => {
-            plToast(ok ? '✓ 서버에 자동 저장됨' : '업로드됨 · 서버 저장 실패(로컬 보관). [저장]을 다시 눌러 주세요.',
-              ok ? 'success' : 'error');
-          });
+          // 자동 저장하지 않음 — 사용자가 [서버에 저장] 버튼을 눌러야 반영됨
+          localStorage.setItem(MD_STORAGE_KEY, JSON.stringify(mdData));
+          mdDirty = true;
+          mdRenderSaveStatus();
+          plToast('업로드 완료 · [서버에 저장]을 눌러야 서버에 반영됩니다.', 'success');
         }
       };
       reader.readAsArrayBuffer(file);
@@ -5608,10 +5662,10 @@
       tr.dataset.rowId = rowIdx;
       tr.innerHTML = `
         <td class="col-num pl-direct-row-num">—</td>
-        <td><input class="pl-cell-input" placeholder="제목" oninput="mdUpdateCount()" /></td>
-        <td><input class="pl-cell-input" placeholder="가수" /></td>
-        <td><input class="pl-cell-input dur-input" placeholder="3:42" title="MM:SS 형식" /></td>
-        <td><input class="pl-cell-input vid-input" placeholder="YouTube ID (11자)" /></td>
+        <td><input class="pl-cell-input" placeholder="제목" oninput="mdUpdateCount(); mdMarkDirty()" /></td>
+        <td><input class="pl-cell-input" placeholder="가수" oninput="mdMarkDirty()" /></td>
+        <td><input class="pl-cell-input dur-input" placeholder="3:42" title="MM:SS 형식" oninput="mdMarkDirty()" /></td>
+        <td><input class="pl-cell-input vid-input" placeholder="YouTube ID (11자)" oninput="mdMarkDirty()" /></td>
         <td><button class="pl-row-del" onclick="mdDeleteRow(this)" title="행 삭제">✕</button></td>`;
       if (data) {
         const inputs = tr.querySelectorAll('input');
@@ -5628,6 +5682,7 @@
       btn.closest('tr').remove();
       mdRenum();
       mdUpdateCount();
+      mdMarkDirty();
     }
 
     function mdRenum() {
@@ -5660,22 +5715,20 @@
           return;
         }
         if (btn) { btn.disabled = true; btn.textContent = '저장 중...'; }
-        const ok = await mdPersist();
+        const savedAt = await mdPersist();
+        mdSavedAt = savedAt;
+        mdDirty = false;
+        mdRenderSaveStatus();
         const moodCount = Object.keys(mdData).length;
-        if (ok) {
-          plToast(`✓ ${moodCount}개 무드 · 총 ${total}곡 저장 완료`, 'success');
-          if (btn) {
-            btn.textContent = '저장됨 ✓';
-            setTimeout(() => { btn.textContent = origText; btn.disabled = false; }, 2000);
-          }
-        } else {
-          plToast('로컬에는 저장됐지만 서버 저장에 실패했습니다. 잠시 후 다시 시도해 주세요.', 'error');
-          if (btn) { btn.textContent = origText; btn.disabled = false; }
+        plToast(`✓ ${moodCount}개 무드 · 총 ${total}곡 저장 완료`, 'success');
+        if (btn) {
+          btn.textContent = '저장됨 ✓';
+          setTimeout(() => { btn.textContent = origText; btn.disabled = false; }, 2000);
         }
         mdUpdateCount();
       } catch(e) {
         console.error('mdSave 오류:', e);
-        plToast('저장 중 오류가 발생했습니다: ' + e.message, 'error');
+        plToast('서버 저장에 실패했습니다. 잠시 후 다시 시도해 주세요. (' + e.message + ')', 'error');
         if (btn) { btn.textContent = origText; btn.disabled = false; }
       }
     }
