@@ -5369,6 +5369,7 @@
     let mdActiveTab = null;
     let mdRowCounter = 0;
     let mdInitialized = false;
+    let mdInitPromise = null;   // 카탈로그 최초 로드 Promise(서버 동기화 포함) — 생성 전 대기용
     let mdSavedAt = null;      // 서버에 마지막으로 저장된 시각(ISO) — 저장된 적 없으면 null
     let mdDirty = false;       // 서버 미반영 변경사항 존재 여부
     const MD_STORAGE_KEY = 'adminMusicData_v2';
@@ -5452,8 +5453,13 @@
       mdRenderSaveStatus();
     }
 
-    async function mdInit() {
-      if (mdInitialized) return;
+    function mdInit() {
+      if (mdInitPromise) return mdInitPromise;   // 이미 로드 중/완료 → 같은 Promise 재사용(중복 호출·레이스 방지)
+      mdInitPromise = mdInitInternal();
+      return mdInitPromise;
+    }
+
+    async function mdInitInternal() {
       mdInitialized = true;
 
       // 1) localStorage 캐시로 즉시 표시 (네트워크 대기 없이 빠르게)
@@ -6040,7 +6046,7 @@
 
       container.innerHTML = stores.map(s => {
         const sm = apData[s.storeName] || {};
-        const mappedHours = Array.from({length:24}, (_,h) => h).filter(h => sm[String(h)]);
+        const mappedHours = apOrderHours(Array.from({length:24}, (_,h) => h).filter(h => sm[String(h)]));
         const mappedCount = mappedHours.length;
         if (mappedCount) mappedStores++;
 
@@ -6114,6 +6120,19 @@
       apPopulateExtraStoreDropdown();
     }
 
+    // 매핑된 시간들을 영업 흐름 순서로 정렬 (자정 넘김 처리: 가장 큰 시간 공백 다음을 영업 시작으로 봄)
+    //  예) 18,19,20,21,22,23,0,1 → 그대로 / 0,1,18..23 → 18,19..23,0,1 (00~01시는 뒤로)
+    function apOrderHours(hours) {
+      const sorted = [...new Set(hours.map(Number))].sort((a, b) => a - b);
+      if (sorted.length <= 1) return sorted;
+      let maxGap = -1, startIdx = 0;
+      for (let i = 0; i < sorted.length; i++) {
+        const gap = (sorted[(i + 1) % sorted.length] - sorted[i] + 24) % 24;
+        if (gap > maxGap) { maxGap = gap; startIdx = (i + 1) % sorted.length; }
+      }
+      return sorted.slice(startIdx).concat(sorted.slice(0, startIdx));
+    }
+
     // 매장의 시간대 슬롯 정보(시간·무드·곡수) — plGenerated 우선, 없으면 음원 매핑(apData) 기준 18곡
     function apHourSlotsFor(storeName) {
       const g = plGenerated[storeName];
@@ -6121,9 +6140,8 @@
         return g.slots.map(sl => ({ hour: sl.hour, mood: sl.mood, count: sl.songs.length || 18 }));
       }
       const sm = apData[storeName] || {};
-      return Array.from({ length: 24 }, (_, h) => h)
-        .filter(h => sm[String(h)])
-        .map(h => ({ hour: h, mood: sm[String(h)], count: 18 }));
+      const mapped = Array.from({ length: 24 }, (_, h) => h).filter(h => sm[String(h)]);
+      return apOrderHours(mapped).map(h => ({ hour: h, mood: sm[String(h)], count: 18 }));
     }
 
     // 서버에서 받은 합본 플리(평면 곡목록)를 시간대 블록으로 다시 분할
@@ -6277,12 +6295,15 @@
     async function apBulkGenerate() {
       const resultArea = document.getElementById('pl-gen-result');
 
+      // 카탈로그(재생시간 포함) 서버 동기화 완료 보장 — 캐시가 비거나 오래돼 00:00으로 생성되는 것 방지
+      try { await mdInit(); } catch {}
+
       const allPayload = [];
       const storeResults = [];
 
       for (const s of stores) {
         const sm = apData[s.storeName] || {};
-        const slots = Array.from({length:24}, (_,h) => h).filter(h => sm[String(h)]);
+        const slots = apOrderHours(Array.from({length:24}, (_,h) => h).filter(h => sm[String(h)]));
         if (!slots.length) continue;
 
         const schedulePlaylists = [];
@@ -6452,6 +6473,8 @@
     localStorage.removeItem('admRefundedStoreIds');
 
     loadStores();
+    // 음원 카탈로그(재생시간 포함)를 시작 시 미리 서버에서 로드 → 랜덤 생성 시 재생시간 누락(00:00) 방지
+    mdInit();
   </script>
 
 </body>
