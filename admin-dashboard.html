@@ -5754,7 +5754,9 @@
                   return `<option value="${val}" ${val === schedTime ? 'selected' : ''}>${val}</option>`;
                 }).join('')}
               </select>
-              ${hasGen ? `<button class="pl-bulk-apply-btn" style="flex-shrink:0" onclick="apRescheduleStore('${s.storeName}')">적용</button>` : ''}
+              ${hasGen
+                ? `<button class="pl-bulk-apply-btn" style="flex-shrink:0" onclick="apRescheduleStore('${s.storeName}')">프론트 반영</button>`
+                : `<button class="pl-bulk-apply-btn" style="flex-shrink:0;opacity:0.4;cursor:not-allowed" disabled title="먼저 [플레이리스트 생성]으로 미리보기를 만들어 주세요">프론트 반영</button>`}
             </div>
           </div>`;
 
