@@ -5786,42 +5786,95 @@
       panel.appendChild(saveBtn);
     }
 
+    // plGenerated 항목 → 곡 배열 (랜덤=시간대 합본, 엑셀=곡목록)
+    function plGenSongs(g) {
+      if (!g) return [];
+      if (g.mode === 'random') return g.slots ? g.slots.flatMap(sl => sl.songs) : [];
+      return g.songs || [];
+    }
+
+    // 플리 곡 목록 섹션 DOM 생성
+    function plBuildSongSection(titleText, countText, songs, accent) {
+      const wrap = document.createElement('div');
+      wrap.style.cssText = 'margin-bottom:20px;';
+      const header = document.createElement('div');
+      header.style.cssText = 'display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:10px;';
+      header.innerHTML = `
+        <span style="font-size:13px;font-weight:700;color:${accent};">${titleText}</span>
+        <span style="font-size:12px;color:rgba(255,255,255,0.35);flex-shrink:0;">${countText}</span>`;
+      wrap.appendChild(header);
+      const body = document.createElement('div');
+      body.className = 'pl-compare-col-body';
+      body.style.maxHeight = 'none';
+      songs.forEach((song, idx) => {
+        const row = document.createElement('div'); row.className = 'pl-compare-row';
+        const num    = document.createElement('span'); num.className    = 'pl-compare-num';    num.textContent    = idx + 1;
+        const title  = document.createElement('span'); title.className  = 'pl-compare-title';  title.textContent  = song.title  || '-';
+        const artist = document.createElement('span'); artist.className = 'pl-compare-artist'; artist.textContent = song.artist || '-';
+        row.appendChild(num); row.appendChild(title); row.appendChild(artist);
+        body.appendChild(row);
+      });
+      wrap.appendChild(body);
+      return wrap;
+    }
+
     async function renderCurrentPlaylistTab(storeId, storeName) {
       const panel = document.getElementById('drawer-tab-current-pl');
       if (!panel) return;
       panel.innerHTML = '<div style="padding:32px 0;text-align:center;color:rgba(255,255,255,0.3);font-size:13px">불러오는 중...</div>';
+
+      // 1) 백엔드에 현재 적용된 플리 조회
+      let appliedSongs = [];
+      let loadError = false;
       try {
         const data = await apiFetch('GET', `/api/stores/${storeId}/playlists`, undefined, adminToken);
-        const songs = data.playlist?.songs || [];
-        if (!songs.length) {
-          panel.innerHTML = '<div style="padding:32px 0;text-align:center;color:rgba(255,255,255,0.25);font-size:13px">적용된 플레이리스트가 없습니다.</div>';
-          return;
-        }
-        const durSec = songs.reduce((s, t) => s + parsePlayTimeSec(t.playTime), 0);
-        const header = document.createElement('div');
-        header.style.cssText = 'display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;';
-        header.innerHTML = `
-          <span style="font-size:13px;font-weight:700;color:rgba(255,255,255,0.7);">현재 적용 중인 플레이리스트</span>
-          <span style="font-size:12px;color:rgba(255,255,255,0.35);">${songs.length}곡 · ${fmtDuration(durSec)}</span>`;
-        const body = document.createElement('div');
-        body.className = 'pl-compare-col-body';
-        body.style.maxHeight = 'none';
-        songs.forEach((song, idx) => {
-          const row = document.createElement('div');
-          row.className = 'pl-compare-row';
-          const num    = document.createElement('span'); num.className    = 'pl-compare-num';    num.textContent    = idx + 1;
-          const title  = document.createElement('span'); title.className  = 'pl-compare-title';  title.textContent  = song.title  || '-';
-          const artist = document.createElement('span'); artist.className = 'pl-compare-artist'; artist.textContent = song.artist || '-';
-          row.appendChild(num); row.appendChild(title); row.appendChild(artist);
-          body.appendChild(row);
-        });
-        panel.innerHTML = '';
-        panel.appendChild(header);
-        panel.appendChild(body);
-        // 캐시 업데이트 (엑셀 업로드 탭과 공유)
-        if (storeName) plCurrentSongs[storeName] = songs;
+        appliedSongs = data.playlist?.songs || [];
+        if (storeName) plCurrentSongs[storeName] = appliedSongs;   // 엑셀 비교 탭과 캐시 공유
       } catch(e) {
-        panel.innerHTML = '<div style="padding:32px 0;text-align:center;color:#ff5c5c;font-size:13px">플레이리스트를 불러오지 못했습니다.</div>';
+        loadError = true;
+      }
+
+      panel.innerHTML = '';
+
+      // 현재 적용 중 섹션
+      if (loadError) {
+        const err = document.createElement('div');
+        err.style.cssText = 'padding:24px 0;text-align:center;color:#ff5c5c;font-size:13px';
+        err.textContent = '플레이리스트를 불러오지 못했습니다.';
+        panel.appendChild(err);
+      } else if (appliedSongs.length) {
+        const durSec = appliedSongs.reduce((s, t) => s + parsePlayTimeSec(t.playTime), 0);
+        panel.appendChild(plBuildSongSection(
+          '현재 적용 중인 플레이리스트',
+          `${appliedSongs.length}곡 · ${fmtDuration(durSec)}`,
+          appliedSongs, 'rgba(255,255,255,0.7)'));
+      } else {
+        const empty = document.createElement('div');
+        empty.style.cssText = 'padding:24px 0;text-align:center;color:rgba(255,255,255,0.25);font-size:13px';
+        empty.textContent = '현재 적용된 플레이리스트가 없습니다.';
+        panel.appendChild(empty);
+      }
+
+      // 2) 플레이리스트 관리에서 생성/예약한 플리 (이번 세션 캐시)
+      const g = storeName ? plGenerated[storeName] : null;
+      const genSongs = plGenSongs(g);
+      if (genSongs.length) {
+        const durSec = genSongs.reduce((s, t) => s + parsePlayTimeSec(t.playTime), 0);
+        let statusText;
+        if (g.scheduledAt) {
+          const dt = new Date(g.scheduledAt);
+          const dateStr = `${dt.getFullYear()}.${String(dt.getMonth()+1).padStart(2,'0')}.${String(dt.getDate()).padStart(2,'0')} ${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')}`;
+          statusText = (dt > new Date()) ? `${dateStr} 반영 예정` : `${dateStr} 반영됨`;
+        } else {
+          statusText = '미반영(생성만 됨)';
+        }
+        const divider = document.createElement('div');
+        divider.style.cssText = 'border-top:1px solid rgba(255,255,255,0.08);margin:4px 0 16px;';
+        panel.appendChild(divider);
+        panel.appendChild(plBuildSongSection(
+          `플레이리스트 관리에서 생성됨 · ${statusText}`,
+          `${genSongs.length}곡 · ${fmtDuration(durSec)}`,
+          genSongs, 'rgba(198,241,53,0.85)'));
       }
     }
 
