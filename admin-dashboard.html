@@ -5001,8 +5001,8 @@
       const storeIdByName = {};
       stores.forEach(s => { storeIdByName[s.storeName] = s.id; });
 
-      const header = ['매장명','시간대','출처','순번','제목','가수','재생시간','vid','고정곡'];
-      const aoa = [header];
+      const header = ['시간대','출처','순번','제목','가수','재생시간','vid','고정곡'];
+      const byStore = {};   // { storeName: [ ...rows ] } — 시트 분리용
       const missing = [];
       let blockCount = 0;
 
@@ -5047,12 +5047,13 @@
         const fixedVids = new Set(fixeds.map(f => (f.vid || '').trim()).filter(Boolean));
         const fixedTA   = new Set(fixeds.map(f => `${(f.title||'').trim()}|${(f.artist||'').trim()}`));
 
+        const rows = (byStore[storeName] = byStore[storeName] || []);
         songs.forEach((song, idx) => {
           const vid = (song.vid || '').trim();
           const ta  = `${(song.title||'').trim()}|${(song.artist||'').trim()}`;
           const isFixed = (vid && fixedVids.has(vid)) || fixedTA.has(ta);
-          aoa.push([
-            storeName, timeLabel, source, idx + 1,
+          rows.push([
+            timeLabel, source, idx + 1,
             song.title || '', song.artist || '',
             secToMMSS(normPlayTime(song.playTime)), vid, isFixed ? 'O' : ''
           ]);
@@ -5067,8 +5068,17 @@
         return;
       }
 
+      // 매장별 시트 분리
       const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(aoa), '고정곡_시간대_18곡');
+      const usedNames = new Set();
+      Object.keys(byStore).sort((a, b) => a.localeCompare(b, 'ko')).forEach(storeName => {
+        const aoa = [header, ...byStore[storeName]];
+        let name = String(storeName).replace(/[\[\]\:\*\?\/\\]/g, ' ').trim().slice(0, 28) || 'sheet';
+        let unique = name, n = 1;
+        while (usedNames.has(unique)) { unique = `${name.slice(0, 26)}_${n++}`; }
+        usedNames.add(unique);
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(aoa), unique);
+      });
       const now = new Date();
       const fname = `고정곡시간대_${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}_${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}.xlsx`;
       XLSX.writeFile(wb, fname);
@@ -5284,20 +5294,23 @@
       picked.forEach(f => {
         const songObj = { title: f.title, artist: f.artist, vid: f.vid, playTime: f.playTime };
         if (f.hour === null || f.hour === undefined) {
-          // 엑셀(시간대 없음) → 업로드된 목록에 삽입
+          // 엑셀(시간대 없음) → 업로드된 목록의 지정 위치 곡을 '교체'(곡 수 유지)
           const list = playlists[f.storeName];
           if (!list || !list.length) { notGen.add(f.storeName); return; }
-          const pos = Math.max(0, Math.min(f.position - 1, list.length));
-          list.splice(pos, 0, songObj);
+          const pos = Math.max(0, Math.min(f.position - 1, list.length - 1));
+          list.splice(pos, 1, songObj);   // 기존 곡 삭제 + 고정곡 삽입 → 총 곡 수 동일
           applied++;
         } else {
-          // 랜덤(시간대 있음) → 생성된 플리의 해당 시간대 슬롯에 삽입
+          // 랜덤(시간대 있음) → 해당 시간대 슬롯의 지정 위치 곡을 '교체'(18곡 유지)
           const g = plGenerated[f.storeName];
           if (!g || g.mode !== 'random' || !g.slots?.length) { notGen.add(f.storeName); return; }
           const slot = g.slots.find(sl => sl.hour === f.hour);
           if (!slot) { noSlot.push(`${f.storeName} ${String(f.hour).padStart(2,'0')}시`); return; }
-          const pos = Math.max(0, Math.min(f.position - 1, slot.songs.length));
-          slot.songs.splice(pos, 0, songObj);
+          if (!slot.songs.length) { slot.songs.push(songObj); }
+          else {
+            const pos = Math.max(0, Math.min(f.position - 1, slot.songs.length - 1));
+            slot.songs.splice(pos, 1, songObj);   // 기존 곡 삭제 + 고정곡 삽입 → 18곡 유지
+          }
           applied++;
         }
       });
