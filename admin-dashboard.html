@@ -5205,6 +5205,7 @@
 
       let ok = 0;
       const errors = [];
+      const posCounter = {};   // (매장|시간대)별 자동 순번 — 삽입순서 미기입 시 엑셀 행 순서 유지
       for (let i = 0; i < rows.length; i++) {
         const r = rows[i];
         const rowNo = i + 2;   // 엑셀 행번호(헤더=1)
@@ -5220,7 +5221,17 @@
         const endDate   = apParseExcelDate(r['종료일'] ?? r['endDate']);
         const hourRaw   = r['시간대'] ?? r['hour'] ?? '';
         const hour      = (hourRaw === '' || hourRaw === null) ? null : parseInt(hourRaw);
-        const position  = parseInt(r['삽입순서'] ?? r['position'] ?? 1) || 1;
+        // 삽입순서: 기입돼 있으면 그대로, 비어 있으면 (매장|시간대)별 엑셀 행 순서대로 1,2,3…
+        const groupKey  = `${storeName}|${hour}`;
+        const posRaw    = String(r['삽입순서'] ?? r['position'] ?? '').trim();
+        let position;
+        if (posRaw === '') {
+          posCounter[groupKey] = (posCounter[groupKey] || 0) + 1;
+          position = posCounter[groupKey];
+        } else {
+          position = parseInt(posRaw) || 1;
+          posCounter[groupKey] = Math.max(posCounter[groupKey] || 0, position);
+        }
         const playTime  = parsePlayTimeSec(String(r['재생시간'] ?? r['playTime'] ?? ''));
         const vidInput  = String(r['YouTube'] || r['vid'] || r['vlink'] || '').trim();
         const vidMatch  = vidInput.match(/(?:v=|youtu\.be\/|embed\/)([A-Za-z0-9_-]{11})/);
@@ -6034,6 +6045,7 @@
       const container = document.getElementById('pl-store-list');
       if (!container) return;
 
+      const prevSelected = apSelectedStore;   // 재렌더 후 펼침 상태 복원용
       apSelectedStore = null;
 
       if (!stores.length) {
@@ -6118,6 +6130,17 @@
       if (statMapped) statMapped.textContent = mappedStores;
 
       apPopulateExtraStoreDropdown();
+
+      // 펼쳐져 있던 매장은 재렌더 후에도 펼친 상태 유지 (캐시된 현재곡 사용 — 서버 재요청 없음)
+      if (prevSelected && stores.some(s => s.storeName === prevSelected)) {
+        const safe = prevSelected.replace(/[^a-zA-Z0-9가-힣]/g, '_');
+        const item = document.getElementById('ap-item-' + safe);
+        if (item) {
+          apSelectedStore = prevSelected;
+          item.classList.add('active', 'expanded');
+          apRenderExpandCompare(prevSelected, safe);
+        }
+      }
     }
 
     // 매핑된 시간들을 영업 흐름 순서로 정렬 (자정 넘김 처리: 가장 큰 시간 공백 다음을 영업 시작으로 봄)
@@ -6195,72 +6218,91 @@
         songs = [];
       }
 
-      if (songs.length) {
-        const durSec = songs.reduce((acc, t) => acc + parsePlayTimeSec(t.playTime), 0);
-        plCurrentSongs[storeName] = songs;
-        const groups = apGroupSongsByHour(storeName, songs);
-        const rowsHtml = (list) => list.map((song, idx) => `
-          <div class="pl-compare-row">
-            <span class="pl-compare-num">${idx + 1}</span>
-            <span class="pl-compare-title">${song.title || '-'}</span>
-            <span class="pl-compare-artist">${song.artist || '-'}</span>
-          </div>`).join('');
-        const bodyHtml = groups
-          ? groups.map((grp, gi) => {
-              const timeLabel = (grp.hour === null || grp.hour === undefined)
-                ? '기타'
-                : `${String(grp.hour).padStart(2,'0')}:00~${String((grp.hour+1)%24).padStart(2,'0')}:00`;
-              return `
-                <div style="display:flex;align-items:center;gap:8px;padding:${gi===0?'0':'12px'} 0 6px;${gi>0?'border-top:1px solid rgba(255,255,255,0.05);margin-top:4px;':''}">
-                  <span style="font-size:13px;font-weight:700;color:#fff;">${timeLabel}</span>
-                  ${grp.mood ? `<span style="font-size:12px;color:rgba(255,255,255,0.4);">${grp.mood}</span>` : ''}
-                  <span style="font-size:12px;color:rgba(255,255,255,0.3);margin-left:auto;">${grp.songs.length}곡</span>
-                </div>
-                <div class="pl-compare-col-body">${rowsHtml(grp.songs)}</div>`;
-            }).join('')
-          : `<div class="pl-compare-col-body">${rowsHtml(songs)}</div>`;
-        expandDiv.innerHTML = `
-          <div style="font-size:12px;color:rgba(255,255,255,0.35);margin-bottom:6px">현재 적용 중 · ${songs.length}곡 · ${fmtDuration(durSec)}</div>
-          ${bodyHtml}`;
-        return;
-      }
+      plCurrentSongs[storeName] = songs || [];
+      apRenderExpandCompare(storeName, safeId);
+    }
 
-      // 적용 중인 플리가 없으면 → 방금 생성/예약한 플리 미리보기
-      const gen = plGenerated[storeName];
-      if (gen && gen.mode === 'random' && gen.slots?.length) {
-        const totalSongs = gen.slots.reduce((a, sl) => a + sl.songs.length, 0);
-        let headStr;
+    // 시간대 블록(헤더 + 곡행) HTML — 한 컬럼 안에 여러 시간대 블록을 이어붙여 렌더
+    function apHourBlocksHtml(groups) {
+      return groups.map((grp, gi) => {
+        const timeLabel = (grp.hour === null || grp.hour === undefined)
+          ? '기타'
+          : `${String(grp.hour).padStart(2,'0')}:00~${String((grp.hour+1)%24).padStart(2,'0')}:00`;
+        return `
+          <div style="display:flex;align-items:center;gap:8px;padding:${gi===0?'8px':'12px'} 16px 6px;${gi>0?'border-top:1px solid rgba(255,255,255,0.06);':''}">
+            <span style="font-size:12px;font-weight:700;color:#fff;">${timeLabel}</span>
+            ${grp.mood ? `<span style="font-size:11px;color:rgba(255,255,255,0.4);">${grp.mood}</span>` : ''}
+            <span style="font-size:11px;color:rgba(255,255,255,0.3);margin-left:auto;">${grp.songs.length}곡</span>
+          </div>
+          ${apFlatRowsHtml(grp.songs)}`;
+      }).join('');
+    }
+
+    function apFlatRowsHtml(songs) {
+      return songs.map((song, idx) => `
+        <div class="pl-compare-row">
+          <span class="pl-compare-num">${idx + 1}</span>
+          <span class="pl-compare-title">${song.title || '-'}</span>
+          <span class="pl-compare-artist">${song.artist || '-'}</span>
+        </div>`).join('');
+    }
+
+    // 매장 펼침 2단 비교 렌더
+    //  좌 '현재 적용 중'  : 서버 적용 플리를 시간대별로 그룹핑
+    //  우 '신규 등록'      : 생성된 랜덤 미리보기(plGenerated)를 시간대별로 표시 (곡 추가 반영 대상)
+    function apRenderExpandCompare(storeName, safeId) {
+      const expandDiv = document.getElementById('ap-expand-' + safeId);
+      if (!expandDiv) return;
+
+      // ── 좌: 현재 적용 중 ──
+      const curSongs  = plCurrentSongs[storeName] || [];
+      const curGroups = curSongs.length ? apGroupSongsByHour(storeName, curSongs) : null;
+      const curDurSec = curSongs.reduce((a, t) => a + parsePlayTimeSec(t.playTime), 0);
+      const curCount  = curSongs.length
+        ? curSongs.length + '곡' + (curDurSec > 0 ? ' · ' + fmtDuration(curDurSec) : '')
+        : '없음';
+      const curContent = (curGroups && curGroups.length)
+        ? `<div style="max-height:500px;overflow-y:auto;">${apHourBlocksHtml(curGroups)}</div>`
+        : (curSongs.length
+            ? `<div style="max-height:500px;overflow-y:auto;">${apFlatRowsHtml(curSongs)}</div>`
+            : `<div class="pl-compare-empty">적용된 플레이리스트가 없습니다.</div>`);
+
+      // ── 우: 신규 등록 (생성된 랜덤 미리보기) ──
+      const gen       = plGenerated[storeName];
+      const genSlots  = (gen && gen.mode === 'random' && gen.slots?.length) ? gen.slots : null;
+      const genGroups = genSlots ? genSlots.map(sl => ({ hour: sl.hour, mood: sl.mood, songs: sl.songs })) : null;
+      const genTotal  = genGroups ? genGroups.reduce((a, g) => a + g.songs.length, 0) : 0;
+      const genDurSec = genGroups ? genGroups.reduce((a, g) => a + g.songs.reduce((x, t) => x + (t.playTime || 0), 0), 0) : 0;
+      const genCount  = genGroups ? genTotal + '곡' + (genDurSec > 0 ? ' · ' + fmtDuration(genDurSec) : '') : '';
+
+      let genHead = '';
+      if (genGroups) {
         if (gen.scheduledAt) {
           const dt = new Date(gen.scheduledAt);
           const dateStr = `${dt.getFullYear()}.${String(dt.getMonth()+1).padStart(2,'0')}.${String(dt.getDate()).padStart(2,'0')} ${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')}`;
-          headStr = `프론트 반영 예약됨 · ${dateStr} 적용 예정`;
+          genHead = `프론트 반영 예약됨 · ${dateStr} 적용 예정`;
         } else {
-          headStr = '생성됨(미반영) · 프론트 반영 대기';
+          genHead = '생성됨(미반영) · [프론트 반영] 대기';
         }
-        expandDiv.innerHTML = `
-          <div style="font-size:12px;color:rgba(198,241,53,0.85);margin-bottom:8px">${headStr} · ${gen.slots.length}개 시간대 → 1개 플리 · 총 ${totalSongs}곡</div>
-          ${gen.slots.map((sl, si) => {
-            const t1 = `${String(sl.hour).padStart(2,'0')}:00`;
-            const t2 = `${String((sl.hour+1)%24).padStart(2,'0')}:00`;
-            return `
-              <div style="display:flex;align-items:center;gap:8px;padding:${si===0?'0':'12px'} 0 6px;${si>0?'border-top:1px solid rgba(255,255,255,0.05);margin-top:4px;':''}">
-                <span style="font-size:13px;font-weight:700;color:#fff;">${t1}~${t2}</span>
-                <span style="font-size:12px;color:rgba(255,255,255,0.4);">${sl.mood}</span>
-                <span style="font-size:12px;color:rgba(255,255,255,0.3);margin-left:auto;">${sl.songs.length}곡</span>
-              </div>
-              <div class="pl-compare-col-body">
-                ${sl.songs.map((song, idx) => `
-                  <div class="pl-compare-row">
-                    <span class="pl-compare-num">${idx + 1}</span>
-                    <span class="pl-compare-title">${song.title || '-'}</span>
-                    <span class="pl-compare-artist">${song.artist || '-'}</span>
-                  </div>`).join('')}
-              </div>`;
-          }).join('')}`;
-        return;
       }
+      const genContent = (genGroups && genGroups.length)
+        ? `<div style="max-height:500px;overflow-y:auto;">${apHourBlocksHtml(genGroups)}</div>`
+        : `<div class="pl-compare-empty">없음 — [플레이리스트 생성] 후 여기에 표시됩니다.</div>`;
 
-      expandDiv.innerHTML = '<div style="font-size:12px;color:rgba(255,255,255,0.25);padding:8px 0">적용된 플레이리스트가 없습니다.</div>';
+      expandDiv.innerHTML = `
+        <div style="background:#141416;border-radius:10px;overflow:hidden;">
+          <div class="pl-compare-wrap">
+            <div class="pl-compare-col">
+              <div class="pl-compare-col-title">현재 적용 중 <span class="pl-count-current">${curCount}</span></div>
+              ${curContent}
+            </div>
+            <div class="pl-compare-col">
+              <div class="pl-compare-col-title">신규 등록 <span>${genCount}</span></div>
+              ${genHead ? `<div style="font-size:11px;color:rgba(198,241,53,0.85);padding:6px 16px 0;">${genHead}</div>` : ''}
+              ${genContent}
+            </div>
+          </div>
+        </div>`;
     }
 
     // 랜덤 생성 미리보기(plGenerated)는 in-memory라 새로고침 시 사라짐
@@ -6363,105 +6405,21 @@
       });
       plPersistRandom();
       plSetLastCreated();
-      plToast(`✓ ${storeResults.length}개 매장 플리 생성 완료 — 아래에서 적용 시각 설정 후 [프론트 반영]`, 'success');
+      plToast(`✓ ${storeResults.length}개 매장 플리 생성 완료 — 매장을 펼쳐 '신규 등록'에서 확인 · 적용 시각 설정 후 [프론트 반영]`, 'success');
       plUpdateDownloadBtn();
       apRenderStoreCards();
       apRenderGenResult();
     }
 
-    // 생성된(랜덤) 플레이리스트 미리보기 렌더 — plGenerated 기준
+    // 생성된 랜덤 플리는 별도 하단 영역 대신 매장 펼침의 '신규 등록' 컬럼으로 통합 노출.
+    //  → 하단 임시 영역(pl-gen-result)은 비우고, 펼쳐져 있는 매장의 2단 비교만 갱신한다.
     function apRenderGenResult() {
       const resultArea = document.getElementById('pl-gen-result');
-      if (!resultArea) return;
-      resultArea.innerHTML = '';
-
-      const entries = Object.entries(plGenerated)
-        .filter(([, g]) => g && g.mode === 'random' && g.slots && g.slots.length);
-      if (!entries.length) return;
-
-      const wrap = document.createElement('div');
-      wrap.style.cssText = 'display:flex;flex-direction:column;gap:8px;margin-top:12px;';
-
-      const applyNotice = document.createElement('div');
-      applyNotice.style.cssText = 'font-size:13px;color:rgba(255,255,255,0.4);padding:0 2px 4px;';
-      applyNotice.textContent = `✓ ${entries.length}개 매장 미리보기 생성 — 적용 날짜·시각 설정 후 [프론트 반영]`;
-      wrap.appendChild(applyNotice);
-
-      entries.forEach(([storeName, g]) => {
-        const slots = g.slots;
-        const totalSongs = slots.reduce((s, pl) => s + pl.songs.length, 0);
-        const totalSec   = slots.reduce((s, pl) => s + pl.songs.reduce((a, t) => a + (t.playTime || 0), 0), 0);
-        const applyStr   = g.scheduledAt
-          ? `반영 예정 · ${new Date(g.scheduledAt).toLocaleString('ko-KR')}`
-          : '미반영 · [프론트 반영]에서 적용';
-
-        const item = document.createElement('div');
-        item.className = 'pl-store-item';
-
-        const top = document.createElement('div');
-        top.className = 'pl-store-item-top';
-        top.style.cssText = 'display:flex;align-items:center;gap:10px;cursor:pointer;';
-
-        const nameWrap = document.createElement('div');
-        nameWrap.style.flex = '1';
-        const nameEl = document.createElement('p');
-        nameEl.className = 'pl-store-name';
-        nameEl.style.margin = '0';
-        nameEl.textContent = storeName;
-        const applyEl = document.createElement('p');
-        applyEl.style.cssText = 'font-size:11px;color:rgba(198,241,53,0.7);margin:2px 0 0;';
-        applyEl.textContent = applyStr;
-        nameWrap.appendChild(nameEl);
-        nameWrap.appendChild(applyEl);
-
-        const badge = document.createElement('span');
-        badge.style.cssText = 'font-size:12px;color:rgba(255,255,255,0.4);flex-shrink:0;';
-        badge.textContent = `${slots.length}개 시간대 → 1개 플리 · 총 ${totalSongs}곡 · ${fmtDuration(totalSec)}`;
-
-        const chevron = document.createElement('span');
-        chevron.className = 'pl-store-chevron';
-        chevron.textContent = '▼';
-
-        top.appendChild(nameWrap);
-        top.appendChild(badge);
-        top.appendChild(chevron);
-
-        const expand = document.createElement('div');
-        expand.className = 'pl-store-expand';
-        expand.style.cssText = 'max-height:400px;overflow-y:auto;';
-
-        slots.forEach((pl, si) => {
-          const t1 = `${String(pl.hour).padStart(2,'0')}:00`;
-          const t2 = `${String((pl.hour+1)%24).padStart(2,'0')}:00`;
-
-          const slotHeader = document.createElement('div');
-          slotHeader.style.cssText = `display:flex;align-items:center;gap:8px;padding:${si===0?'0':'12px'} 0 6px;${si>0?'border-top:1px solid rgba(255,255,255,0.05);margin-top:4px;':''}`;
-          const slotTime  = document.createElement('span'); slotTime.style.cssText  = 'font-size:13px;font-weight:700;color:#fff;';        slotTime.textContent  = `${t1}~${t2}`;
-          const slotMood  = document.createElement('span'); slotMood.style.cssText  = 'font-size:12px;color:rgba(255,255,255,0.4);';       slotMood.textContent  = pl.mood;
-          const slotCount = document.createElement('span'); slotCount.style.cssText = 'font-size:12px;color:rgba(255,255,255,0.3);margin-left:auto;'; slotCount.textContent = `${pl.songs.length}곡`;
-          slotHeader.appendChild(slotTime); slotHeader.appendChild(slotMood); slotHeader.appendChild(slotCount);
-          expand.appendChild(slotHeader);
-
-          const colBody = document.createElement('div');
-          colBody.className = 'pl-compare-col-body';
-          pl.songs.forEach((song, idx) => {
-            const row = document.createElement('div'); row.className = 'pl-compare-row';
-            const num    = document.createElement('span'); num.className    = 'pl-compare-num';    num.textContent    = idx + 1;
-            const title  = document.createElement('span'); title.className  = 'pl-compare-title';  title.textContent  = song.title  || '-';
-            const artist = document.createElement('span'); artist.className = 'pl-compare-artist'; artist.textContent = song.artist || '-';
-            row.appendChild(num); row.appendChild(title); row.appendChild(artist);
-            colBody.appendChild(row);
-          });
-          expand.appendChild(colBody);
-        });
-
-        top.addEventListener('click', () => { item.classList.toggle('expanded'); });
-        item.appendChild(top);
-        item.appendChild(expand);
-        wrap.appendChild(item);
-      });
-
-      resultArea.appendChild(wrap);
+      if (resultArea) resultArea.innerHTML = '';
+      if (apSelectedStore) {
+        const safe = apSelectedStore.replace(/[^a-zA-Z0-9가-힣]/g, '_');
+        if (document.getElementById('ap-expand-' + safe)) apRenderExpandCompare(apSelectedStore, safe);
+      }
     }
 
     // ── 초기화 ──
