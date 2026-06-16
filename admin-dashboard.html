@@ -2928,6 +2928,7 @@
               <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px">
                 <button class="ap-extra-add-btn" style="width:auto;padding:8px 14px;margin:0" onclick="document.getElementById('ap-fixed-file').click()">⬆ 엑셀 업로드</button>
                 <button class="ap-extra-add-btn" style="width:auto;padding:8px 14px;margin:0" onclick="apDownloadFixedExcel()">⬇ 엑셀 양식·목록 다운로드</button>
+                <button class="ap-extra-add-btn" id="btn-download-fixed-hours" style="width:auto;padding:8px 14px;margin:0;background:rgba(99,102,241,0.18);border-color:rgba(99,102,241,0.45)" onclick="apDownloadFixedHourExcel()">⬇ 고정곡 시간대 18곡 추출</button>
                 <input type="file" id="ap-fixed-file" accept=".xlsx,.xls" style="display:none" onchange="apFixedFileSelected(this)" />
                 <span style="font-size:11px;color:rgba(255,255,255,0.35)">양식을 받아 채운 뒤 업로드하면 목록에 한꺼번에 추가됩니다</span>
               </div>
@@ -4973,6 +4974,109 @@
       const fname = `적용플레이리스트_${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}_${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}.xlsx`;
       XLSX.writeFile(wb, fname);
       plToast(`✓ ${count}개 매장 적용 플레이리스트를 엑셀로 내려받았습니다`, 'success');
+    }
+
+    // ── 고정곡이 들어간 (매장 × 시간대)의 18곡(블록) 전체를 엑셀로 추출 ──
+    //  소스 우선순위: ① 신규 등록(plGenerated 작업본, 메모리)  ② 없으면 현재 적용 중(서버) 플리
+    //  엑셀에 '출처'(신규/적용)와 '고정곡'(O) 열을 넣어 어디서 나왔는지/어떤 곡이 고정곡인지 표시.
+    async function apDownloadFixedHourExcel() {
+      if (typeof XLSX === 'undefined') { plToast('엑셀 모듈을 불러오지 못했습니다.', 'error'); return; }
+
+      // 고정곡 목록 확보 (아직 안 불러왔으면 로드)
+      if (!apFixedSongs || !apFixedSongs.length) { try { await apLoadFixedList(); } catch(e){} }
+      const fixedHourly = (apFixedSongs || []).filter(f => f.hour !== null && f.hour !== undefined);
+      if (!fixedHourly.length) { plToast('시간대가 지정된 고정곡이 없습니다. (엑셀 모드 고정곡은 시간대가 없어 제외됩니다)', 'error'); return; }
+
+      const btn = document.getElementById('btn-download-fixed-hours');
+      const prevLabel = btn ? btn.textContent : '';
+      if (btn) { btn.disabled = true; btn.textContent = '불러오는 중...'; }
+
+      // (매장, 시간대)별로 고정곡 묶기 → key: "storeName hour"
+      const byKey = {};
+      fixedHourly.forEach(f => {
+        const key = `${f.storeName} ${f.hour}`;
+        (byKey[key] = byKey[key] || { storeName: f.storeName, hour: f.hour, fixeds: [] }).fixeds.push(f);
+      });
+
+      const storeIdByName = {};
+      stores.forEach(s => { storeIdByName[s.storeName] = s.id; });
+
+      const header = ['매장명','시간대','출처','순번','제목','가수','재생시간','vid','고정곡'];
+      const aoa = [header];
+      const missing = [];
+      let blockCount = 0;
+
+      // key를 매장명→시간대 순으로 정렬
+      const keys = Object.keys(byKey).sort((a, b) => {
+        const A = byKey[a], B = byKey[b];
+        return A.storeName === B.storeName ? A.hour - B.hour : A.storeName.localeCompare(B.storeName, 'ko');
+      });
+
+      for (const key of keys) {
+        const { storeName, hour, fixeds } = byKey[key];
+        const timeLabel = `${String(hour).padStart(2,'0')}:00~${String((hour+1)%24).padStart(2,'0')}:00`;
+
+        // ① 신규 등록(작업본) 우선
+        let songs = null, source = '';
+        const g = plGenerated[storeName];
+        if (g && g.mode === 'random' && g.slots?.length) {
+          const slot = g.slots.find(sl => sl.hour === hour);
+          if (slot && slot.songs?.length) { songs = slot.songs; source = '신규'; }
+        }
+
+        // ② 없으면 현재 적용 중(서버) 플리에서 해당 시간대 블록
+        if (!songs) {
+          let applied = plCurrentSongs[storeName];
+          if (!applied && storeIdByName[storeName] != null) {
+            try {
+              const data = await apiFetch('GET', `/api/stores/${storeIdByName[storeName]}/playlists`, undefined, adminToken);
+              applied = data.playlist?.songs || [];
+              plCurrentSongs[storeName] = applied;
+            } catch(e) { applied = []; }
+          }
+          if (applied && applied.length) {
+            const groups = apGroupSongsByHour(storeName, applied);
+            const grp = groups && groups.find(gr => gr.hour === hour);
+            if (grp && grp.songs?.length) { songs = grp.songs; source = '적용'; }
+          }
+        }
+
+        if (!songs) { missing.push(`${storeName} ${timeLabel}`); continue; }
+
+        // 이 (매장,시간대)의 고정곡 식별값 (vid 우선, 보조로 제목|가수)
+        const fixedVids = new Set(fixeds.map(f => (f.vid || '').trim()).filter(Boolean));
+        const fixedTA   = new Set(fixeds.map(f => `${(f.title||'').trim()}|${(f.artist||'').trim()}`));
+
+        songs.forEach((song, idx) => {
+          const vid = (song.vid || '').trim();
+          const ta  = `${(song.title||'').trim()}|${(song.artist||'').trim()}`;
+          const isFixed = (vid && fixedVids.has(vid)) || fixedTA.has(ta);
+          aoa.push([
+            storeName, timeLabel, source, idx + 1,
+            song.title || '', song.artist || '',
+            secToMMSS(normPlayTime(song.playTime)), vid, isFixed ? 'O' : ''
+          ]);
+        });
+        blockCount++;
+      }
+
+      if (btn) { btn.disabled = false; btn.textContent = prevLabel; }
+
+      if (!blockCount) {
+        plToast(`추출할 데이터가 없습니다. 해당 매장 플레이리스트를 먼저 생성하거나 프론트 반영해 주세요.`, 'error');
+        return;
+      }
+
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(aoa), '고정곡_시간대_18곡');
+      const now = new Date();
+      const fname = `고정곡시간대_${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}_${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}.xlsx`;
+      XLSX.writeFile(wb, fname);
+
+      let msg = `✓ ${blockCount}개 (매장·시간대) 블록을 엑셀로 내려받았습니다`;
+      if (missing.length) msg += ` · 데이터 없음 ${missing.length}건 제외`;
+      plToast(msg, 'success');
+      if (missing.length) console.warn('고정곡 시간대 추출 — 소스 없음:', missing);
     }
 
     // 프론트 반영 시각 계산 (날짜 + 단일 시각 → ISO). 시각 미설정 시 자정.
