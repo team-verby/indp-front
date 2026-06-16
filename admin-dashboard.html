@@ -4820,9 +4820,12 @@
         });
         apRenderStoreCards();
         // 생성된 플리를 지정 시각에 프론트 반영
-        const rescheduled = await apRescheduleGenerated();
-        if (rescheduled) {
-          plToast(`✓ ${rescheduled}개 매장 플리를 ${date}${time ? ' ' + time : ''}에 프론트 반영 예약했습니다`, 'success');
+        const res = await apRescheduleGenerated();
+        if (res.ok) {
+          plToast(`✓ ${res.count}개 매장 플리를 ${date}${time ? ' ' + time : ''}에 프론트 반영 예약했습니다`, 'success');
+        } else if (res.reason === 'post') {
+          // 미리보기는 있으나 서버 반영(POST)이 실패 — 실제 원인을 노출
+          plToast(`프론트 반영 실패: ${res.error?.message || '서버 오류'}`, 'error');
         } else {
           plToast('먼저 [플레이리스트 생성]으로 미리보기를 만들어 주세요.', 'error');
         }
@@ -4938,6 +4941,7 @@
           schedulePlaylists: [{ storeName, scheduledAt, songs: apCombinedSongs(g) }]
         }, adminToken);
         g.scheduledAt = scheduledAt;
+        plPersistRandom();
         plSetLastCreated();
         plToast(`✓ "${storeName}" — ${dateVal}${timeVal ? ' ' + timeVal : ''} 프론트 반영 예약 완료`, 'success');
         apRenderStoreCards();
@@ -4950,7 +4954,7 @@
     // 전체 매장: 생성된 플리를 각각 하나로 합쳐 지정 시각에 프론트 반영 (곡은 재생성하지 않음)
     async function apRescheduleGenerated() {
       const entries = Object.entries(plGenerated).filter(([, g]) => g.mode === 'random' && g.slots?.length);
-      if (!entries.length) return 0;
+      if (!entries.length) return { ok: false, count: 0, reason: 'empty' };
 
       const todayStr = document.getElementById('pl-bulk-date')?.value || new Date().toISOString().slice(0, 10);
       const payload = [];
@@ -4962,15 +4966,15 @@
         g.scheduledAt = scheduledAt;
         payload.push({ storeName, scheduledAt, songs: apCombinedSongs(g) });
       });
-      if (!payload.length) return 0;
+      if (!payload.length) return { ok: false, count: 0, reason: 'empty' };
       try {
         await apiFetch('POST', '/api/admin/scheduled-playlists', { schedulePlaylists: payload }, adminToken);
+        plPersistRandom();
         plSetLastCreated();
-        return entries.length;
+        return { ok: true, count: entries.length };
       } catch(e) {
         console.warn('프론트 반영 실패:', e);
-        plToast('프론트 반영에 실패했습니다.', 'error');
-        return 0;
+        return { ok: false, count: 0, reason: 'post', error: e };
       }
     }
 
@@ -6199,6 +6203,35 @@
       expandDiv.innerHTML = '<div style="font-size:12px;color:rgba(255,255,255,0.25);padding:8px 0">적용된 플레이리스트가 없습니다.</div>';
     }
 
+    // 랜덤 생성 미리보기(plGenerated)는 in-memory라 새로고침 시 사라짐
+    //  → 프론트 반영 전에 페이지가 리로드돼도 미리보기가 유지되도록 localStorage에 백업/복원
+    const PL_RANDOM_KEY = 'adminPlGeneratedRandom';
+    const PL_RANDOM_TTL = 24 * 60 * 60 * 1000; // 24시간 지난 미리보기는 복원하지 않음
+    function plPersistRandom() {
+      try {
+        const randoms = {};
+        Object.entries(plGenerated).forEach(([k, g]) => {
+          if (g && g.mode === 'random' && g.slots?.length) randoms[k] = g;
+        });
+        if (Object.keys(randoms).length) {
+          localStorage.setItem(PL_RANDOM_KEY, JSON.stringify({ ts: Date.now(), data: randoms }));
+        } else {
+          localStorage.removeItem(PL_RANDOM_KEY);
+        }
+      } catch {}
+    }
+    function plRestoreRandom() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(PL_RANDOM_KEY) || 'null');
+        if (!saved || !saved.data) return;
+        if (Date.now() - (saved.ts || 0) > PL_RANDOM_TTL) { localStorage.removeItem(PL_RANDOM_KEY); return; }
+        Object.entries(saved.data).forEach(([k, g]) => {
+          if (g && g.mode === 'random' && g.slots?.length && !plGenerated[k]) plGenerated[k] = g;
+        });
+      } catch {}
+    }
+    plRestoreRandom();
+
     async function apBulkGenerate() {
       const resultArea = document.getElementById('pl-gen-result');
 
@@ -6265,6 +6298,7 @@
           scheduledAt: null,   // 아직 프론트 미반영
         };
       });
+      plPersistRandom();
       plSetLastCreated();
       plToast(`✓ ${storeResults.length}개 매장 플리 생성 완료 — 아래에서 적용 시각 설정 후 [프론트 반영]`, 'success');
       plUpdateDownloadBtn();
