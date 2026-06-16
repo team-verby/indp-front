@@ -5336,19 +5336,83 @@
     let mdInitialized = false;
     const MD_STORAGE_KEY = 'adminMusicData_v2';
 
-    function mdInit() {
-      if (mdInitialized) return;
-      mdInitialized = true;
+    // mdData( { mood: [{title,artist,playTime,vid}] } ) ↔ 백엔드 카탈로그 변환
+    function mdToCatalogPayload() {
+      return {
+        moods: Object.keys(mdData).map(mood => ({
+          mood,
+          songs: (mdData[mood] || []).map(s => ({
+            title:    s.title    || '',
+            artist:   s.artist   || '',
+            playTime: s.playTime || '',
+            vid:      s.vid      || ''
+          }))
+        }))
+      };
+    }
+    function mdFromCatalogResponse(resp) {
+      const obj = {};
+      (resp?.moods || []).forEach(m => {
+        obj[m.mood] = (m.songs || []).map(s => ({
+          title:    s.title    || '',
+          artist:   s.artist   || '',
+          playTime: s.playTime || '',
+          vid:      s.vid      || ''
+        }));
+      });
+      return obj;
+    }
+    function mdTotalCount(data) {
+      return Object.values(data || {}).reduce((sum, arr) => sum + (arr ? arr.length : 0), 0);
+    }
+
+    // localStorage(즉시 캐시) + 백엔드(영속) 동시 저장. 백엔드 성공 여부 반환.
+    async function mdPersist() {
+      localStorage.setItem(MD_STORAGE_KEY, JSON.stringify(mdData));
       try {
-        const saved = JSON.parse(localStorage.getItem(MD_STORAGE_KEY) || '{}');
-        if (saved && typeof saved === 'object' && !Array.isArray(saved)) mdData = saved;
-      } catch {}
+        await apiFetch('PUT', '/api/admin/music-catalog', mdToCatalogPayload(), adminToken);
+        return true;
+      } catch (e) {
+        console.error('음원 카탈로그 백엔드 저장 실패:', e);
+        return false;
+      }
+    }
+
+    function mdRenderInit() {
       const tabs = Object.keys(mdData);
       if (tabs.length > 0) {
         mdRenderTabs();
         mdShowSummary();
       } else {
         mdShowEmpty(true);
+      }
+    }
+
+    async function mdInit() {
+      if (mdInitialized) return;
+      mdInitialized = true;
+
+      // 1) localStorage 캐시로 즉시 표시 (네트워크 대기 없이 빠르게)
+      try {
+        const saved = JSON.parse(localStorage.getItem(MD_STORAGE_KEY) || '{}');
+        if (saved && typeof saved === 'object' && !Array.isArray(saved)) mdData = saved;
+      } catch {}
+      mdRenderInit();
+
+      // 2) 백엔드(원본)에서 다시 로드해 동기화
+      try {
+        const resp = await apiFetch('GET', '/api/admin/music-catalog', undefined, adminToken);
+        const fromServer = mdFromCatalogResponse(resp);
+        if (mdTotalCount(fromServer) === 0 && mdTotalCount(mdData) > 0) {
+          // 마이그레이션: 서버는 비었는데 로컬에 기존 데이터가 있으면 로컬을 서버로 올림
+          await mdPersist();
+        } else {
+          mdData = fromServer;
+          localStorage.setItem(MD_STORAGE_KEY, JSON.stringify(mdData));
+          mdRenderInit();
+        }
+      } catch (e) {
+        console.error('음원 카탈로그 백엔드 로드 실패(localStorage 사용):', e);
       }
     }
 
@@ -5435,7 +5499,15 @@
         mdShowSummary();
         const total = Object.values(mdData).reduce((s, a) => s + a.length, 0);
         plToast(`✓ ${wb.SheetNames.length}개 무드 · 총 ${total}곡 로드`, 'success');
-        if (total === 0) plToast('곡을 찾지 못했습니다. 헤더명(제목, 가수 등)을 확인해 주세요.', 'error');
+        if (total === 0) {
+          plToast('곡을 찾지 못했습니다. 헤더명(제목, 가수 등)을 확인해 주세요.', 'error');
+        } else {
+          // 업로드 즉시 자동 저장 (재로그인/기기 변경에도 유지)
+          mdPersist().then(ok => {
+            plToast(ok ? '✓ 서버에 자동 저장됨' : '업로드됨 · 서버 저장 실패(로컬 보관). [저장]을 다시 눌러 주세요.',
+              ok ? 'success' : 'error');
+          });
+        }
       };
       reader.readAsArrayBuffer(file);
     }
@@ -5577,7 +5649,7 @@
       mdRenum();
     }
 
-    function mdSave() {
+    async function mdSave() {
       const btn = document.querySelector('#md-grid-area .btn-create-pl');
       const origText = btn ? btn.textContent : '저장';
       try {
@@ -5587,18 +5659,24 @@
           plToast('저장할 곡 정보를 입력해 주세요.', 'error');
           return;
         }
-        localStorage.setItem(MD_STORAGE_KEY, JSON.stringify(mdData));
+        if (btn) { btn.disabled = true; btn.textContent = '저장 중...'; }
+        const ok = await mdPersist();
         const moodCount = Object.keys(mdData).length;
-        plToast(`✓ ${moodCount}개 무드 · 총 ${total}곡 저장 완료`, 'success');
-        if (btn) {
-          btn.textContent = '저장됨 ✓';
-          btn.disabled = true;
-          setTimeout(() => { btn.textContent = origText; btn.disabled = false; }, 2000);
+        if (ok) {
+          plToast(`✓ ${moodCount}개 무드 · 총 ${total}곡 저장 완료`, 'success');
+          if (btn) {
+            btn.textContent = '저장됨 ✓';
+            setTimeout(() => { btn.textContent = origText; btn.disabled = false; }, 2000);
+          }
+        } else {
+          plToast('로컬에는 저장됐지만 서버 저장에 실패했습니다. 잠시 후 다시 시도해 주세요.', 'error');
+          if (btn) { btn.textContent = origText; btn.disabled = false; }
         }
         mdUpdateCount();
       } catch(e) {
         console.error('mdSave 오류:', e);
         plToast('저장 중 오류가 발생했습니다: ' + e.message, 'error');
+        if (btn) { btn.textContent = origText; btn.disabled = false; }
       }
     }
 
