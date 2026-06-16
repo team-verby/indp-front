@@ -3010,7 +3010,8 @@
                 </span>
               </div>
               <div style="display:flex;gap:8px;align-items:center">
-                <button class="btn-create-pl" id="btn-download-pl" onclick="plDownloadExcel()" style="background:transparent;border:1px solid rgba(198,241,53,0.5);color:#c6f135;display:none">엑셀 다운로드</button>
+                <button class="btn-create-pl" id="btn-download-applied" onclick="plDownloadAppliedExcel()" style="background:transparent;border:1px solid rgba(255,255,255,0.3);color:rgba(255,255,255,0.85)">적용 플리 다운로드</button>
+                <button class="btn-create-pl" id="btn-download-pl" onclick="plDownloadExcel()" style="background:transparent;border:1px solid rgba(198,241,53,0.5);color:#c6f135;display:none">신규 플리 다운로드</button>
                 <button class="btn-create-pl" id="btn-create-pl" onclick="plGenerate()">플레이리스트 생성</button>
               </div>
             </div>
@@ -4885,7 +4886,7 @@
             const t2 = `${String((sl.hour+1)%24).padStart(2,'0')}:00`;
             sl.songs.forEach(song => {
               order++;
-              aoa.push([ratStr, `${t1}~${t2} ${sl.mood || ''}`.trim(), order, song.title || '', song.artist || '', secToMMSS(parsePlayTimeSec(song.playTime)), song.vid || '']);
+              aoa.push([ratStr, `${t1}~${t2} ${sl.mood || ''}`.trim(), order, song.title || '', song.artist || '', secToMMSS(normPlayTime(song.playTime)), song.vid || '']);
             });
           });
         } else {
@@ -4894,7 +4895,7 @@
           const atStr = at ? `${at.getFullYear()}-${String(at.getMonth()+1).padStart(2,'0')}-${String(at.getDate()).padStart(2,'0')} ${String(at.getHours()).padStart(2,'0')}:${String(at.getMinutes()).padStart(2,'0')}` : '';
           aoa.push(['적용시각', '순서', '제목', '가수', '재생시간', 'vid']);
           songs.forEach((song, idx) => {
-            aoa.push([atStr, idx + 1, song.title || '', song.artist || '', secToMMSS(parsePlayTimeSec(song.playTime)), song.vid || '']);
+            aoa.push([atStr, idx + 1, song.title || '', song.artist || '', secToMMSS(normPlayTime(song.playTime)), song.vid || '']);
           });
         }
 
@@ -4911,17 +4912,91 @@
       const now = new Date();
       const fname = `매장플레이리스트_${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}_${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}.xlsx`;
       XLSX.writeFile(wb, fname);
-      plToast(`✓ ${entries.length}개 매장 플레이리스트를 엑셀로 내려받았습니다`, 'success');
+      plToast(`✓ ${entries.length}개 매장 신규 플레이리스트를 엑셀로 내려받았습니다`, 'success');
+    }
+
+    // 현재 프론트에 '적용 중'인(서버) 플레이리스트를 매장당 1시트로 다운로드 — 시간대 블록 그룹핑
+    async function plDownloadAppliedExcel() {
+      if (typeof XLSX === 'undefined') { plToast('엑셀 모듈을 불러오지 못했습니다.', 'error'); return; }
+      if (!stores.length) { plToast('매장 정보를 불러오는 중입니다.', 'error'); return; }
+
+      const btn = document.getElementById('btn-download-applied');
+      const prevLabel = btn ? btn.textContent : '';
+      if (btn) { btn.disabled = true; btn.textContent = '불러오는 중...'; }
+
+      const wb = XLSX.utils.book_new();
+      const usedNames = new Set();
+      let count = 0;
+
+      for (const s of stores) {
+        let songs = plCurrentSongs[s.storeName];
+        if (!songs) {
+          try {
+            const data = await apiFetch('GET', `/api/stores/${s.id}/playlists`, undefined, adminToken);
+            songs = data.playlist?.songs || [];
+            plCurrentSongs[s.storeName] = songs;
+          } catch(e) { songs = []; }
+        }
+        if (!songs.length) continue;
+
+        const groups = apGroupSongsByHour(s.storeName, songs);
+        const aoa = [['시간대', '재생순서', '제목', '가수', '재생시간', 'vid']];
+        let order = 0;
+        if (groups && groups.length) {
+          groups.forEach(grp => {
+            const label = (grp.hour === null || grp.hour === undefined)
+              ? '기타'
+              : `${String(grp.hour).padStart(2,'0')}:00~${String((grp.hour+1)%24).padStart(2,'0')}:00`;
+            grp.songs.forEach(song => {
+              order++;
+              aoa.push([label, order, song.title || '', song.artist || '', secToMMSS(normPlayTime(song.playTime)), song.vid || '']);
+            });
+          });
+        } else {
+          songs.forEach((song, idx) => {
+            aoa.push(['', idx + 1, song.title || '', song.artist || '', secToMMSS(normPlayTime(song.playTime)), song.vid || '']);
+          });
+        }
+
+        let name = String(s.storeName).replace(/[\[\]\:\*\?\/\\]/g, ' ').trim().slice(0, 28) || 'sheet';
+        let unique = name, n = 1;
+        while (usedNames.has(unique)) { unique = `${name.slice(0, 26)}_${n++}`; }
+        usedNames.add(unique);
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(aoa), unique);
+        count++;
+      }
+
+      if (btn) { btn.disabled = false; btn.textContent = prevLabel; }
+
+      if (!count) { plToast('적용 중인 플레이리스트가 없습니다.', 'error'); return; }
+      const now = new Date();
+      const fname = `적용플레이리스트_${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}_${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}.xlsx`;
+      XLSX.writeFile(wb, fname);
+      plToast(`✓ ${count}개 매장 적용 플레이리스트를 엑셀로 내려받았습니다`, 'success');
     }
 
     // 프론트 반영 시각 계산 (날짜 + 단일 시각 → ISO). 시각 미설정 시 자정.
     function apFrontScheduledAt(dateVal, timeVal) {
-      return new Date(`${dateVal}T${timeVal || '00:00'}:00`).toISOString();
+      // 백엔드 scheduledAt은 LocalDateTime(타임존 없음) → 로컬 벽시계 그대로 'YYYY-MM-DDTHH:mm:ss'로 전송.
+      //  (toISOString()은 UTC로 변환 + 'Z'가 붙어 LocalDateTime 파싱 실패/시간 어긋남)
+      return `${dateVal}T${timeVal || '00:00'}:00`;
     }
 
-    // 생성된 시간대 슬롯들을 시간순으로 이어붙인 하나의 곡목록
+    // 재생시간이 비어있는 곡 기본값(초) — 백엔드는 playTime>0만 허용하므로 0이면 프론트 반영이 실패함
+    const DEFAULT_PLAYTIME = 180;
+    function normPlayTime(v) {
+      const n = Math.round(Number(parsePlayTimeSec(v)) || 0);
+      return n > 0 ? n : DEFAULT_PLAYTIME;
+    }
+
+    // 생성된 시간대 슬롯들을 시간순으로 이어붙인 하나의 곡목록 (백엔드 검증 통과하도록 정규화)
     function apCombinedSongs(g) {
-      return g.slots.flatMap(sl => sl.songs);
+      return g.slots.flatMap(sl => sl.songs).map(s => ({
+        title:    s.title,
+        artist:   s.artist,
+        vid:      (s.vid && String(s.vid).trim()) ? s.vid : genVid(),
+        playTime: normPlayTime(s.playTime),
+      }));
     }
 
     // 특정 매장: 생성된 플리를 하나로 합쳐 지정 시각에 프론트 반영 (플리 통째 교체)
@@ -4947,7 +5022,7 @@
         apRenderStoreCards();
       } catch(e) {
         console.warn('프론트 반영 실패:', e);
-        plToast('프론트 반영에 실패했습니다.', 'error');
+        plToast(`프론트 반영 실패: ${e?.message || '서버 오류'}`, 'error');
       }
     }
 
