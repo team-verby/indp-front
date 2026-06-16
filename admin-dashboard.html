@@ -947,13 +947,22 @@
 
     /* ── 플레이리스트 관리 패널 ── */
     .pl-layout {
-      display: grid;
-      grid-template-columns: 280px 1fr;
+      display: flex;
+      flex-direction: column;
       gap: 20px;
-      align-items: start;
     }
 
-    .pl-left { display: flex; flex-direction: column; gap: 0; }
+    /* 상단: 입력 카드들을 가로로 배치 */
+    .pl-left {
+      display: flex;
+      flex-direction: row;
+      flex-wrap: wrap;
+      gap: 14px;
+      align-items: flex-start;
+    }
+    .pl-left > div { flex: 1 1 300px; min-width: 280px; }
+    .pl-left > div > .ap-gen-card,
+    .pl-left > .ap-gen-card { margin-bottom: 0; }
 
     .pl-right {
       display: flex;
@@ -2816,7 +2825,7 @@
 
         <div class="pl-layout">
 
-          <!-- ───── 좌측 패널 ───── -->
+          <!-- ───── 상단 입력부 (가로 배치) ───── -->
           <div class="pl-left">
 
             <!-- 엑셀 입력부 (엑셀 모드) -->
@@ -2946,9 +2955,9 @@
 
           </div>
 
-          <!-- ───── 우측 패널 (공통 매장 목록) ───── -->
+          <!-- ───── 하단 플레이리스트 (공통 매장 목록) ───── -->
           <div class="pl-right">
-            <!-- 우측 헤더 -->
+            <!-- 헤더 -->
             <div class="pl-right-header">
               <div class="pl-right-stats">
                 <span id="pl-stats-excel">
