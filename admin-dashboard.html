@@ -2841,8 +2841,8 @@
 
         <!-- 생성 방식 토글 -->
         <div class="pl-mode-tabs">
-          <button class="pl-mode-tab active" id="pl-mode-tab-excel" onclick="switchPlMode('excel', this)">엑셀 업로드</button>
-          <button class="pl-mode-tab" id="pl-mode-tab-random" onclick="switchPlMode('random', this)">랜덤 생성</button>
+          <button class="pl-mode-tab active" id="pl-mode-tab-random" onclick="switchPlMode('random', this)">랜덤 생성</button>
+          <button class="pl-mode-tab" id="pl-mode-tab-excel" onclick="switchPlMode('excel', this)">엑셀 업로드</button>
         </div>
 
         <div class="pl-layout">
@@ -2894,8 +2894,12 @@
             <div id="pl-input-random" style="display:none"></div>
 
             <!-- 곡 추가 (공통): 입력 → 목록 → 체크박스 선택 → 매장에 추가 -->
-            <div class="ap-gen-card">
-              <p class="ap-gen-card-title">곡 추가</p>
+            <div class="ap-gen-card" id="ap-add-card">
+              <p class="ap-gen-card-title" id="ap-add-toggle" onclick="toggleAddSong()" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;margin-bottom:0">
+                <span>곡 추가</span>
+                <span class="ap-add-chevron" style="font-size:11px;color:rgba(255,255,255,0.35);transition:transform 0.15s">▼</span>
+              </p>
+              <div id="ap-add-body" style="display:none;margin-top:14px">
               <div class="ap-extra-form-grid">
                 <div class="ap-extra-field">
                   <label class="ap-extra-label">가수</label>
@@ -2950,6 +2954,7 @@
                 </div>
                 <div id="ap-fixed-list"></div>
                 <button class="ap-extra-add-btn ap-apply-btn" style="width:100%;margin-top:10px;background:rgba(34,197,94,0.16);border-color:rgba(34,197,94,0.45)" onclick="apAddSelectedToStores()">선택 곡 매장에 추가</button>
+              </div>
               </div>
             </div>
 
@@ -4449,7 +4454,7 @@
     const apScheduledAt = {}; // { storeName: { date, time } } — 랜덤 생성용
     const plCurrentSongs = {}; // { storeName: [ {title,artist,playTime} ] } — API 캐시
     let plSelectedStore = null;
-    let plGenMode = 'excel';   // 'excel' | 'random' — 현재 생성 방식
+    let plGenMode = 'random';   // 'random' | 'excel' — 현재 생성 방식
     const plGenerated = {};    // { storeName: { mode, scheduledAt, songs?, slots? } } — 방금 생성/등록한 예약 플리 캐시
 
     // 재생시간 문자열 → 초 (정수, "MM:SS", "H:MM:SS" 모두 지원)
@@ -4977,6 +4982,16 @@
 
     function apToggleAllFixed(checked) {
       document.querySelectorAll('#ap-fixed-list .ap-fixed-check').forEach(c => { c.checked = checked; });
+    }
+
+    // 곡 추가 카드 접기/펼치기 (기본: 접힘)
+    function toggleAddSong() {
+      const body = document.getElementById('ap-add-body');
+      const chevron = document.querySelector('#ap-add-toggle .ap-add-chevron');
+      if (!body) return;
+      const open = body.style.display === 'none';
+      body.style.display = open ? '' : 'none';
+      if (chevron) chevron.style.transform = open ? 'rotate(180deg)' : '';
     }
 
     async function apSaveFixedSong() {
