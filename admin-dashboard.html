@@ -2900,6 +2900,12 @@
                 <span class="ap-add-chevron" style="font-size:11px;color:rgba(255,255,255,0.35);transition:transform 0.15s">▼</span>
               </p>
               <div id="ap-add-body" style="display:none;margin-top:14px">
+              <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px">
+                <button class="ap-extra-add-btn" style="width:auto;padding:8px 14px;margin:0" onclick="document.getElementById('ap-fixed-file').click()">⬆ 엑셀 업로드</button>
+                <button class="ap-extra-add-btn" style="width:auto;padding:8px 14px;margin:0" onclick="apDownloadFixedExcel()">⬇ 엑셀 양식·목록 다운로드</button>
+                <input type="file" id="ap-fixed-file" accept=".xlsx,.xls" style="display:none" onchange="apFixedFileSelected(this)" />
+                <span style="font-size:11px;color:rgba(255,255,255,0.35)">양식을 받아 채운 뒤 업로드하면 목록에 한꺼번에 추가됩니다</span>
+              </div>
               <div class="ap-extra-form-grid">
                 <div class="ap-extra-field">
                   <label class="ap-extra-label">가수</label>
@@ -5103,6 +5109,116 @@
       } else {
         plToast('추가할 곡이 없습니다.', 'error');
       }
+    }
+
+    // ── 곡 추가 엑셀 양식/목록 다운로드 ──
+    // 헤더 1행 + 안내 1행 + 현재 저장된 곡 목록
+    function apDownloadFixedExcel() {
+      if (typeof XLSX === 'undefined') { plToast('엑셀 모듈을 불러오지 못했습니다.', 'error'); return; }
+      const header = ['매장명','시작일','종료일','시간대','삽입순서','가수','제목','재생시간','YouTube'];
+      const guide  = ['정확한 매장명','YYYY-MM-DD','YYYY-MM-DD','0~23 (비우면 엑셀모드)','숫자(랜덤 1~18)','아티스트','곡 제목','mm:ss 또는 초','URL 또는 11자리 ID'];
+      const aoa = [header, guide];
+      (apFixedSongs || []).forEach(f => {
+        aoa.push([
+          f.storeName,
+          f.startDate,
+          f.endDate,
+          (f.hour === null || f.hour === undefined) ? '' : f.hour,
+          f.position,
+          f.artist,
+          f.title,
+          secToMMSS(f.playTime),
+          f.vid,
+        ]);
+      });
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.aoa_to_sheet(aoa);
+      ws['!cols'] = [{wch:16},{wch:12},{wch:12},{wch:18},{wch:14},{wch:14},{wch:18},{wch:14},{wch:18}];
+      XLSX.utils.book_append_sheet(wb, ws, '곡추가');
+      const today = new Date().toISOString().slice(0,10);
+      XLSX.writeFile(wb, `곡추가_${today}.xlsx`);
+    }
+
+    function apFixedFileSelected(input) {
+      const file = input.files?.[0];
+      if (file) apUploadFixedExcel(file);
+      input.value = '';   // 같은 파일 재선택 허용
+    }
+
+    // 엑셀 셀값 → YYYY-MM-DD ("2026-06-01" / "2026/6/1" / Excel 일련번호 모두 허용)
+    function apParseExcelDate(v) {
+      if (v === '' || v === null || v === undefined) return '';
+      if (typeof v === 'number') {
+        const d = new Date(Math.round((v - 25569) * 86400 * 1000));
+        return d.toISOString().slice(0, 10);
+      }
+      const s = String(v).trim().replace(/[./]/g, '-');
+      const m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+      if (!m) return '';
+      return `${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`;
+    }
+
+    // ── 곡 추가 엑셀 업로드 → 행마다 백엔드 저장 ──
+    async function apUploadFixedExcel(file) {
+      if (typeof XLSX === 'undefined') { plToast('엑셀 모듈을 불러오지 못했습니다.', 'error'); return; }
+      if (!adminToken) { plToast('관리자 로그인이 필요합니다.', 'error'); return; }
+
+      const buf = await file.arrayBuffer();
+      const wb = XLSX.read(buf, { type: 'array' });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+
+      let ok = 0;
+      const errors = [];
+      for (let i = 0; i < rows.length; i++) {
+        const r = rows[i];
+        const rowNo = i + 2;   // 엑셀 행번호(헤더=1)
+
+        const storeName = String(r['매장명'] || r['storeName'] || '').trim();
+        const artist    = String(r['가수'] || r['artist'] || '').trim();
+        const title     = String(r['제목'] || r['title'] || '').trim();
+        // 안내 행/빈 행 건너뛰기
+        if (!storeName && !artist && !title) continue;
+        if (storeName === '정확한 매장명') continue;
+
+        const startDate = apParseExcelDate(r['시작일'] ?? r['startDate']);
+        const endDate   = apParseExcelDate(r['종료일'] ?? r['endDate']);
+        const hourRaw   = r['시간대'] ?? r['hour'] ?? '';
+        const hour      = (hourRaw === '' || hourRaw === null) ? null : parseInt(hourRaw);
+        const position  = parseInt(r['삽입순서'] ?? r['position'] ?? 1) || 1;
+        const playTime  = parsePlayTimeSec(String(r['재생시간'] ?? r['playTime'] ?? ''));
+        const vidInput  = String(r['YouTube'] || r['vid'] || r['vlink'] || '').trim();
+        const vidMatch  = vidInput.match(/(?:v=|youtu\.be\/|embed\/)([A-Za-z0-9_-]{11})/);
+        const vid       = vidMatch ? vidMatch[1] : (vidInput.length === 11 ? vidInput : '');
+
+        if (!storeName)            { errors.push(`${rowNo}행: 매장명 누락`); continue; }
+        if (!artist || !title)     { errors.push(`${rowNo}행: 가수/제목 누락`); continue; }
+        if (!startDate || !endDate){ errors.push(`${rowNo}행: 시작일/종료일 형식 오류`); continue; }
+        if (endDate < startDate)   { errors.push(`${rowNo}행: 종료일이 시작일보다 빠름`); continue; }
+        if (hour !== null && (isNaN(hour) || hour < 0 || hour > 23)) { errors.push(`${rowNo}행: 시간대(0~23) 오류`); continue; }
+        if (!playTime || playTime <= 0) { errors.push(`${rowNo}행: 재생시간 오류`); continue; }
+        if (!vid)                  { errors.push(`${rowNo}행: YouTube ID/URL 오류`); continue; }
+
+        try {
+          await apiFetch('POST', '/api/admin/fixed-songs', {
+            storeName, startDate, endDate, hour, position, title, artist, vid, playTime
+          }, adminToken);
+          ok++;
+        } catch(e) {
+          console.warn('엑셀 행 저장 실패:', rowNo, e);
+          errors.push(`${rowNo}행: 저장 실패(매장명 확인)`);
+        }
+      }
+
+      await apLoadFixedList();
+      if (ok) {
+        let msg = `✓ ${ok}곡을 목록에 추가했습니다`;
+        if (errors.length) msg += ` · 실패 ${errors.length}건`;
+        plToast(msg, 'success');
+      } else {
+        plToast(errors.length ? `업로드 실패 — ${errors[0]}` : '추가할 곡이 없습니다.', 'error');
+      }
+      if (errors.length) console.warn('곡 추가 엑셀 업로드 오류:\n' + errors.join('\n'));
     }
 
     function apPopulateExtraStoreDropdown() {
