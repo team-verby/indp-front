@@ -5123,10 +5123,10 @@
         }
       });
 
-      // 화면 갱신
+      // 화면 갱신 — 현재 모드의 목록 렌더러만 호출(둘 다 #pl-store-list를 그려 서로 덮어쓰는 것 방지)
       apRenderGenResult();
-      apRenderStoreCards();
-      plRenderStoreList();
+      if (plGenMode === 'excel') plRenderStoreList();
+      else apRenderStoreCards();   // 랜덤: 카드 + 펼친 매장 '신규 등록' 2단 갱신(내부에서 재오픈)
 
       // 선택 해제
       document.querySelectorAll('#ap-fixed-list .ap-fixed-check').forEach(c => { c.checked = false; });
@@ -6156,11 +6156,13 @@
       return sorted.slice(startIdx).concat(sorted.slice(0, startIdx));
     }
 
-    // 매장의 시간대 슬롯 정보(시간·무드·곡수) — plGenerated 우선, 없으면 음원 매핑(apData) 기준 18곡
+    // 매장의 시간대 슬롯 정보(시간·무드) — plGenerated 우선, 없으면 음원 매핑(apData).
+    //  좌측 '현재 적용 중'(서버 18곡/시간대) 그룹핑 전용이라 곡수는 18로 고정
+    //  (곡 추가로 신규 등록 슬롯이 19곡이 돼도 좌측 서버 플리 끊김이 밀리지 않도록)
     function apHourSlotsFor(storeName) {
       const g = plGenerated[storeName];
       if (g && g.mode === 'random' && g.slots?.length) {
-        return g.slots.map(sl => ({ hour: sl.hour, mood: sl.mood, count: sl.songs.length || 18 }));
+        return g.slots.map(sl => ({ hour: sl.hour, mood: sl.mood, count: 18 }));
       }
       const sm = apData[storeName] || {};
       const mapped = Array.from({ length: 24 }, (_, h) => h).filter(h => sm[String(h)]);
