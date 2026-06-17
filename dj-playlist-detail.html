@@ -686,7 +686,81 @@
         </div>`;
     }
 
-    /* ── 진행 바 실시간 업데이트 (구독자 or 프리뷰 모드) ── */
+    /* ── 실제 오디오 재생 ── */
+    const CLOUDFRONT_DOMAIN = 'd144jf8wjk9lk.cloudfront.net';
+    let audio = null;
+
+    /* 레거시 raw S3 URL → CloudFront 도메인으로 치환 (비공개 버킷 403 방지) */
+    function normalizeStreamUrl(url) {
+      if (!url) return url;
+      return url.replace(
+        /^https?:\/\/indp-app-storage\.s3[.-][^/]*amazonaws\.com/i,
+        'https://' + CLOUDFRONT_DOMAIN
+      );
+    }
+
+    /* 자동재생이 차단되면 탭하여 재생 버튼 노출 */
+    function showPlayButton() {
+      if (document.getElementById('tap-to-play')) return;
+      const btn = document.createElement('button');
+      btn.id = 'tap-to-play';
+      btn.textContent = '▶ 탭하여 재생';
+      btn.style.cssText = 'position:fixed;left:50%;bottom:32px;transform:translateX(-50%);z-index:9999;background:var(--blue,#2f6bff);color:#fff;border:none;border-radius:999px;padding:14px 28px;font-size:15px;font-weight:800;box-shadow:0 6px 20px rgba(0,0,0,.25);cursor:pointer;';
+      btn.onclick = () => { if (audio) audio.play().then(() => btn.remove()).catch(() => {}); };
+      document.body.appendChild(btn);
+    }
+
+    function startPlayback() {
+      if (!pl || !pl.isLive) return;
+      if (!canPlay && !previewMode) return;
+      if (!pl.tracks || !pl.tracks.length) return;
+
+      audio = new Audio();
+      audio.preload = 'auto';
+      let idx = pl.currentIdx || 0;
+
+      function loadTrack(i) {
+        const t = pl.tracks[i];
+        if (!t) return;
+        elapsed = 0;
+        audio.src = normalizeStreamUrl(t.streamUrl);
+        audio.play().catch(() => showPlayButton());
+      }
+
+      audio.addEventListener('timeupdate', () => {
+        const t = pl.tracks[idx];
+        if (!t) return;
+        elapsed = Math.floor(audio.currentTime);
+
+        /* 비구독자 프리뷰: 30초 카운트다운 후 종료 */
+        if (previewMode && !previewEnded) {
+          const remain = PREVIEW_SECS - Math.floor(audio.currentTime);
+          const countEl = document.getElementById('preview-countdown');
+          if (countEl) countEl.textContent = remain > 0 ? `남은 시간 ${remain}초` : '0초';
+          if (audio.currentTime >= PREVIEW_SECS) { audio.pause(); endPreview(); return; }
+        }
+
+        buildWaveform(elapsed, t.secs);
+      });
+
+      /* 곡이 끝나면 다음 곡으로 (구독자만) */
+      audio.addEventListener('ended', () => {
+        if (previewMode) return;
+        idx = (idx + 1) % pl.tracks.length;
+        pl.currentIdx = idx;
+        loadTrack(idx);
+      });
+
+      /* 재생 실패 시 파형 애니메이션으로 폴백 */
+      audio.addEventListener('error', () => {
+        console.warn('오디오 재생 실패 — 파형 시뮬레이션으로 전환');
+        startTimer();
+      });
+
+      loadTrack(idx);
+    }
+
+    /* ── 진행 바 실시간 업데이트 (오디오 재생 불가 시 폴백) ── */
     function startTimer() {
       if (!pl || !pl.isLive) return;
       if (!canPlay && !previewMode) return;
@@ -712,14 +786,14 @@
     (async function init() {
       try {
         pl = await apiFetch('GET', `/api/dj/playlists/${plId}`);
-        elapsed = pl ? Math.floor((pl.tracks?.[pl.currentIdx]?.secs || 0) * 0.37) : 0;
+        elapsed = 0;
         previewMode = !canPlay && !!(pl?.isLive);
       } catch(e) {
         console.warn('DJ 플레이리스트 로드 실패:', e);
         pl = null;
       }
       render();
-      startTimer();
+      startPlayback();
     })();
   </script>
 </body>
