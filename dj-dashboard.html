@@ -1388,7 +1388,15 @@ window.addEventListener('pagehide', () => {
   if (isLive) {
     isLive = false;
     setDjLive(false);
-    // TODO: 백엔드 API 준비 후 POST /api/dj/live/stop 호출
+    // 페이지 언로드 중에도 종료 요청이 전송되도록 keepalive 사용
+    // (sendBeacon은 Authorization 헤더를 실을 수 없어 keepalive fetch로 처리)
+    try {
+      fetch(BASE_URL + '/api/dj/live/stop', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${djToken}` },
+        keepalive: true
+      });
+    } catch (_) { /* 언로드 중 예외 무시 */ }
   }
 });
 </script>
