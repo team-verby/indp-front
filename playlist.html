@@ -582,10 +582,13 @@
         ? `<div class="playing-badge"><div class="playing-dot"></div>지금 재생 중</div>`
         : `<div class="standby-badge"><div class="standby-dot"></div>대기 중</div>`;
       const wave = pl.isLive ? `<div class="blob-bottom"><div class="soundwave-wrap"></div></div>` : '';
+      const visual = pl.thumbnailUrl
+        ? `<div style="position:absolute;inset:0;background-image:url('${pl.thumbnailUrl}');background-size:cover;background-position:center;"></div>`
+        : `<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:72px;opacity:0.55;">${pl.emoji || '🎧'}</div>`;
       return `
         <img src="lp.png" alt="" class="card-vinyl" />
         <div class="blob-card" style="background:linear-gradient(135deg,#1a1a2e 0%,#0f3460 100%);">
-          <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:72px;opacity:0.55;">${pl.emoji}</div>
+          ${visual}
           <div class="blob-overlay"></div>
           <div class="blob-top">${badge}</div>
           ${wave}

@@ -858,9 +858,15 @@
       </div>
     </div>
 
-    <div class="form-group" style="margin-bottom:20px">
+    <div class="form-group" style="margin-bottom:16px">
       <label class="form-label">크리에이터명 (활동명)</label>
       <input class="form-input" id="edit-dj-name" type="text" placeholder="예: DJ Parkwan" />
+    </div>
+
+    <div class="form-group" style="margin-bottom:20px">
+      <label class="form-label">소개글 <span style="font-size:11px;color:var(--text-gray);font-weight:400">(플레이리스트 상세에 표시됩니다)</span></label>
+      <textarea class="form-input" id="edit-intro" rows="3" maxlength="1000" oninput="updateIntroCount()" placeholder="채널과 플레이리스트를 소개해 주세요." style="resize:vertical;min-height:72px;line-height:1.5"></textarea>
+      <p style="font-size:11px;color:var(--text-gray);text-align:right;margin-top:4px"><span id="intro-count">0</span>/1000</p>
     </div>
 
     <!-- 변경 불가 영역 -->
@@ -912,6 +918,9 @@ let djRealName = localStorage.getItem('djRealName') || '';
 let djPhone    = localStorage.getItem('djPhone')    || '';
 let djEmail    = localStorage.getItem('djEmail')    || '';
 let djThumb    = localStorage.getItem('djThumb')    || null;
+let djIntro    = localStorage.getItem('djIntro')    || '';
+let thumbFile    = null;   // 새로 선택한 썸네일 File (업로드 대상)
+let thumbRemoved = false;  // 썸네일 삭제 요청 여부
 
 async function init() {
   // GNB 스크롤 플로팅
@@ -935,6 +944,23 @@ async function init() {
   `;
 
   document.getElementById('dj-main').style.display = 'block';
+
+  // 서버에서 최신 프로필 로드 (썸네일·소개글 포함)
+  try {
+    const p = await apiFetch('GET', '/api/dj/profile', undefined, djToken);
+    if (p) {
+      djName     = p.djName || djName;
+      djRealName = p.name  || djRealName;
+      djPhone    = p.phone || djPhone;
+      djEmail    = p.email || djEmail;
+      djThumb    = p.thumbnailUrl || null;
+      djIntro    = p.introduction || '';
+      localStorage.setItem('djName', djName);
+      if (djThumb) localStorage.setItem('djThumb', djThumb); else localStorage.removeItem('djThumb');
+      localStorage.setItem('djIntro', djIntro);
+    }
+  } catch(e) { console.warn('프로필 로드 실패:', e); }
+
   document.getElementById('dj-name').textContent   = djName;
   applyThumb(djThumb, document.getElementById('dj-avatar-wrap'));
 
@@ -1310,16 +1336,25 @@ function applyThumb(src, container) {
 function handleThumbChange(e) {
   const file = e.target.files[0];
   if (!file) return;
+  if (file.size > 5 * 1024 * 1024) {
+    alert('썸네일 이미지는 최대 5MB까지 업로드할 수 있습니다.');
+    e.target.value = '';
+    return;
+  }
+  thumbFile    = file;   // 업로드 대상
+  thumbRemoved = false;
   const reader = new FileReader();
   reader.onload = ev => {
-    djThumb = ev.target.result;
+    djThumb = ev.target.result;   // 미리보기용 base64
     applyThumb(djThumb, document.getElementById('profile-thumb-preview'));
   };
   reader.readAsDataURL(file);
 }
 
 function removeThumb() {
-  djThumb = null;
+  djThumb      = null;
+  thumbFile    = null;
+  thumbRemoved = true;
   document.getElementById('profile-thumb-input').value = '';
   applyThumb(null, document.getElementById('profile-thumb-preview'));
 }
@@ -1331,8 +1366,17 @@ function toggleNewPwField() {
   document.getElementById('pw-change-error').style.display = 'none';
 }
 
+function updateIntroCount() {
+  const v = document.getElementById('edit-intro').value;
+  document.getElementById('intro-count').textContent = v.length;
+}
+
 function openProfileModal() {
+  thumbFile    = null;
+  thumbRemoved = false;
   document.getElementById('edit-dj-name').value       = djName;
+  document.getElementById('edit-intro').value          = djIntro || '';
+  updateIntroCount();
   document.getElementById('edit-real-name').textContent = djRealName || '—';
   document.getElementById('edit-phone').textContent     = djPhone    || '—';
   document.getElementById('edit-email').textContent     = djEmail    || '—';
@@ -1349,39 +1393,84 @@ function closeProfileModal() { document.getElementById('profile-modal').classLis
 
 async function saveProfile() {
   const name       = document.getElementById('edit-dj-name').value.trim();
+  const intro      = document.getElementById('edit-intro').value;
   const currentPw  = document.getElementById('edit-pw-current').value;
   const newPw      = document.getElementById('edit-pw-new').value;
   const errEl      = document.getElementById('pw-change-error');
+  const saveBtn    = document.querySelector('#profile-modal .btn-modal-confirm');
 
   if (!name) { document.getElementById('edit-dj-name').focus(); return; }
 
-  // 비밀번호 변경 유효성 검사
+  // 비밀번호 변경 유효성 검사 + API 호출
   if (currentPw) {
     if (newPw.length < 8) {
       errEl.textContent = '새 비밀번호는 8자 이상이어야 합니다.';
       errEl.style.display = '';
       return;
     }
-    // TODO: 백엔드 API 준비 후 실제 현재 비밀번호 검증 및 변경 API 호출로 교체
-    // try {
-    //   await apiFetch('PATCH', '/api/dj/password', { currentPassword: currentPw, newPassword: newPw }, djToken);
-    // } catch(e) {
-    //   errEl.textContent = '현재 비밀번호가 일치하지 않습니다.';
-    //   errEl.style.display = '';
-    //   return;
-    // }
   }
   errEl.style.display = 'none';
 
-  djName = name;
-  localStorage.setItem('djName', djName);
-  if (djThumb) localStorage.setItem('djThumb', djThumb);
-  else         localStorage.removeItem('djThumb');
+  saveBtn.disabled = true;
+  saveBtn.textContent = '저장 중...';
+  try {
+    // 비밀번호 변경 (입력 시에만)
+    if (currentPw) {
+      try {
+        await apiFetch('PATCH', '/api/dj/password', { currentPassword: currentPw, newPassword: newPw }, djToken);
+      } catch(e) {
+        errEl.textContent = '현재 비밀번호가 일치하지 않습니다.';
+        errEl.style.display = '';
+        return;
+      }
+    }
 
-  document.getElementById('dj-name').textContent = djName;
-  applyThumb(djThumb, document.getElementById('dj-avatar-wrap'));
+    // 프로필(활동명·썸네일·소개글) — multipart PATCH
+    const form = new FormData();
+    form.append('djName', name);
+    form.append('introduction', intro);
+    if (thumbFile)         form.append('thumbnail', thumbFile);
+    if (thumbRemoved)      form.append('removeThumbnail', 'true');
 
-  closeProfileModal();
+    const res = await fetch(BASE_URL + '/api/dj/profile', {
+      method: 'PATCH',
+      headers: { 'Authorization': `Bearer ${djToken}` },  // Content-Type은 브라우저가 boundary 포함해 자동 설정
+      body: form
+    });
+    if (!res.ok) {
+      let msg = '프로필 저장에 실패했습니다.';
+      try { const d = await res.json(); msg = d.message || msg; } catch(_) {}
+      throw new Error(msg);
+    }
+
+    // 저장 성공 → 서버에서 최신 프로필 다시 로드 (썸네일 CDN URL 확정)
+    try {
+      const p = await apiFetch('GET', '/api/dj/profile', undefined, djToken);
+      djName  = p?.djName || name;
+      djThumb = p?.thumbnailUrl || null;
+      djIntro = p?.introduction || '';
+    } catch(_) {
+      djName = name; djIntro = intro;
+      if (thumbRemoved) djThumb = null;
+    }
+
+    localStorage.setItem('djName', djName);
+    localStorage.setItem('djIntro', djIntro);
+    if (djThumb) localStorage.setItem('djThumb', djThumb);
+    else         localStorage.removeItem('djThumb');
+
+    document.getElementById('dj-name').textContent = djName;
+    applyThumb(djThumb, document.getElementById('dj-avatar-wrap'));
+
+    thumbFile = null;
+    thumbRemoved = false;
+    closeProfileModal();
+  } catch(e) {
+    alert(e.message || '프로필 저장 중 오류가 발생했습니다.');
+  } finally {
+    saveBtn.disabled = false;
+    saveBtn.textContent = '저장';
+  }
 }
 
 /* ── 모달 외부 클릭 닫기 ── */

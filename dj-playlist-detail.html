@@ -519,6 +519,9 @@
       <!-- Cover art -->
       <div class="dj-cover-art" id="dj-cover">☕</div>
 
+      <!-- DJ 소개글 -->
+      <p class="dj-intro-text" id="dj-intro" style="display:none;margin-top:16px;font-size:14px;line-height:1.7;color:var(--text-gray);white-space:pre-wrap"></p>
+
     </div>
 
   </div>
@@ -606,7 +609,31 @@
       /* ── 오른쪽 컬럼 ── */
       document.getElementById('dj-name').textContent   = pl.djName;
       document.getElementById('pl-name').innerHTML = `${pl.name} <span id="live-badge"></span>`;
-      document.getElementById('dj-cover').textContent  = pl.emoji;
+
+      /* 썸네일 — 있으면 아바타·커버를 이미지로, 없으면 이모지 폴백 */
+      const avatarEl = document.getElementById('dj-avatar');
+      const coverEl  = document.getElementById('dj-cover');
+      if (pl.thumbnailUrl) {
+        avatarEl.style.backgroundImage = `url("${pl.thumbnailUrl}")`;
+        avatarEl.style.backgroundSize = 'cover';
+        avatarEl.style.backgroundPosition = 'center';
+        avatarEl.textContent = '';
+        coverEl.style.backgroundImage = `url("${pl.thumbnailUrl}")`;
+        coverEl.style.backgroundSize = 'cover';
+        coverEl.style.backgroundPosition = 'center';
+        coverEl.textContent = '';
+      } else {
+        coverEl.textContent = pl.emoji || '🎧';
+      }
+
+      /* 소개글 */
+      const introEl = document.getElementById('dj-intro');
+      if (pl.introduction && pl.introduction.trim()) {
+        introEl.textContent = pl.introduction;
+        introEl.style.display = '';
+      } else {
+        introEl.style.display = 'none';
+      }
       if (pl.isLive && pl.listeners) {
         document.getElementById('pl-listeners').textContent = `${pl.listeners}명 청취 중`;
         document.getElementById('pl-listeners-row').style.display = '';
