@@ -1187,22 +1187,47 @@ async function extractDurationAndUpload(localId, file) {
   };
 
   try {
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('duration', duration);
-    formData.append('secs', String(secs));
-
-    updateProgress(30);
-
-    const res = await fetch(BASE_URL + '/api/dj/tracks', {
+    // [1] presigned 업로드 URL 요청 (작은 JSON 요청 — 서버/nginx 통과)
+    updateProgress(5);
+    const presign = await fetch(BASE_URL + '/api/dj/tracks/upload-url', {
       method: 'POST',
-      headers: { 'Authorization': `Bearer ${djToken}` },
-      body: formData
+      headers: { 'Authorization': `Bearer ${djToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ filename: file.name })
+    });
+    if (!presign.ok) {
+      const err = await presign.json().catch(() => ({}));
+      throw new Error(err.message || `업로드 URL 발급 실패 (${presign.status})`);
+    }
+    const { uploadUrl, streamUrl } = await presign.json();
+
+    // [2] mp3를 S3로 직접 PUT — 서버를 거치지 않으므로 용량 제한 없음 (실제 진행률 표시)
+    await new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('PUT', uploadUrl);
+      xhr.upload.onprogress = (ev) => {
+        if (ev.lengthComputable) {
+          updateProgress(5 + Math.round((ev.loaded / ev.total) * 90)); // 5~95%
+        }
+      };
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) resolve();
+        else reject(new Error(`S3 업로드 실패 (${xhr.status})`));
+      };
+      xhr.onerror = () => reject(new Error('S3 업로드 중 네트워크 오류'));
+      xhr.send(file); // File의 MIME(audio/mpeg)이 Content-Type으로 전송됨
+    });
+
+    // [3] 업로드 완료 — 트랙 메타데이터 등록 (작은 JSON 요청)
+    updateProgress(97);
+    const res = await fetch(BASE_URL + '/api/dj/tracks/register', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${djToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ filename: file.name, streamUrl, duration, secs })
     });
 
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(err.message || `업로드 실패 (${res.status})`);
+      throw new Error(err.message || `트랙 등록 실패 (${res.status})`);
     }
 
     const data = await res.json();
