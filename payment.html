@@ -788,7 +788,18 @@
         openTossModal();
         await initTossWidget(orderId, amount, orderName);
       } catch(e) {
-        alert('신청 처리 중 오류가 발생했습니다: ' + e.message);
+        // 서버 오류 메시지가 전달되지 못하고 "Failed to fetch"(네트워크/CORS)로 오는 경우 친화적 안내.
+        // Plan A에서 이 단계의 실패는 대개 아이디 중복(이메일은 중복 허용)이다.
+        const masked = e.message === 'Failed to fetch' || e.name === 'TypeError';
+        let msg;
+        if (masked && plan === 'A') {
+          msg = '이미 사용 중인 아이디일 수 있습니다.\n이전 화면에서 아이디를 다시 확인해 주세요.';
+        } else if (masked) {
+          msg = '일시적인 오류로 신청을 완료하지 못했습니다.\n잠시 후 다시 시도해 주세요.';
+        } else {
+          msg = '신청 처리 중 오류가 발생했습니다: ' + e.message;
+        }
+        alert(msg);
         btn.disabled = false;
         btn.textContent = origText;
       }
