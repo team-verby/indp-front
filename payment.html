@@ -455,7 +455,7 @@
 
     <!-- Actions -->
     <div class="form-actions">
-      <a href="apply-music.html" class="btn-secondary">이전</a>
+      <a href="apply-music.html" id="btn-prev" class="btn-secondary">이전</a>
       <button class="btn-primary" onclick="doSubmitApply()">결제하기</button>
     </div>
 
@@ -805,6 +805,8 @@
     if (plan === 'A') {
       document.getElementById('page-subtitle').textContent = '결제 주기를 선택하고 결제를 진행해 주세요';
       document.getElementById('duration-label').innerHTML = '결제 주기 <span class="required" style="color:var(--blue)">*</span>';
+      // 라이트(A)는 매장정보/음악무드 단계가 없으므로 '이전'은 계정 정보 입력(apply.html)으로
+      document.getElementById('btn-prev').href = 'apply.html?plan=A';
     }
 
     buildDurations();
