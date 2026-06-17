@@ -292,6 +292,14 @@
       localStorage.removeItem('pendingApplyResult');
     }
 
+    // Plan A는 결제 확인(비동기) 이전에 미리 Plan A 완료 화면으로 렌더하여,
+    // B/C용 기본 안내문이 잠깐 보였다가 바뀌는 깜빡임을 방지한다.
+    if (localStorage.getItem('selectedPlan') === 'A') {
+      applyPlanANotices();
+      const ctaA = document.querySelector('.complete-action');
+      if (ctaA) ctaA.innerHTML = '<a href="playlist.html?tab=dj" class="btn-primary">DJ 플레이리스트 바로 가기</a>';
+    }
+
     (async function handlePaymentConfirm() {
       const params = new URLSearchParams(location.search);
       const paymentKey = params.get('paymentKey');
@@ -331,7 +339,8 @@
                 if (subRes?.startDate) showSubscriptionInfo(subRes, amount, true);
               } catch(e) { console.warn('구독 정보 로드 실패:', e); }
 
-              setTimeout(() => { window.location.href = 'playlist.html?tab=dj'; }, 3000);
+              // 자동 이동 제거 — Plan A 결제 완료 페이지를 유지하고,
+              // 사용자가 'DJ 플레이리스트 바로 가기' 버튼으로 이동하도록 한다.
             }
           } catch(e) { console.warn('[Plan A] 자동 로그인 실패:', e); }
 
