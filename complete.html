@@ -217,6 +217,24 @@
   </footer>
   <div class="copyright">Copyright 2026. VERBY Co. all rights reserved.</div>
 
+  <!-- Plan A 안내 교체: api.js(네트워크 블로킹) 로드 이전에 동기 실행하여
+       B/C 기본 안내문이 잠깐 그려지는 깜빡임을 원천 차단한다. -->
+  <script>
+    function applyPlanANotices() {
+      var byId = function (id) { return document.getElementById(id); };
+      if (byId('notice-period-desc')) byId('notice-period-desc').textContent = '결제 완료 즉시 서비스가 시작됩니다.';
+      if (byId('notice-cred-title')) byId('notice-cred-title').textContent = '로그인 정보';
+      if (byId('notice-cred-desc')) byId('notice-cred-desc').textContent = '가입 시 입력하신 아이디와 비밀번호로 로그인하세요.';
+      if (byId('notice-next-title')) byId('notice-next-title').textContent = 'DJ 플레이리스트 바로 이용';
+      if (byId('notice-next-desc')) byId('notice-next-desc').innerHTML =
+        '로그인 후 <strong>플레이리스트 &gt; DJ 탭</strong>에서 원하는 DJ의 음악을 바로 들을 수 있습니다.';
+    }
+    if (localStorage.getItem('selectedPlan') === 'A') {
+      applyPlanANotices();
+      var ctaA = document.querySelector('.complete-action');
+      if (ctaA) ctaA.innerHTML = '<a href="playlist.html?tab=dj" class="btn-primary">DJ 플레이리스트 바로 가기</a>';
+    }
+  </script>
   <script src="api.js"></script>
   <script>
     const DAY_KO_CP = ['일','월','화','수','목','금','토'];
@@ -260,15 +278,6 @@
       const amt = paidAmount || sub.amount || sub.totalAmount;
       if (amt) document.getElementById('subscription-amount').textContent = Number(amt).toLocaleString() + '원';
       document.getElementById('subscription-box').style.display = 'block';
-    }
-
-    function applyPlanANotices() {
-      document.getElementById('notice-period-desc').textContent = '결제 완료 즉시 서비스가 시작됩니다.';
-      document.getElementById('notice-cred-title').textContent = '로그인 정보';
-      document.getElementById('notice-cred-desc').textContent = '가입 시 입력하신 아이디와 비밀번호로 로그인하세요.';
-      document.getElementById('notice-next-title').textContent = 'DJ 플레이리스트 바로 이용';
-      document.getElementById('notice-next-desc').innerHTML =
-        '로그인 후 <strong>플레이리스트 &gt; DJ 탭</strong>에서 원하는 DJ의 음악을 바로 들을 수 있습니다.';
     }
 
     function showCredentials(credId, credPw) {
@@ -331,7 +340,8 @@
                 if (subRes?.startDate) showSubscriptionInfo(subRes, amount, true);
               } catch(e) { console.warn('구독 정보 로드 실패:', e); }
 
-              setTimeout(() => { window.location.href = 'playlist.html?tab=dj'; }, 3000);
+              // 자동 이동 제거 — Plan A 결제 완료 페이지를 유지하고,
+              // 사용자가 'DJ 플레이리스트 바로 가기' 버튼으로 이동하도록 한다.
             }
           } catch(e) { console.warn('[Plan A] 자동 로그인 실패:', e); }
 

@@ -31,20 +31,6 @@
       gap: 16px;
       margin-bottom: 32px;
     }
-    .dj-avatar-wrap {
-      width: 64px; height: 64px;
-      border-radius: 50%;
-      overflow: hidden;
-      flex-shrink: 0;
-      background: #e8eaf0;
-      display: flex; align-items: center; justify-content: center;
-      border: 2px solid #e5e7eb;
-    }
-    .dj-avatar-wrap img {
-      width: 100%; height: 100%;
-      object-fit: cover;
-      border-radius: 50%;
-    }
     .dj-profile-info { flex: 1; }
     .dj-profile-name { font-size: 20px; font-weight: 800; color: var(--dark); }
     .btn-edit-sm {
@@ -108,7 +94,7 @@
     }
     .profile-thumb-preview {
       width: 72px; height: 72px;
-      border-radius: 50%;
+      border-radius: 12px;
       overflow: hidden;
       background: #e8eaf0;
       flex-shrink: 0;
@@ -490,6 +476,27 @@
       flex-shrink: 0;
     }
 
+    /* 새로고침 버튼 (청취자 수 · 정산 카드 공용) */
+    .refresh-btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 22px; height: 22px; padding: 0; margin-left: 4px;
+      border: none; border-radius: 50%;
+      background: transparent; color: inherit;
+      cursor: pointer; flex-shrink: 0;
+      transition: background 0.15s;
+    }
+    .refresh-btn:hover { background: rgba(0,0,0,0.07); }
+    .refresh-btn svg { width: 13px; height: 13px; }
+    .refresh-btn.spinning { pointer-events: none; }
+    .refresh-btn.spinning svg { animation: spin 0.7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .revenue-card-head {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 6px;
+    }
+    .revenue-card-head .revenue-card-title { margin-bottom: 0; }
+    .revenue-card-head .refresh-btn { color: var(--text-gray); }
+
     /* 유의사항 카드 */
     .notice-card {
       background: #fffbeb;
@@ -644,12 +651,6 @@
 
   <!-- 프로필 -->
   <div class="dj-profile-row">
-    <div class="dj-avatar-wrap" id="dj-avatar-wrap">
-      <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="rgba(0,0,0,0.2)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-        <circle cx="12" cy="7" r="4"/>
-      </svg>
-    </div>
     <div class="dj-profile-info">
       <div class="dj-profile-name" id="dj-name">DJ 이름</div>
     </div>
@@ -666,7 +667,7 @@
         ondrop="handleDrop(event)" onclick="document.getElementById('file-input').click()">
         <div class="upload-zone-icon">🎵</div>
         <div class="upload-zone-title">MP3 파일을 드래그하거나 클릭해서 업로드</div>
-        <div class="upload-zone-sub">MP3 · WAV 지원 · 파일당 최대 50MB · 본인 소유 저작권 음악만</div>
+        <div class="upload-zone-sub">MP3 · WAV 지원 · 파일당 최대 20MB · 본인 소유 저작권 음악만</div>
         <button class="upload-zone-btn" onclick="event.stopPropagation(); document.getElementById('file-input').click()">파일 선택</button>
       </div>
       <input type="file" id="file-input" multiple accept=".mp3,.wav" onchange="handleFileSelect(event)" />
@@ -676,7 +677,7 @@
         onclick="document.getElementById('file-input').click()">
         <span class="upload-zone-compact-icon">➕</span>
         <span class="upload-zone-compact-text">파일 추가</span>
-        <span class="upload-zone-compact-sub">MP3 · WAV · 파일당 최대 50MB</span>
+        <span class="upload-zone-compact-sub">MP3 · WAV · 파일당 최대 20MB</span>
       </div>
 
       <div id="track-list-wrap" style="display:none">
@@ -735,6 +736,9 @@
         <div class="listener-row" id="listener-row" style="display:none">
           <span class="listener-dot"></span>
           <span id="listener-count">0명</span> 청취 중
+          <button class="refresh-btn" id="listener-refresh" onclick="refreshListeners()" title="청취자 수 새로고침" aria-label="청취자 수 새로고침">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+          </button>
         </div>
       </div>
 
@@ -748,24 +752,29 @@
 
   <!-- 정산 카드 -->
   <div class="revenue-card">
-    <p class="revenue-card-title">수익 정산</p>
-    <p class="revenue-card-subtitle">청취자 수와 청취 시간에 따라 정산 금액이 결정됩니다. 더 많은 구독자가 더 오래 들을수록 수익이 늘어납니다.</p>
+    <div class="revenue-card-head">
+      <p class="revenue-card-title">수익 정산</p>
+      <button class="refresh-btn" id="revenue-refresh" onclick="loadRevenue(true)" title="정산 정보 새로고침" aria-label="정산 정보 새로고침">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+      </button>
+    </div>
+    <p class="revenue-card-subtitle">청취 시간 3,456초당 1원이 적립됩니다. 더 많은 구독자가 더 오래 들을수록 적립액이 늘어납니다.</p>
     <div class="revenue-grid">
       <div class="revenue-item">
-        <div class="revenue-item-label">이번 달 예상 수익</div>
-        <div class="revenue-item-value">—<span class="revenue-item-unit">원</span></div>
+        <div class="revenue-item-label">이번 달 예상 적립액</div>
+        <div class="revenue-item-value" id="rev-estimate">—<span class="revenue-item-unit">원</span></div>
       </div>
       <div class="revenue-item">
-        <div class="revenue-item-label">누적 정산 금액</div>
-        <div class="revenue-item-value">—<span class="revenue-item-unit">원</span></div>
+        <div class="revenue-item-label">현재 적립 잔액</div>
+        <div class="revenue-item-value" id="rev-balance">—<span class="revenue-item-unit">원</span></div>
       </div>
       <div class="revenue-item">
         <div class="revenue-item-label">다음 정산 예정일</div>
-        <div class="revenue-item-value" style="font-size:16px">—</div>
+        <div class="revenue-item-value" id="rev-nextdate" style="font-size:16px">—</div>
       </div>
     </div>
-    <div class="revenue-pending-notice">
-      정산은 매월 익월 15일에 지급됩니다. 최소 출금 금액은 10,000원이며, 미달 시 다음 달로 이월됩니다.
+    <div class="revenue-pending-notice" id="rev-notice">
+      적립액은 매월 익월 10일에 확정되며, 잔액 50,000원 이상일 때 정산을 신청할 수 있습니다. 신청분은 익월 15일에 지급됩니다.
     </div>
   </div>
 
@@ -783,7 +792,7 @@
       <li><strong>어뷰징 금지:</strong> 봇·자동 재생 등 비정상적인 방법으로 청취 수를 조작하는 행위는 정산 무효 및 계정 제재 사유가 됩니다.</li>
       <li><strong>부적절 콘텐츠:</strong> 폭력·혐오·성인 콘텐츠가 포함된 음원은 즉시 삭제됩니다.</li>
       <div class="notice-divider"></div>
-      <li><strong>정산 지급:</strong> 매월 익월 15일 지급 · 최소 출금 금액 10,000원 (미달 시 이월)</li>
+      <li><strong>정산 지급:</strong> 적립액은 익월 10일 확정 → 잔액 50,000원 이상이면 정산 신청 → 익월 15일 지급 (미달 시 자동 이월)</li>
       <li><strong>세금:</strong> 개인 크리에이터는 정산액의 3.3%가 원천징수된 후 지급됩니다.</li>
       <li><strong>정책 위반 제재:</strong> 경고 → 정산 보류 → 계정 영구 비활성화 순으로 처리됩니다.</li>
     </ul>
@@ -804,7 +813,7 @@
       <li><strong>콘텐츠 제거:</strong> 저작권 문제가 확인된 음원은 사전 통보 없이 즉시 재생 목록에서 제외될 수 있습니다.</li>
       <div class="notice-divider"></div>
       <li><strong>페이지 유지:</strong> 방송 중 이 페이지를 닫거나 새로고침하면 라이브가 종료됩니다.</li>
-      <li><strong>파일 형식:</strong> MP3 · WAV만 허용되며, 파일당 최대 50MB입니다.</li>
+      <li><strong>파일 형식:</strong> MP3 · WAV만 허용되며, 파일당 최대 20MB입니다.</li>
     </ul>
   </div>
 
@@ -842,11 +851,13 @@
     <p class="profile-section-label">수정 가능</p>
 
     <!-- 썸네일 -->
+    <label class="form-label" style="display:block;margin-bottom:8px">플레이리스트 썸네일 <span style="font-size:11px;color:var(--text-gray);font-weight:400">(플레이리스트 목록·상세에 표시됩니다)</span></label>
     <div class="profile-thumb-edit">
       <div class="profile-thumb-preview" id="profile-thumb-preview">
         <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="rgba(0,0,0,0.2)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-          <circle cx="12" cy="7" r="4"/>
+          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+          <circle cx="8.5" cy="8.5" r="1.5"/>
+          <path d="M21 15l-5-5L5 21"/>
         </svg>
       </div>
       <div class="profile-thumb-actions">
@@ -858,9 +869,15 @@
       </div>
     </div>
 
-    <div class="form-group" style="margin-bottom:20px">
+    <div class="form-group" style="margin-bottom:16px">
       <label class="form-label">크리에이터명 (활동명)</label>
       <input class="form-input" id="edit-dj-name" type="text" placeholder="예: DJ Parkwan" />
+    </div>
+
+    <div class="form-group" style="margin-bottom:20px">
+      <label class="form-label">소개글 <span style="font-size:11px;color:var(--text-gray);font-weight:400">(플레이리스트 상세에 표시됩니다)</span></label>
+      <textarea class="form-input" id="edit-intro" rows="3" maxlength="1000" oninput="updateIntroCount()" placeholder="채널과 플레이리스트를 소개해 주세요." style="resize:vertical;min-height:72px;line-height:1.5"></textarea>
+      <p style="font-size:11px;color:var(--text-gray);text-align:right;margin-top:4px"><span id="intro-count">0</span>/1000</p>
     </div>
 
     <!-- 변경 불가 영역 -->
@@ -879,18 +896,6 @@
         <span class="profile-readonly-val" id="edit-email">—</span>
       </div>
     </div>
-
-    <!-- 비밀번호 변경 -->
-    <p class="profile-section-label">비밀번호 변경 <span style="font-weight:400;text-transform:none;letter-spacing:0">(선택)</span></p>
-    <div class="form-group" style="margin-bottom:14px">
-      <label class="form-label">현재 비밀번호</label>
-      <input class="form-input" id="edit-pw-current" type="password" placeholder="현재 비밀번호를 입력해 주세요" oninput="toggleNewPwField()" />
-    </div>
-    <div class="form-group" style="margin-bottom:0;display:none" id="new-pw-field">
-      <label class="form-label">새 비밀번호 <span style="font-size:11px;color:var(--text-gray);font-weight:400">(8자 이상)</span></label>
-      <input class="form-input" id="edit-pw-new" type="password" placeholder="새 비밀번호를 입력해 주세요" />
-    </div>
-    <p id="pw-change-error" style="font-size:12px;color:#e53e3e;margin-top:6px;display:none"></p>
 
     <div class="modal-footer">
       <button class="btn-modal-cancel" onclick="closeProfileModal()">취소</button>
@@ -912,6 +917,9 @@ let djRealName = localStorage.getItem('djRealName') || '';
 let djPhone    = localStorage.getItem('djPhone')    || '';
 let djEmail    = localStorage.getItem('djEmail')    || '';
 let djThumb    = localStorage.getItem('djThumb')    || null;
+let djIntro    = localStorage.getItem('djIntro')    || '';
+let thumbFile    = null;   // 새로 선택한 썸네일 File (업로드 대상)
+let thumbRemoved = false;  // 썸네일 삭제 요청 여부
 
 async function init() {
   // GNB 스크롤 플로팅
@@ -935,8 +943,24 @@ async function init() {
   `;
 
   document.getElementById('dj-main').style.display = 'block';
+
+  // 서버에서 최신 프로필 로드 (썸네일·소개글 포함)
+  try {
+    const p = await apiFetch('GET', '/api/dj/profile', undefined, djToken);
+    if (p) {
+      djName     = p.djName || djName;
+      djRealName = p.name  || djRealName;
+      djPhone    = p.phone || djPhone;
+      djEmail    = p.email || djEmail;
+      djThumb    = p.thumbnailUrl || null;
+      djIntro    = p.introduction || '';
+      localStorage.setItem('djName', djName);
+      if (djThumb) localStorage.setItem('djThumb', djThumb); else localStorage.removeItem('djThumb');
+      localStorage.setItem('djIntro', djIntro);
+    }
+  } catch(e) { console.warn('프로필 로드 실패:', e); }
+
   document.getElementById('dj-name').textContent   = djName;
-  applyThumb(djThumb, document.getElementById('dj-avatar-wrap'));
 
   appliedTrackIds = new Set();
 
@@ -954,6 +978,9 @@ async function init() {
 
   renderTracks();
   renderChannel();
+
+  // 정산 정보 로드 (독립 실행 — 실패해도 대시보드엔 영향 없음)
+  loadRevenue();
 }
 
 /* ── 변경사항 적용 관리 ── */
@@ -1057,10 +1084,64 @@ function renderChannel() {
     document.getElementById('live-on-desc').textContent =
       `${readyCount}개 트랙이 구독자에게 스트리밍되고 있습니다.`;
     if (listenerRow) {
+      const wasHidden = listenerRow.style.display === 'none';
       listenerRow.style.display = '';
-      // TODO: 백엔드 API 연동 후 실시간 시청자 수로 교체
-      document.getElementById('listener-count').textContent = '0명';
+      // ON AIR로 전환되는 순간 1회 실시간 청취자 수 조회 (이후엔 새로고침 버튼으로)
+      if (wasHidden) refreshListeners();
     }
+  }
+}
+
+// 실시간 청취자 수 조회 (최근 7분 내 heartbeat 기준)
+async function refreshListeners() {
+  if (!djToken) return;
+  const btn = document.getElementById('listener-refresh');
+  if (btn) btn.classList.add('spinning');
+  try {
+    const r = await apiFetch('GET', '/api/dj/live/listeners', undefined, djToken);
+    const n = (r && typeof r.count === 'number') ? r.count : 0;
+    const el = document.getElementById('listener-count');
+    if (el) el.textContent = n + '명';
+  } catch (e) {
+    console.warn('청취자 수 조회 실패:', e);
+  } finally {
+    if (btn) setTimeout(() => btn.classList.remove('spinning'), 400);
+  }
+}
+
+// 정산 정보 조회 (GET /api/dj/revenue)
+async function loadRevenue(manual) {
+  if (!djToken) return;
+  const btn = document.getElementById('revenue-refresh');
+  if (manual && btn) btn.classList.add('spinning');
+  const fmt = n => (n ?? 0).toLocaleString('ko-KR');
+  const unit = '<span class="revenue-item-unit">원</span>';
+  try {
+    const r = await apiFetch('GET', '/api/dj/revenue', undefined, djToken);
+    if (r) {
+      const minPayout = r.minPayout ?? 50000;
+      const balance   = r.balance ?? 0;
+      const est = document.getElementById('rev-estimate');
+      const bal = document.getElementById('rev-balance');
+      const nxt = document.getElementById('rev-nextdate');
+      if (est) est.innerHTML = fmt(r.thisMonthEstimate) + unit;
+      if (bal) bal.innerHTML = fmt(balance) + unit;
+      if (nxt) nxt.textContent = r.nextPayoutDate || '—';
+      const notice = document.getElementById('rev-notice');
+      if (notice) {
+        const base = `적립액은 매월 익월 10일에 확정되며, 잔액 ${fmt(minPayout)}원 이상일 때 정산을 신청할 수 있습니다. 신청분은 익월 15일에 지급됩니다.`;
+        if (r.canRequest) {
+          notice.innerHTML = base + '<br><strong style="color:#16a34a">현재 정산 신청이 가능합니다.</strong>';
+        } else {
+          const remain = Math.max(0, minPayout - balance);
+          notice.innerHTML = base + `<br>최소 신청 금액까지 <strong>${fmt(remain)}원</strong> 남았습니다.`;
+        }
+      }
+    }
+  } catch (e) {
+    console.warn('정산 정보 로드 실패:', e);
+  } finally {
+    if (btn) setTimeout(() => btn.classList.remove('spinning'), 400);
   }
 }
 
@@ -1149,8 +1230,16 @@ function handleDragLeave()  { document.getElementById('upload-zone').classList.r
 function handleDrop(e)      { e.preventDefault(); document.getElementById('upload-zone').classList.remove('dragover'); processFiles([...e.dataTransfer.files]); }
 function handleFileSelect(e){ processFiles([...e.target.files]); e.target.value = ''; }
 
+/* 업로드 제한 — 비용(전송/저장) 안전장치. 백엔드에서도 동일하게 강제됨. */
+const MAX_FILE_MB   = 20;            // 파일 1개 최대 용량
+const MAX_TOTAL_SECS = 2 * 60 * 60;  // 누적 재생 길이 최대 2시간
+
 function processFiles(files) {
   files.filter(f => f.type.startsWith('audio/')).forEach(file => {
+    if (file.size > MAX_FILE_MB * 1024 * 1024) {
+      alert(`"${file.name}" 파일이 너무 큽니다.\n파일당 최대 ${MAX_FILE_MB}MB까지 업로드할 수 있습니다.`);
+      return;
+    }
     const localId = Date.now() + Math.random();
     tracks.push({ id: localId, filename: file.name, duration: '-', secs: 0, uploading: true, progress: 0 });
     renderTracks();
@@ -1180,6 +1269,17 @@ async function extractDurationAndUpload(localId, file) {
     });
   } catch(e) { console.warn('duration 추출 실패:', e); }
 
+  // 누적 길이 2시간 상한 사전 체크 (서버에서도 최종 검증)
+  const otherSecs = tracks.filter(t => t.id !== localId).reduce((a, t) => a + (t.secs || 0), 0);
+  if (otherSecs + secs > MAX_TOTAL_SECS) {
+    const remain = Math.max(MAX_TOTAL_SECS - otherSecs, 0);
+    alert(`업로드 가능한 총 길이(2시간)를 초과합니다.\n남은 시간: ${Math.floor(remain / 60)}분 ${remain % 60}초`);
+    tracks = tracks.filter(t => t.id !== localId);
+    renderTracks();
+    renderChannel();
+    return;
+  }
+
   // 진행률 표시 (업로드 중)
   const updateProgress = p => {
     const t = tracks.find(t => t.id === localId);
@@ -1187,22 +1287,47 @@ async function extractDurationAndUpload(localId, file) {
   };
 
   try {
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('duration', duration);
-    formData.append('secs', String(secs));
-
-    updateProgress(30);
-
-    const res = await fetch(BASE_URL + '/api/dj/tracks', {
+    // [1] presigned 업로드 URL 요청 (작은 JSON 요청 — 서버/nginx 통과)
+    updateProgress(5);
+    const presign = await fetch(BASE_URL + '/api/dj/tracks/upload-url', {
       method: 'POST',
-      headers: { 'Authorization': `Bearer ${djToken}` },
-      body: formData
+      headers: { 'Authorization': `Bearer ${djToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ filename: file.name })
+    });
+    if (!presign.ok) {
+      const err = await presign.json().catch(() => ({}));
+      throw new Error(err.message || `업로드 URL 발급 실패 (${presign.status})`);
+    }
+    const { uploadUrl, streamUrl } = await presign.json();
+
+    // [2] mp3를 S3로 직접 PUT — 서버를 거치지 않음 (용량은 위에서 사전 검증, 실제 진행률 표시)
+    await new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('PUT', uploadUrl);
+      xhr.upload.onprogress = (ev) => {
+        if (ev.lengthComputable) {
+          updateProgress(5 + Math.round((ev.loaded / ev.total) * 90)); // 5~95%
+        }
+      };
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) resolve();
+        else reject(new Error(`S3 업로드 실패 (${xhr.status})`));
+      };
+      xhr.onerror = () => reject(new Error('S3 업로드 중 네트워크 오류'));
+      xhr.send(file); // File의 MIME(audio/mpeg)이 Content-Type으로 전송됨
+    });
+
+    // [3] 업로드 완료 — 트랙 메타데이터 등록 (작은 JSON 요청)
+    updateProgress(97);
+    const res = await fetch(BASE_URL + '/api/dj/tracks/register', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${djToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ filename: file.name, streamUrl, duration, secs })
     });
 
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(err.message || `업로드 실패 (${res.status})`);
+      throw new Error(err.message || `트랙 등록 실패 (${res.status})`);
     }
 
     const data = await res.json();
@@ -1255,9 +1380,10 @@ function saveTrackEdit() {
 }
 
 /* ── 프로필 수정 ── */
-const DEFAULT_AVATAR_SVG = `<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="rgba(0,0,0,0.2)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
+const DEFAULT_AVATAR_SVG = `<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="rgba(0,0,0,0.2)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>`;
 
 function applyThumb(src, container) {
+  if (!container) return;
   container.innerHTML = src
     ? `<img src="${src}" alt="썸네일" />`
     : DEFAULT_AVATAR_SVG;
@@ -1266,36 +1392,71 @@ function applyThumb(src, container) {
 function handleThumbChange(e) {
   const file = e.target.files[0];
   if (!file) return;
-  const reader = new FileReader();
-  reader.onload = ev => {
-    djThumb = ev.target.result;
+  if (!file.type.startsWith('image/')) {
+    alert('이미지 파일만 업로드할 수 있습니다.');
+    e.target.value = '';
+    return;
+  }
+  // 리사이즈·압축 후 업로드 → nginx 1MB 제한 우회 + 저장/CDN 비용 절감
+  compressImage(file, 800, 0.85).then(({ blob, dataUrl }) => {
+    const name = `thumb-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`;
+    thumbFile    = new File([blob], name, { type: 'image/jpeg' });  // 업로드 대상(압축본)
+    thumbRemoved = false;
+    djThumb      = dataUrl;   // 미리보기용
     applyThumb(djThumb, document.getElementById('profile-thumb-preview'));
-  };
-  reader.readAsDataURL(file);
+  }).catch(() => {
+    alert('이미지를 처리하지 못했습니다. 다른 이미지를 시도해 주세요.');
+    e.target.value = '';
+  });
+}
+
+// 캔버스로 최대 변(maxDim) 기준 리사이즈 + JPEG 압축 → 업로드 용량을 1MB 미만으로
+function compressImage(file, maxDim, quality) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      let { width, height } = img;
+      if (width > maxDim || height > maxDim) {
+        if (width >= height) { height = Math.round(height * maxDim / width); width = maxDim; }
+        else                 { width = Math.round(width * maxDim / height); height = maxDim; }
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = width; canvas.height = height;
+      canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+      canvas.toBlob(blob => {
+        if (!blob) { reject(new Error('toBlob 실패')); return; }
+        resolve({ blob, dataUrl: canvas.toDataURL('image/jpeg', quality) });
+      }, 'image/jpeg', quality);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('이미지 로드 실패')); };
+    img.src = url;
+  });
 }
 
 function removeThumb() {
-  djThumb = null;
+  djThumb      = null;
+  thumbFile    = null;
+  thumbRemoved = true;
   document.getElementById('profile-thumb-input').value = '';
   applyThumb(null, document.getElementById('profile-thumb-preview'));
 }
 
-function toggleNewPwField() {
-  const hasInput = document.getElementById('edit-pw-current').value.length > 0;
-  document.getElementById('new-pw-field').style.display = hasInput ? '' : 'none';
-  if (!hasInput) document.getElementById('edit-pw-new').value = '';
-  document.getElementById('pw-change-error').style.display = 'none';
+function updateIntroCount() {
+  const v = document.getElementById('edit-intro').value;
+  document.getElementById('intro-count').textContent = v.length;
 }
 
 function openProfileModal() {
+  thumbFile    = null;
+  thumbRemoved = false;
   document.getElementById('edit-dj-name').value       = djName;
+  document.getElementById('edit-intro').value          = djIntro || '';
+  updateIntroCount();
   document.getElementById('edit-real-name').textContent = djRealName || '—';
   document.getElementById('edit-phone').textContent     = djPhone    || '—';
   document.getElementById('edit-email').textContent     = djEmail    || '—';
-  document.getElementById('edit-pw-current').value = '';
-  document.getElementById('edit-pw-new').value     = '';
-  document.getElementById('new-pw-field').style.display = 'none';
-  document.getElementById('pw-change-error').style.display = 'none';
   applyThumb(djThumb, document.getElementById('profile-thumb-preview'));
   document.getElementById('profile-modal').classList.add('open');
   setTimeout(() => document.getElementById('edit-dj-name').focus(), 50);
@@ -1305,39 +1466,59 @@ function closeProfileModal() { document.getElementById('profile-modal').classLis
 
 async function saveProfile() {
   const name       = document.getElementById('edit-dj-name').value.trim();
-  const currentPw  = document.getElementById('edit-pw-current').value;
-  const newPw      = document.getElementById('edit-pw-new').value;
-  const errEl      = document.getElementById('pw-change-error');
+  const intro      = document.getElementById('edit-intro').value;
+  const saveBtn    = document.querySelector('#profile-modal .btn-modal-confirm');
 
   if (!name) { document.getElementById('edit-dj-name').focus(); return; }
 
-  // 비밀번호 변경 유효성 검사
-  if (currentPw) {
-    if (newPw.length < 8) {
-      errEl.textContent = '새 비밀번호는 8자 이상이어야 합니다.';
-      errEl.style.display = '';
-      return;
+  saveBtn.disabled = true;
+  saveBtn.textContent = '저장 중...';
+  try {
+    // 프로필(활동명·썸네일·소개글) — multipart PATCH
+    const form = new FormData();
+    form.append('djName', name);
+    form.append('introduction', intro);
+    if (thumbFile)         form.append('thumbnail', thumbFile);
+    if (thumbRemoved)      form.append('removeThumbnail', 'true');
+
+    const res = await fetch(BASE_URL + '/api/dj/profile', {
+      method: 'PATCH',
+      headers: { 'Authorization': `Bearer ${djToken}` },  // Content-Type은 브라우저가 boundary 포함해 자동 설정
+      body: form
+    });
+    if (!res.ok) {
+      let msg = '프로필 저장에 실패했습니다.';
+      try { const d = await res.json(); msg = d.message || msg; } catch(_) {}
+      throw new Error(msg);
     }
-    // TODO: 백엔드 API 준비 후 실제 현재 비밀번호 검증 및 변경 API 호출로 교체
-    // try {
-    //   await apiFetch('PATCH', '/api/dj/password', { currentPassword: currentPw, newPassword: newPw }, djToken);
-    // } catch(e) {
-    //   errEl.textContent = '현재 비밀번호가 일치하지 않습니다.';
-    //   errEl.style.display = '';
-    //   return;
-    // }
+
+    // 저장 성공 → 서버에서 최신 프로필 다시 로드 (썸네일 CDN URL 확정)
+    try {
+      const p = await apiFetch('GET', '/api/dj/profile', undefined, djToken);
+      djName  = p?.djName || name;
+      djThumb = p?.thumbnailUrl || null;
+      djIntro = p?.introduction || '';
+    } catch(_) {
+      djName = name; djIntro = intro;
+      if (thumbRemoved) djThumb = null;
+    }
+
+    localStorage.setItem('djName', djName);
+    localStorage.setItem('djIntro', djIntro);
+    if (djThumb) localStorage.setItem('djThumb', djThumb);
+    else         localStorage.removeItem('djThumb');
+
+    document.getElementById('dj-name').textContent = djName;
+
+    thumbFile = null;
+    thumbRemoved = false;
+    closeProfileModal();
+  } catch(e) {
+    alert(e.message || '프로필 저장 중 오류가 발생했습니다.');
+  } finally {
+    saveBtn.disabled = false;
+    saveBtn.textContent = '저장';
   }
-  errEl.style.display = 'none';
-
-  djName = name;
-  localStorage.setItem('djName', djName);
-  if (djThumb) localStorage.setItem('djThumb', djThumb);
-  else         localStorage.removeItem('djThumb');
-
-  document.getElementById('dj-name').textContent = djName;
-  applyThumb(djThumb, document.getElementById('dj-avatar-wrap'));
-
-  closeProfileModal();
 }
 
 /* ── 모달 외부 클릭 닫기 ── */
@@ -1363,7 +1544,15 @@ window.addEventListener('pagehide', () => {
   if (isLive) {
     isLive = false;
     setDjLive(false);
-    // TODO: 백엔드 API 준비 후 POST /api/dj/live/stop 호출
+    // 페이지 언로드 중에도 종료 요청이 전송되도록 keepalive 사용
+    // (sendBeacon은 Authorization 헤더를 실을 수 없어 keepalive fetch로 처리)
+    try {
+      fetch(BASE_URL + '/api/dj/live/stop', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${djToken}` },
+        keepalive: true
+      });
+    } catch (_) { /* 언로드 중 예외 무시 */ }
   }
 });
 </script>

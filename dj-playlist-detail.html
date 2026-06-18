@@ -519,6 +519,14 @@
       <!-- Cover art -->
       <div class="dj-cover-art" id="dj-cover">☕</div>
 
+      <!-- DJ 소개글 -->
+      <p class="dj-intro-text" id="dj-intro" style="display:none;margin-top:16px;font-size:14px;line-height:1.7;color:var(--text-gray);white-space:pre-wrap"></p>
+
+      <!-- 정산 안내 (금액·산식 비공개) -->
+      <p class="dj-settle-note" style="margin-top:20px;padding:12px 14px;background:#f6f7f9;border-radius:10px;font-size:12.5px;line-height:1.6;color:var(--text-gray)">
+        🎧 회원님이 이 채널을 청취하시는 시간은 크리에이터의 창작 활동을 응원하고 지원하는 데 사용됩니다.
+      </p>
+
     </div>
 
   </div>
@@ -606,7 +614,31 @@
       /* ── 오른쪽 컬럼 ── */
       document.getElementById('dj-name').textContent   = pl.djName;
       document.getElementById('pl-name').innerHTML = `${pl.name} <span id="live-badge"></span>`;
-      document.getElementById('dj-cover').textContent  = pl.emoji;
+
+      /* 썸네일 — 있으면 아바타·커버를 이미지로, 없으면 이모지 폴백 */
+      const avatarEl = document.getElementById('dj-avatar');
+      const coverEl  = document.getElementById('dj-cover');
+      if (pl.thumbnailUrl) {
+        avatarEl.style.backgroundImage = `url("${pl.thumbnailUrl}")`;
+        avatarEl.style.backgroundSize = 'cover';
+        avatarEl.style.backgroundPosition = 'center';
+        avatarEl.textContent = '';
+        coverEl.style.backgroundImage = `url("${pl.thumbnailUrl}")`;
+        coverEl.style.backgroundSize = 'cover';
+        coverEl.style.backgroundPosition = 'center';
+        coverEl.textContent = '';
+      } else {
+        coverEl.textContent = pl.emoji || '🎧';
+      }
+
+      /* 소개글 */
+      const introEl = document.getElementById('dj-intro');
+      if (pl.introduction && pl.introduction.trim()) {
+        introEl.textContent = pl.introduction;
+        introEl.style.display = '';
+      } else {
+        introEl.style.display = 'none';
+      }
       if (pl.isLive && pl.listeners) {
         document.getElementById('pl-listeners').textContent = `${pl.listeners}명 청취 중`;
         document.getElementById('pl-listeners-row').style.display = '';
@@ -686,7 +718,134 @@
         </div>`;
     }
 
-    /* ── 진행 바 실시간 업데이트 (구독자 or 프리뷰 모드) ── */
+    /* ── 실제 오디오 재생 ── */
+    const CLOUDFRONT_DOMAIN = 'd144jf8wjk9lk.cloudfront.net';
+    let audio = null;
+
+    /* ── 청취시간 기록 (정산 집계용) ──
+       구독자(Plan A)의 실제 재생분만 누적해 5분 주기·일시정지·이탈 시 전송.
+       금액·산식은 서버에만 있으며, 여기서는 재생 초(델타)만 보낸다. */
+    const HEARTBEAT_MS = 300000;      // 5분
+    let   listenAccumSec = 0;         // 전송 대기 중인 누적 재생 초
+    let   lastBeatCT     = 0;         // 직전 timeupdate의 audio.currentTime
+    let   beatTimer      = null;
+    let   joinedBeatSent = false;     // 청취 시작 직후 조기 등록 beat 전송 여부
+
+    function flushListening(useKeepalive) {
+      const token = getUserToken();           // Plan A 구독자만 집계 (서버에서도 ACTIVE 구독 재검증)
+      if (!token || previewMode) return;
+      const secs = Math.floor(listenAccumSec);
+      if (secs <= 0) return;
+      listenAccumSec -= secs;
+      try {
+        fetch(BASE_URL + '/api/listening/heartbeat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify({ creatorId: plId, seconds: secs }),
+          keepalive: !!useKeepalive            // 이탈 시에도 Authorization 헤더 유지 (sendBeacon 불가)
+        }).catch(() => {});
+      } catch (e) {}
+    }
+
+    function startHeartbeat() {
+      if (beatTimer || !getUserToken() || previewMode) return;
+      beatTimer = setInterval(() => flushListening(false), HEARTBEAT_MS);
+      window.addEventListener('pagehide', () => flushListening(true));
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden) flushListening(true);
+      });
+    }
+
+    /* 레거시 raw S3 URL → CloudFront 도메인으로 치환 (비공개 버킷 403 방지) */
+    function normalizeStreamUrl(url) {
+      if (!url) return url;
+      return url.replace(
+        /^https?:\/\/indp-app-storage\.s3[.-][^/]*amazonaws\.com/i,
+        'https://' + CLOUDFRONT_DOMAIN
+      );
+    }
+
+    /* 자동재생이 차단되면 탭하여 재생 버튼 노출 */
+    function showPlayButton() {
+      if (document.getElementById('tap-to-play')) return;
+      const btn = document.createElement('button');
+      btn.id = 'tap-to-play';
+      btn.textContent = '▶ 탭하여 재생';
+      btn.style.cssText = 'position:fixed;left:50%;bottom:32px;transform:translateX(-50%);z-index:9999;background:var(--blue,#2f6bff);color:#fff;border:none;border-radius:999px;padding:14px 28px;font-size:15px;font-weight:800;box-shadow:0 6px 20px rgba(0,0,0,.25);cursor:pointer;';
+      btn.onclick = () => { if (audio) audio.play().then(() => btn.remove()).catch(() => {}); };
+      document.body.appendChild(btn);
+    }
+
+    function startPlayback() {
+      if (!pl || !pl.isLive) return;
+      if (!canPlay && !previewMode) return;
+      if (!pl.tracks || !pl.tracks.length) return;
+
+      audio = new Audio();
+      audio.preload = 'auto';
+      let idx = pl.currentIdx || 0;
+
+      function loadTrack(i) {
+        const t = pl.tracks[i];
+        if (!t) return;
+        elapsed = 0;
+        lastBeatCT = 0;            // 트랙 전환 시 재생 델타 기준 리셋
+        audio.src = normalizeStreamUrl(t.streamUrl);
+        audio.play().catch(() => showPlayButton());
+      }
+
+      audio.addEventListener('timeupdate', () => {
+        const t = pl.tracks[idx];
+        if (!t) return;
+        elapsed = Math.floor(audio.currentTime);
+
+        /* 구독자 청취시간 누적: 정상 전진 재생(0<δ<2초)만 인정, 탐색·트랙전환 제외 */
+        if (getUserToken() && !previewMode) {
+          const ct = audio.currentTime;
+          const d = ct - lastBeatCT;
+          if (d > 0 && d < 2) listenAccumSec += d;
+          lastBeatCT = ct;
+          /* 실제 재생 ~5초 시점에 1회 조기 전송 → DJ 대시보드에 즉시 '청취 중'으로 집계
+             (5분 주기 첫 전송을 기다리지 않음). 이후엔 5분 주기 + 이탈 시 전송. */
+          if (!joinedBeatSent && listenAccumSec >= 5) {
+            joinedBeatSent = true;
+            flushListening(false);
+          }
+        }
+
+        /* 비구독자 프리뷰: 30초 카운트다운 후 종료 */
+        if (previewMode && !previewEnded) {
+          const remain = PREVIEW_SECS - Math.floor(audio.currentTime);
+          const countEl = document.getElementById('preview-countdown');
+          if (countEl) countEl.textContent = remain > 0 ? `남은 시간 ${remain}초` : '0초';
+          if (audio.currentTime >= PREVIEW_SECS) { audio.pause(); endPreview(); return; }
+        }
+
+        buildWaveform(elapsed, t.secs);
+      });
+
+      /* 곡이 끝나면 다음 곡으로 (구독자만) */
+      audio.addEventListener('ended', () => {
+        if (previewMode) return;
+        idx = (idx + 1) % pl.tracks.length;
+        pl.currentIdx = idx;
+        loadTrack(idx);
+      });
+
+      /* 일시정지 시 누적분 즉시 전송 + 재개 시 다시 조기 등록되도록 플래그 리셋 */
+      audio.addEventListener('pause', () => { flushListening(false); joinedBeatSent = false; });
+
+      /* 재생 실패 시 파형 애니메이션으로 폴백 */
+      audio.addEventListener('error', () => {
+        console.warn('오디오 재생 실패 — 파형 시뮬레이션으로 전환');
+        startTimer();
+      });
+
+      startHeartbeat();
+      loadTrack(idx);
+    }
+
+    /* ── 진행 바 실시간 업데이트 (오디오 재생 불가 시 폴백) ── */
     function startTimer() {
       if (!pl || !pl.isLive) return;
       if (!canPlay && !previewMode) return;
@@ -712,14 +871,14 @@
     (async function init() {
       try {
         pl = await apiFetch('GET', `/api/dj/playlists/${plId}`);
-        elapsed = pl ? Math.floor((pl.tracks?.[pl.currentIdx]?.secs || 0) * 0.37) : 0;
+        elapsed = 0;
         previewMode = !canPlay && !!(pl?.isLive);
       } catch(e) {
         console.warn('DJ 플레이리스트 로드 실패:', e);
         pl = null;
       }
       render();
-      startTimer();
+      startPlayback();
     })();
   </script>
 </body>
