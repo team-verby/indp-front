@@ -729,6 +729,7 @@
     let   listenAccumSec = 0;         // 전송 대기 중인 누적 재생 초
     let   lastBeatCT     = 0;         // 직전 timeupdate의 audio.currentTime
     let   beatTimer      = null;
+    let   joinedBeatSent = false;     // 청취 시작 직후 조기 등록 beat 전송 여부
 
     function flushListening(useKeepalive) {
       const token = getUserToken();           // Plan A 구독자만 집계 (서버에서도 ACTIVE 구독 재검증)
@@ -804,6 +805,12 @@
           const d = ct - lastBeatCT;
           if (d > 0 && d < 2) listenAccumSec += d;
           lastBeatCT = ct;
+          /* 실제 재생 ~5초 시점에 1회 조기 전송 → DJ 대시보드에 즉시 '청취 중'으로 집계
+             (5분 주기 첫 전송을 기다리지 않음). 이후엔 5분 주기 + 이탈 시 전송. */
+          if (!joinedBeatSent && listenAccumSec >= 5) {
+            joinedBeatSent = true;
+            flushListening(false);
+          }
         }
 
         /* 비구독자 프리뷰: 30초 카운트다운 후 종료 */
@@ -825,8 +832,8 @@
         loadTrack(idx);
       });
 
-      /* 일시정지 시 누적분 즉시 전송 */
-      audio.addEventListener('pause', () => flushListening(false));
+      /* 일시정지 시 누적분 즉시 전송 + 재개 시 다시 조기 등록되도록 플래그 리셋 */
+      audio.addEventListener('pause', () => { flushListening(false); joinedBeatSent = false; });
 
       /* 재생 실패 시 파형 애니메이션으로 폴백 */
       audio.addEventListener('error', () => {
