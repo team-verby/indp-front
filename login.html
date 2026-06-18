@@ -248,30 +248,30 @@
         // (개인 구독자는 storeId=null, 점주는 소유 매장 storeId 가 내려온다.)
         const clearDjToken = () => ['djToken','djRefreshToken','djName'].forEach(k => localStorage.removeItem(k));
 
+        // 계정 유형 판정 기준 (요금제 등급 ≠ 계정 유형):
+        //  - DJ(크리에이터): planType === 'DJ'
+        //  - 개인 구독자(app_user): PLAN_A 이면서 소유 매장이 없는 계정(storeId 없음)
+        //  - 매장(점주): 그 외 — storeId 가 있는 모든 계정(기본 PLAN_A / 프리미엄 PLAN_B 무관)
         if (data.planType === 'DJ') {
-          // DJ(크리에이터)
           clearUserToken();
           clearOwnerToken();
           localStorage.setItem('djToken', data.accessToken);
           if (data.refreshToken) localStorage.setItem('djRefreshToken', data.refreshToken);
           localStorage.setItem('djName', data.djName || 'DJ');
           window.location.href = 'dj-dashboard.html';
-        } else if (data.storeId) {
-          // 매장(점주) 계정 — 요금제 등급(planType: 기본=PLAN_A / 프리미엄=PLAN_B)과 무관하게
-          // 점주 흐름으로 처리한다. 등급별 화면 차이는 마이페이지에서 매장 실제 구독으로 분기.
-          clearUserToken();
-          clearDjToken();
-          setOwnerToken(data.accessToken, data.refreshToken);
-          setOwnerStoreId(data.storeId);
-          window.location.href = 'playlist.html';
-        } else if (data.planType === 'PLAN_A') {
-          // 개인 구독자
+        } else if (data.planType === 'PLAN_A' && !data.storeId) {
+          // 개인 구독자 (추후 생성 시). 기본요금제 매장 점주는 storeId 가 있어 여기 해당 안 됨.
           clearOwnerToken();
           clearDjToken();
           setUserToken(data.accessToken, data.refreshToken);
           window.location.href = 'playlist.html?tab=dj';
         } else {
-          throw new Error('알 수 없는 계정 유형입니다.');
+          // 매장(점주) 계정 — 요금제 등급과 무관. 등급별 화면 차이는 마이페이지에서 매장 실제 구독으로 분기.
+          clearUserToken();
+          clearDjToken();
+          setOwnerToken(data.accessToken, data.refreshToken);
+          if (data.storeId) setOwnerStoreId(data.storeId);
+          window.location.href = 'playlist.html';
         }
 
       } catch(e) {
