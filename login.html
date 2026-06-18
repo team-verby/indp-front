@@ -242,30 +242,36 @@
       try {
         const data = await apiFetch('POST', '/api/auth/login', { loginId: id, password });
 
-        switch (data.planType) {
-          case 'PLAN_A':
-            setUserToken(data.accessToken, data.refreshToken);
-            window.location.href = 'playlist.html?tab=dj';
-            break;
-          case 'PLAN_B':
-          case 'PLAN_C':
-            setOwnerToken(data.accessToken, data.refreshToken);
-            if (data.storeId) setOwnerStoreId(data.storeId);
-            window.location.href = 'playlist.html';
-            break;
-          case 'DJ':
-            // 기존 user/owner 토큰 충돌 방지
-            localStorage.removeItem('userToken');
-            localStorage.removeItem('userRefreshToken');
-            localStorage.removeItem('ownerToken');
-            localStorage.removeItem('ownerRefreshToken');
-            localStorage.setItem('djToken', data.accessToken);
-            if (data.refreshToken) localStorage.setItem('djRefreshToken', data.refreshToken);
-            localStorage.setItem('djName', data.djName || 'DJ');
-            window.location.href = 'dj-dashboard.html';
-            break;
-          default:
-            throw new Error('알 수 없는 계정 유형입니다.');
+        // 계정 유형 분기.
+        // 주의: planType 은 "매장 구독 플랜"이기도 해서 PLAN_A 매장의 점주도 planType=PLAN_A 로 내려온다.
+        // 따라서 개인 구독자 vs 매장(점주) 구분은 planType 이 아니라 storeId 존재 여부로 판단한다.
+        // (개인 구독자는 storeId=null, 점주는 소유 매장 storeId 가 내려온다.)
+        const clearDjToken = () => ['djToken','djRefreshToken','djName'].forEach(k => localStorage.removeItem(k));
+
+        if (data.planType === 'DJ') {
+          // DJ(크리에이터)
+          clearUserToken();
+          clearOwnerToken();
+          localStorage.setItem('djToken', data.accessToken);
+          if (data.refreshToken) localStorage.setItem('djRefreshToken', data.refreshToken);
+          localStorage.setItem('djName', data.djName || 'DJ');
+          window.location.href = 'dj-dashboard.html';
+        } else if (data.storeId) {
+          // 매장(점주) 계정 — 매장 구독이 PLAN_A 든 PLAN_B 든 점주 흐름으로 처리
+          clearUserToken();
+          clearDjToken();
+          setOwnerToken(data.accessToken, data.refreshToken);
+          setOwnerStoreId(data.storeId);
+          // PLAN_A 매장은 인스토어 DJ 스트리밍 탭, 그 외는 기본 매장 화면
+          window.location.href = data.planType === 'PLAN_A' ? 'playlist.html?tab=dj' : 'playlist.html';
+        } else if (data.planType === 'PLAN_A') {
+          // 개인 구독자
+          clearOwnerToken();
+          clearDjToken();
+          setUserToken(data.accessToken, data.refreshToken);
+          window.location.href = 'playlist.html?tab=dj';
+        } else {
+          throw new Error('알 수 없는 계정 유형입니다.');
         }
 
       } catch(e) {
