@@ -5961,13 +5961,68 @@
     let apData = {};             // { storeName: { "0": "무드명", ..., "23": "무드명" } }
     let apExtraSongs = {};       // { storeName: { hour: [{ position, song }] } }
     const AP_STORAGE_KEY = 'adminMoodSchedule';
+    let apInitPromise = null;    // 매핑 최초 서버 로드 Promise(마이그레이션 포함) — 생성 전 대기용
 
-    (function apLoadData() {
+    // localStorage 캐시 즉시 로드(네트워크 대기 없이 렌더 가능하도록)
+    (function apLoadLocal() {
       try {
         const saved = JSON.parse(localStorage.getItem(AP_STORAGE_KEY) || '{}');
         if (saved && typeof saved === 'object') apData = saved;
       } catch {}
     })();
+
+    // apData( { storeName: { hour: mood } } ) ↔ 백엔드 매핑 변환
+    function apToSchedulePayload() {
+      return {
+        schedules: Object.keys(apData).map(storeName => ({
+          storeName,
+          slots: Object.keys(apData[storeName] || {})
+            .filter(h => apData[storeName][h])
+            .map(h => ({ hour: parseInt(h, 10), mood: apData[storeName][h] }))
+        })).filter(s => s.slots.length > 0)
+      };
+    }
+    function apFromScheduleResponse(resp) {
+      const obj = {};
+      (resp?.schedules || []).forEach(s => {
+        const m = {};
+        (s.slots || []).forEach(slot => { if (slot.mood) m[String(slot.hour)] = slot.mood; });
+        if (Object.keys(m).length) obj[s.storeName] = m;
+      });
+      return obj;
+    }
+    function apTotalSlots(data) {
+      return Object.values(data || {}).reduce((sum, m) => sum + Object.keys(m || {}).length, 0);
+    }
+
+    // localStorage(즉시 캐시) + 백엔드(영속) 저장. 실패 시 throw.
+    async function apPersist() {
+      localStorage.setItem(AP_STORAGE_KEY, JSON.stringify(apData));
+      await apiFetch('PUT', '/api/admin/mood-schedule', apToSchedulePayload(), adminToken);
+    }
+
+    // 서버에서 매핑 로드 + 동기화. 최초 1회만 실제 수행(같은 Promise 재사용으로 레이스 방지).
+    function apInit() {
+      if (apInitPromise) return apInitPromise;
+      apInitPromise = apInitInternal();
+      return apInitPromise;
+    }
+    async function apInitInternal() {
+      try {
+        const resp = await apiFetch('GET', '/api/admin/mood-schedule', undefined, adminToken);
+        const fromServer = apFromScheduleResponse(resp);
+        if (apTotalSlots(fromServer) === 0 && apTotalSlots(apData) > 0) {
+          // 마이그레이션: 서버는 비었는데 로컬(기존 브라우저)에 매핑이 있으면 → 서버로 올려 영속화
+          try { await apiFetch('PUT', '/api/admin/mood-schedule', apToSchedulePayload(), adminToken); } catch {}
+        } else if (apTotalSlots(fromServer) > 0) {
+          // 서버가 원본 — 채택해 로컬 캐시 갱신
+          apData = fromServer;
+          localStorage.setItem(AP_STORAGE_KEY, JSON.stringify(apData));
+        }
+      } catch (e) {
+        console.error('시간대 무드 매핑 백엔드 로드 실패(localStorage 사용):', e);
+      }
+    }
 
     function switchPlMode(mode, btn) {
       plGenMode = mode;
@@ -6125,16 +6180,24 @@
       saveBtn.className = 'btn-create-pl';
       saveBtn.style.cssText = 'width:100%;margin-top:12px';
       saveBtn.textContent = '매핑 저장';
-      saveBtn.addEventListener('click', () => {
+      saveBtn.addEventListener('click', async () => {
         const mapping = {};
         tbody.querySelectorAll('.ap-mood-sel').forEach(sel => {
           if (sel.value) mapping[sel.dataset.hour] = sel.value;
         });
         apData[storeName] = mapping;
-        localStorage.setItem(AP_STORAGE_KEY, JSON.stringify(apData));
-        plToast(`✓ "${storeName}" 시간대 매핑 저장 완료`, 'success');
-        saveBtn.textContent = '저장됨 ✓';
         saveBtn.disabled = true;
+        try {
+          await apPersist();   // localStorage + 서버 영속화
+          plToast(`✓ "${storeName}" 시간대 매핑 저장 완료`, 'success');
+          saveBtn.textContent = '저장됨 ✓';
+        } catch (e) {
+          localStorage.setItem(AP_STORAGE_KEY, JSON.stringify(apData)); // 최소 로컬 저장은 보장
+          plToast('서버 저장 실패 — 로컬에는 저장됨. 잠시 후 다시 시도해 주세요.', 'error');
+          saveBtn.textContent = '매핑 저장';
+          saveBtn.disabled = false;
+          return;
+        }
         setTimeout(() => { saveBtn.textContent = '매핑 저장'; saveBtn.disabled = false; }, 2000);
       });
       panel.appendChild(saveBtn);
@@ -6531,8 +6594,9 @@
     async function apBulkGenerate() {
       const resultArea = document.getElementById('pl-gen-result');
 
-      // 카탈로그(재생시간 포함) 서버 동기화 완료 보장 — 캐시가 비거나 오래돼 00:00으로 생성되는 것 방지
+      // 카탈로그(재생시간 포함)·매장 시간대 무드 매핑 서버 동기화 완료 보장
       try { await mdInit(); } catch {}
+      try { await apInit(); } catch {}
 
       const allPayload = [];
       const storeResults = [];
@@ -6583,7 +6647,29 @@
       }
 
       if (!allPayload.length) {
-        plToast('생성할 수 있는 플레이리스트가 없습니다. 음원 데이터를 먼저 추가해 주세요.', 'error');
+        // 원인별 정확한 안내 (음원 데이터가 있어도 매장 시간대-무드 매핑이 없으면 비어서 생성 실패)
+        const moodCount = mdTotalCount(mdData);
+        const storesWithMapping = stores.filter(s => {
+          const sm = apData[s.storeName] || {};
+          return Object.keys(sm).some(k => sm[k]);
+        });
+        const emptyMoods = [...new Set(
+          storeResults.flatMap(r => (r.skipped || [])
+            .map(x => (String(x).match(/\((.+)\)$/) || [])[1])
+            .filter(Boolean))
+        )];
+
+        let msg;
+        if (moodCount === 0) {
+          msg = '음원 데이터(무드별 곡)가 없습니다. [음원 데이터 관리]에서 곡을 추가·저장한 뒤 다시 시도해 주세요.';
+        } else if (storesWithMapping.length === 0) {
+          msg = "시간대별 무드 매핑이 설정되지 않았습니다. 매장을 펼쳐 [시간대별 무드 매핑]에서 시간대에 무드를 지정하고 [매핑 저장] 후 다시 [플레이리스트 생성]을 눌러 주세요.";
+        } else if (emptyMoods.length) {
+          msg = `매핑된 무드에 곡이 없습니다: ${emptyMoods.join(', ')} — 해당 무드에 곡을 추가하거나 매핑 무드를 변경해 주세요.`;
+        } else {
+          msg = '생성할 수 있는 플레이리스트가 없습니다. 음원 데이터와 매장 시간대 무드 매핑을 확인해 주세요.';
+        }
+        plToast(msg, 'error');
         return;
       }
 
@@ -6627,6 +6713,8 @@
     loadStores();
     // 음원 카탈로그(재생시간 포함)를 시작 시 미리 서버에서 로드 → 랜덤 생성 시 재생시간 누락(00:00) 방지
     mdInit();
+    // 매장 시간대 무드 매핑을 시작 시 서버에서 로드(+ 기존 localStorage 매핑이 있으면 서버로 마이그레이션)
+    apInit();
   </script>
 
 </body>

@@ -89,3 +89,6 @@ sw.*
 # Vim swap files
 *.swp
 .claude/
+
+# 로컬 매핑 백업(공개 배포 금지)
+.mood-schedule-backup.json
