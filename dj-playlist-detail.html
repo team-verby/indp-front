@@ -522,6 +522,11 @@
       <!-- DJ 소개글 -->
       <p class="dj-intro-text" id="dj-intro" style="display:none;margin-top:16px;font-size:14px;line-height:1.7;color:var(--text-gray);white-space:pre-wrap"></p>
 
+      <!-- 정산 안내 (금액·산식 비공개) -->
+      <p class="dj-settle-note" style="margin-top:20px;padding:12px 14px;background:#f6f7f9;border-radius:10px;font-size:12.5px;line-height:1.6;color:var(--text-gray)">
+        🎧 회원님이 이 채널을 청취하시는 시간은 크리에이터의 창작 활동을 응원하고 지원하는 데 사용됩니다.
+      </p>
+
     </div>
 
   </div>
@@ -717,6 +722,39 @@
     const CLOUDFRONT_DOMAIN = 'd144jf8wjk9lk.cloudfront.net';
     let audio = null;
 
+    /* ── 청취시간 기록 (정산 집계용) ──
+       구독자(Plan A)의 실제 재생분만 누적해 5분 주기·일시정지·이탈 시 전송.
+       금액·산식은 서버에만 있으며, 여기서는 재생 초(델타)만 보낸다. */
+    const HEARTBEAT_MS = 300000;      // 5분
+    let   listenAccumSec = 0;         // 전송 대기 중인 누적 재생 초
+    let   lastBeatCT     = 0;         // 직전 timeupdate의 audio.currentTime
+    let   beatTimer      = null;
+
+    function flushListening(useKeepalive) {
+      const token = getUserToken();           // Plan A 구독자만 집계 (서버에서도 ACTIVE 구독 재검증)
+      if (!token || previewMode) return;
+      const secs = Math.floor(listenAccumSec);
+      if (secs <= 0) return;
+      listenAccumSec -= secs;
+      try {
+        fetch(BASE_URL + '/api/listening/heartbeat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify({ creatorId: plId, seconds: secs }),
+          keepalive: !!useKeepalive            // 이탈 시에도 Authorization 헤더 유지 (sendBeacon 불가)
+        }).catch(() => {});
+      } catch (e) {}
+    }
+
+    function startHeartbeat() {
+      if (beatTimer || !getUserToken() || previewMode) return;
+      beatTimer = setInterval(() => flushListening(false), HEARTBEAT_MS);
+      window.addEventListener('pagehide', () => flushListening(true));
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden) flushListening(true);
+      });
+    }
+
     /* 레거시 raw S3 URL → CloudFront 도메인으로 치환 (비공개 버킷 403 방지) */
     function normalizeStreamUrl(url) {
       if (!url) return url;
@@ -750,6 +788,7 @@
         const t = pl.tracks[i];
         if (!t) return;
         elapsed = 0;
+        lastBeatCT = 0;            // 트랙 전환 시 재생 델타 기준 리셋
         audio.src = normalizeStreamUrl(t.streamUrl);
         audio.play().catch(() => showPlayButton());
       }
@@ -758,6 +797,14 @@
         const t = pl.tracks[idx];
         if (!t) return;
         elapsed = Math.floor(audio.currentTime);
+
+        /* 구독자 청취시간 누적: 정상 전진 재생(0<δ<2초)만 인정, 탐색·트랙전환 제외 */
+        if (getUserToken() && !previewMode) {
+          const ct = audio.currentTime;
+          const d = ct - lastBeatCT;
+          if (d > 0 && d < 2) listenAccumSec += d;
+          lastBeatCT = ct;
+        }
 
         /* 비구독자 프리뷰: 30초 카운트다운 후 종료 */
         if (previewMode && !previewEnded) {
@@ -778,12 +825,16 @@
         loadTrack(idx);
       });
 
+      /* 일시정지 시 누적분 즉시 전송 */
+      audio.addEventListener('pause', () => flushListening(false));
+
       /* 재생 실패 시 파형 애니메이션으로 폴백 */
       audio.addEventListener('error', () => {
         console.warn('오디오 재생 실패 — 파형 시뮬레이션으로 전환');
         startTimer();
       });
 
+      startHeartbeat();
       loadTrack(idx);
     }
 
