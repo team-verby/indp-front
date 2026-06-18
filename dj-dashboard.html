@@ -476,6 +476,27 @@
       flex-shrink: 0;
     }
 
+    /* 새로고침 버튼 (청취자 수 · 정산 카드 공용) */
+    .refresh-btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 22px; height: 22px; padding: 0; margin-left: 4px;
+      border: none; border-radius: 50%;
+      background: transparent; color: inherit;
+      cursor: pointer; flex-shrink: 0;
+      transition: background 0.15s;
+    }
+    .refresh-btn:hover { background: rgba(0,0,0,0.07); }
+    .refresh-btn svg { width: 13px; height: 13px; }
+    .refresh-btn.spinning { pointer-events: none; }
+    .refresh-btn.spinning svg { animation: spin 0.7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .revenue-card-head {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 6px;
+    }
+    .revenue-card-head .revenue-card-title { margin-bottom: 0; }
+    .revenue-card-head .refresh-btn { color: var(--text-gray); }
+
     /* 유의사항 카드 */
     .notice-card {
       background: #fffbeb;
@@ -715,6 +736,9 @@
         <div class="listener-row" id="listener-row" style="display:none">
           <span class="listener-dot"></span>
           <span id="listener-count">0명</span> 청취 중
+          <button class="refresh-btn" id="listener-refresh" onclick="refreshListeners()" title="청취자 수 새로고침" aria-label="청취자 수 새로고침">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+          </button>
         </div>
       </div>
 
@@ -728,24 +752,29 @@
 
   <!-- 정산 카드 -->
   <div class="revenue-card">
-    <p class="revenue-card-title">수익 정산</p>
-    <p class="revenue-card-subtitle">청취자 수와 청취 시간에 따라 정산 금액이 결정됩니다. 더 많은 구독자가 더 오래 들을수록 수익이 늘어납니다.</p>
+    <div class="revenue-card-head">
+      <p class="revenue-card-title">수익 정산</p>
+      <button class="refresh-btn" id="revenue-refresh" onclick="loadRevenue(true)" title="정산 정보 새로고침" aria-label="정산 정보 새로고침">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+      </button>
+    </div>
+    <p class="revenue-card-subtitle">청취 시간 3,456초당 1원이 적립됩니다. 더 많은 구독자가 더 오래 들을수록 적립액이 늘어납니다.</p>
     <div class="revenue-grid">
       <div class="revenue-item">
-        <div class="revenue-item-label">이번 달 예상 수익</div>
-        <div class="revenue-item-value">—<span class="revenue-item-unit">원</span></div>
+        <div class="revenue-item-label">이번 달 예상 적립액</div>
+        <div class="revenue-item-value" id="rev-estimate">—<span class="revenue-item-unit">원</span></div>
       </div>
       <div class="revenue-item">
-        <div class="revenue-item-label">누적 정산 금액</div>
-        <div class="revenue-item-value">—<span class="revenue-item-unit">원</span></div>
+        <div class="revenue-item-label">현재 적립 잔액</div>
+        <div class="revenue-item-value" id="rev-balance">—<span class="revenue-item-unit">원</span></div>
       </div>
       <div class="revenue-item">
         <div class="revenue-item-label">다음 정산 예정일</div>
-        <div class="revenue-item-value" style="font-size:16px">—</div>
+        <div class="revenue-item-value" id="rev-nextdate" style="font-size:16px">—</div>
       </div>
     </div>
-    <div class="revenue-pending-notice">
-      정산은 매월 익월 15일에 지급됩니다. 최소 출금 금액은 10,000원이며, 미달 시 다음 달로 이월됩니다.
+    <div class="revenue-pending-notice" id="rev-notice">
+      적립액은 매월 익월 10일에 확정되며, 잔액 50,000원 이상일 때 정산을 신청할 수 있습니다. 신청분은 익월 15일에 지급됩니다.
     </div>
   </div>
 
@@ -763,7 +792,7 @@
       <li><strong>어뷰징 금지:</strong> 봇·자동 재생 등 비정상적인 방법으로 청취 수를 조작하는 행위는 정산 무효 및 계정 제재 사유가 됩니다.</li>
       <li><strong>부적절 콘텐츠:</strong> 폭력·혐오·성인 콘텐츠가 포함된 음원은 즉시 삭제됩니다.</li>
       <div class="notice-divider"></div>
-      <li><strong>정산 지급:</strong> 매월 익월 15일 지급 · 최소 출금 금액 10,000원 (미달 시 이월)</li>
+      <li><strong>정산 지급:</strong> 적립액은 익월 10일 확정 → 잔액 50,000원 이상이면 정산 신청 → 익월 15일 지급 (미달 시 자동 이월)</li>
       <li><strong>세금:</strong> 개인 크리에이터는 정산액의 3.3%가 원천징수된 후 지급됩니다.</li>
       <li><strong>정책 위반 제재:</strong> 경고 → 정산 보류 → 계정 영구 비활성화 순으로 처리됩니다.</li>
     </ul>
@@ -949,6 +978,9 @@ async function init() {
 
   renderTracks();
   renderChannel();
+
+  // 정산 정보 로드 (독립 실행 — 실패해도 대시보드엔 영향 없음)
+  loadRevenue();
 }
 
 /* ── 변경사항 적용 관리 ── */
@@ -1052,10 +1084,64 @@ function renderChannel() {
     document.getElementById('live-on-desc').textContent =
       `${readyCount}개 트랙이 구독자에게 스트리밍되고 있습니다.`;
     if (listenerRow) {
+      const wasHidden = listenerRow.style.display === 'none';
       listenerRow.style.display = '';
-      // TODO: 백엔드 API 연동 후 실시간 시청자 수로 교체
-      document.getElementById('listener-count').textContent = '0명';
+      // ON AIR로 전환되는 순간 1회 실시간 청취자 수 조회 (이후엔 새로고침 버튼으로)
+      if (wasHidden) refreshListeners();
     }
+  }
+}
+
+// 실시간 청취자 수 조회 (최근 7분 내 heartbeat 기준)
+async function refreshListeners() {
+  if (!djToken) return;
+  const btn = document.getElementById('listener-refresh');
+  if (btn) btn.classList.add('spinning');
+  try {
+    const r = await apiFetch('GET', '/api/dj/live/listeners', undefined, djToken);
+    const n = (r && typeof r.count === 'number') ? r.count : 0;
+    const el = document.getElementById('listener-count');
+    if (el) el.textContent = n + '명';
+  } catch (e) {
+    console.warn('청취자 수 조회 실패:', e);
+  } finally {
+    if (btn) setTimeout(() => btn.classList.remove('spinning'), 400);
+  }
+}
+
+// 정산 정보 조회 (GET /api/dj/revenue)
+async function loadRevenue(manual) {
+  if (!djToken) return;
+  const btn = document.getElementById('revenue-refresh');
+  if (manual && btn) btn.classList.add('spinning');
+  const fmt = n => (n ?? 0).toLocaleString('ko-KR');
+  const unit = '<span class="revenue-item-unit">원</span>';
+  try {
+    const r = await apiFetch('GET', '/api/dj/revenue', undefined, djToken);
+    if (r) {
+      const minPayout = r.minPayout ?? 50000;
+      const balance   = r.balance ?? 0;
+      const est = document.getElementById('rev-estimate');
+      const bal = document.getElementById('rev-balance');
+      const nxt = document.getElementById('rev-nextdate');
+      if (est) est.innerHTML = fmt(r.thisMonthEstimate) + unit;
+      if (bal) bal.innerHTML = fmt(balance) + unit;
+      if (nxt) nxt.textContent = r.nextPayoutDate || '—';
+      const notice = document.getElementById('rev-notice');
+      if (notice) {
+        const base = `적립액은 매월 익월 10일에 확정되며, 잔액 ${fmt(minPayout)}원 이상일 때 정산을 신청할 수 있습니다. 신청분은 익월 15일에 지급됩니다.`;
+        if (r.canRequest) {
+          notice.innerHTML = base + '<br><strong style="color:#16a34a">현재 정산 신청이 가능합니다.</strong>';
+        } else {
+          const remain = Math.max(0, minPayout - balance);
+          notice.innerHTML = base + `<br>최소 신청 금액까지 <strong>${fmt(remain)}원</strong> 남았습니다.`;
+        }
+      }
+    }
+  } catch (e) {
+    console.warn('정산 정보 로드 실패:', e);
+  } finally {
+    if (btn) setTimeout(() => btn.classList.remove('spinning'), 400);
   }
 }
 
