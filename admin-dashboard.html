@@ -4821,13 +4821,18 @@
           if (time) apScheduledAt[s.storeName].time = time;
         });
         apRenderStoreCards();
-        // 생성된 플리를 지정 시각에 프론트 반영
+        // 생성된 플리를 지정 시각에 매장별로 일괄(독립) 프론트 반영
         const res = await apRescheduleGenerated();
         if (res.ok) {
-          plToast(`✓ ${res.count}개 매장 플리를 ${date}${time ? ' ' + time : ''}에 프론트 반영 예약했습니다`, 'success');
+          let msg = `✓ ${res.count}개 매장 플리를 ${date}${time ? ' ' + time : ''}에 프론트 반영 예약했습니다`;
+          if (res.failedNames?.length) {
+            msg += ` · 실패 ${res.failedNames.length}곳: ${res.failedNames.join(', ')}`;
+          }
+          plToast(msg, res.failedNames?.length ? 'error' : 'success');
         } else if (res.reason === 'post') {
-          // 미리보기는 있으나 서버 반영(POST)이 실패 — 실제 원인을 노출
-          plToast(`프론트 반영 실패: ${res.error?.message || '서버 오류'}`, 'error');
+          // 미리보기는 있으나 서버 반영(POST)이 모두 실패 — 실패 매장과 실제 원인을 노출
+          const who = res.failedNames?.length ? ` (${res.failedNames.join(', ')})` : '';
+          plToast(`프론트 반영 실패${who}: ${res.error?.message || '서버 오류'}`, 'error');
         } else {
           plToast('먼저 [플레이리스트 생성]으로 미리보기를 만들어 주세요.', 'error');
         }
@@ -5141,30 +5146,46 @@
     }
 
     // 전체 매장: 생성된 플리를 각각 하나로 합쳐 지정 시각에 프론트 반영 (곡은 재생성하지 않음)
+    //  · 매장별로 '독립' POST → 한 매장이 실패(매장명 불일치·곡 검증 등)해도 나머지는 정상 반영된다.
+    //    (과거: 전 매장을 1개 POST로 묶어 보내 백엔드 단일 트랜잭션에서 1곳이라도 실패하면 전체 롤백 →
+    //     아무것도 반영되지 않아 매장을 하나하나 눌러야 했던 문제를 해결)
     async function apRescheduleGenerated() {
-      const entries = Object.entries(plGenerated).filter(([, g]) => g.mode === 'random' && g.slots?.length);
+      // 현재 매장 목록에 있는 매장만 대상 — 오래된 미리보기에 남은 매장명은 백엔드 404를 유발하므로 제외
+      const validNames = new Set(stores.map(s => s.storeName));
+      const entries = Object.entries(plGenerated)
+        .filter(([name, g]) => g.mode === 'random' && g.slots?.length && validNames.has(name));
       if (!entries.length) return { ok: false, count: 0, reason: 'empty' };
 
       const todayStr = document.getElementById('pl-bulk-date')?.value || new Date().toISOString().slice(0, 10);
-      const payload = [];
-      entries.forEach(([storeName, g]) => {
+      const bulkTime = document.getElementById('pl-bulk-time')?.value || '';
+
+      const results = await Promise.all(entries.map(async ([storeName, g]) => {
         const sched = apScheduledAt[storeName] || {};
         const dateVal = sched.date || todayStr;
-        const timeVal = sched.time || document.getElementById('pl-bulk-time')?.value || '';
+        const timeVal = sched.time || bulkTime || '';
         const scheduledAt = apFrontScheduledAt(dateVal, timeVal);
-        g.scheduledAt = scheduledAt;
-        payload.push({ storeName, scheduledAt, songs: apCombinedSongs(g) });
-      });
-      if (!payload.length) return { ok: false, count: 0, reason: 'empty' };
-      try {
-        await apiFetch('POST', '/api/admin/scheduled-playlists', { schedulePlaylists: payload }, adminToken);
-        plPersistRandom();
-        plSetLastCreated();
-        return { ok: true, count: entries.length };
-      } catch(e) {
-        console.warn('프론트 반영 실패:', e);
-        return { ok: false, count: 0, reason: 'post', error: e };
+        try {
+          await apiFetch('POST', '/api/admin/scheduled-playlists', {
+            schedulePlaylists: [{ storeName, scheduledAt, songs: apCombinedSongs(g) }]
+          }, adminToken);
+          g.scheduledAt = scheduledAt;
+          return { storeName, ok: true };
+        } catch(e) {
+          console.warn(`프론트 반영 실패(${storeName}):`, e);
+          return { storeName, ok: false, error: e };
+        }
+      }));
+
+      plPersistRandom();
+      plSetLastCreated();
+
+      const failedNames = results.filter(r => !r.ok).map(r => r.storeName);
+      const okCount = results.length - failedNames.length;
+      if (!okCount) {
+        return { ok: false, count: 0, reason: 'post',
+          error: results.find(r => !r.ok)?.error, failedNames };
       }
+      return { ok: true, count: okCount, failedNames };
     }
 
     // ── 곡 추가 (백엔드 저장 → 목록 → 체크박스 선택 → 매장에 추가) ──
