@@ -719,9 +719,12 @@
           <button class="btn-apply" onclick="applyChanges()">적용하기</button>
         </div>
 
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:10px">
           <span style="font-size:14px;font-weight:700;color:var(--dark)">업로드된 파일</span>
-          <span style="font-size:13px;color:var(--text-gray)" id="track-count"></span>
+          <div style="display:flex;align-items:center;gap:12px">
+            <span style="font-size:13px;color:var(--text-gray)" id="track-count"></span>
+            <button id="btn-delete-all" onclick="deleteAllTracks()" title="업로드된 트랙 전체 삭제" style="display:none;background:none;border:1px solid #e05a5a;color:#e05a5a;border-radius:6px;padding:5px 10px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">전체 삭제</button>
+          </div>
         </div>
         <div class="track-list" id="track-list"></div>
       </div>
@@ -1266,6 +1269,10 @@ function renderTracks() {
     ? `총 ${tracks.length}개 · ${totalStr} · 지금 시작 시 ${endStr} 종료`
     : `총 ${tracks.length}개`;
 
+  // 전체 삭제 버튼: 서버에 등록된 트랙이 1개 이상일 때만 노출
+  const delAllBtn = document.getElementById('btn-delete-all');
+  if (delAllBtn) delAllBtn.style.display = doneTracks.length > 0 ? '' : 'none';
+
   // 전체 진행률 업데이트
   updateOverallProgress();
 
@@ -1419,11 +1426,53 @@ async function extractDurationAndUpload(localId, file) {
   }
 }
 
-function removeTrack(id) {
+async function removeTrack(id) {
+  const t = tracks.find(t => t.id === id);
+  if (!t) return;
   if (!confirm('트랙을 삭제할까요?')) return;
-  tracks = tracks.filter(t => t.id !== id);
+  // 업로드 중(서버 미등록) 트랙은 로컬에서만 제거
+  if (t.uploading) {
+    tracks = tracks.filter(t => t.id !== id);
+    renderTracks();
+    renderChannel();
+    return;
+  }
+  try {
+    await apiFetch('DELETE', '/api/dj/tracks/' + id, undefined, djToken);
+    tracks = tracks.filter(t => t.id !== id);
+    appliedTrackIds.delete(id);
+    renderTracks();
+    renderChannel();
+  } catch (e) {
+    console.warn('트랙 삭제 실패:', e);
+    alert('트랙 삭제에 실패했습니다.' + (e && e.message ? '\n' + e.message : ''));
+  }
+}
+
+async function deleteAllTracks() {
+  const targets = tracks.filter(t => !t.uploading);
+  if (!targets.length) { alert('삭제할 트랙이 없습니다.'); return; }
+  if (!confirm(`업로드된 트랙 ${targets.length}개를 모두 삭제할까요?\n되돌릴 수 없습니다.`)) return;
+  const btn = document.getElementById('btn-delete-all');
+  if (btn) { btn.disabled = true; btn.textContent = '삭제 중...'; }
+  let ok = 0, fail = 0;
+  for (const t of targets) {
+    try {
+      await apiFetch('DELETE', '/api/dj/tracks/' + t.id, undefined, djToken);
+      tracks = tracks.filter(x => x.id !== t.id);
+      appliedTrackIds.delete(t.id);
+      ok++;
+    } catch (e) {
+      console.warn('트랙 삭제 실패 id=' + t.id, e);
+      fail++;
+    }
+  }
   renderTracks();
   renderChannel();
+  if (btn) { btn.disabled = false; btn.textContent = '전체 삭제'; }
+  alert(fail
+    ? `${ok}개 삭제 완료, ${fail}개 실패. 잠시 후 다시 시도해 주세요.`
+    : `${ok}개 트랙을 모두 삭제했습니다.`);
 }
 
 /* ── 트랙 수정 모달 ── */
