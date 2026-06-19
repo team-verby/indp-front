@@ -5103,9 +5103,13 @@
 
     // 재생시간이 비어있는 곡 기본값(초) — 백엔드는 playTime>0만 허용하므로 0이면 프론트 반영이 실패함
     const DEFAULT_PLAYTIME = 180;
+    // 음원 1곡의 현실적 최대 길이(초). 60분 초과 값은 "mm:ss"를 "H:MM:SS"로 오해석한 파싱 오류
+    //  (예: "12:49:49" → 46189초 → 표시 시 "769:49"분)일 가능성이 커서 입력 단계에서 막는다.
+    const MAX_PLAYTIME_SEC = 60 * 60;
     function normPlayTime(v) {
       const n = Math.round(Number(parsePlayTimeSec(v)) || 0);
-      return n > 0 ? n : DEFAULT_PLAYTIME;
+      if (n <= 0) return DEFAULT_PLAYTIME;
+      return n > MAX_PLAYTIME_SEC ? MAX_PLAYTIME_SEC : n;   // 비정상 대형값 표시·반영 방지(방어)
     }
 
     // 생성된 시간대 슬롯들을 시간순으로 이어붙인 하나의 곡목록 (백엔드 검증 통과하도록 정규화)
@@ -5265,6 +5269,10 @@
 
       const playTime = parsePlayTimeSec(duration);
       if (!playTime || playTime <= 0) { plToast('재생시간(mm:ss)을 입력해 주세요.', 'error'); return; }
+      if (playTime > MAX_PLAYTIME_SEC) {
+        plToast(`재생시간이 비정상적으로 깁니다(${secToMMSS(playTime)}). "분:초" 형식(예 3:42)으로 입력해 주세요.`, 'error');
+        return;
+      }
 
       // YouTube URL → 11자리 ID 파싱
       const vidMatch = vidInput.match(/(?:v=|youtu\.be\/|embed\/)([A-Za-z0-9_-]{11})/);
@@ -5456,6 +5464,7 @@
         if (endDate < startDate)   { errors.push(`${rowNo}행: 종료일이 시작일보다 빠름`); continue; }
         if (hour !== null && (isNaN(hour) || hour < 0 || hour > 23)) { errors.push(`${rowNo}행: 시간대(0~23) 오류`); continue; }
         if (!playTime || playTime <= 0) { errors.push(`${rowNo}행: 재생시간 오류`); continue; }
+        if (playTime > MAX_PLAYTIME_SEC) { errors.push(`${rowNo}행: 재생시간 비정상(${secToMMSS(playTime)}) — mm:ss 확인`); continue; }
         if (!vid)                  { errors.push(`${rowNo}행: YouTube ID/URL 오류`); continue; }
 
         try {
