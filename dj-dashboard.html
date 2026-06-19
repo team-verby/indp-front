@@ -424,11 +424,32 @@
     }
     .revenue-grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(2, 1fr);
       gap: 16px;
       margin-bottom: 20px;
     }
     @media (max-width: 700px) { .revenue-grid { grid-template-columns: 1fr 1fr; } }
+    /* 정산 신청 버튼 */
+    .btn-request-payout {
+      width: 100%;
+      padding: 14px 16px;
+      border: none;
+      border-radius: 12px;
+      background: var(--blue, #2563eb);
+      color: #fff;
+      font-size: 15px;
+      font-weight: 800;
+      font-family: inherit;
+      cursor: pointer;
+      transition: background 0.15s, opacity 0.15s;
+      margin-bottom: 12px;
+    }
+    .btn-request-payout:hover:not(:disabled) { filter: brightness(1.05); }
+    .btn-request-payout:disabled {
+      background: #d1d5db;
+      color: #6b7280;
+      cursor: not-allowed;
+    }
     .revenue-item {
       background: #f8f9fb;
       border-radius: 14px;
@@ -758,7 +779,7 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
       </button>
     </div>
-    <p class="revenue-card-subtitle">청취 시간 3,456초당 1원이 적립됩니다. 더 많은 구독자가 더 오래 들을수록 적립액이 늘어납니다.</p>
+    <p class="revenue-card-subtitle">구독자의 청취 시간에 따라 수익이 적립됩니다. 더 많은 구독자가 더 오래 들을수록 적립액이 늘어납니다.</p>
     <div class="revenue-grid">
       <div class="revenue-item">
         <div class="revenue-item-label">이번 달 예상 적립액</div>
@@ -768,13 +789,10 @@
         <div class="revenue-item-label">현재 적립 잔액</div>
         <div class="revenue-item-value" id="rev-balance">—<span class="revenue-item-unit">원</span></div>
       </div>
-      <div class="revenue-item">
-        <div class="revenue-item-label">다음 정산 예정일</div>
-        <div class="revenue-item-value" id="rev-nextdate" style="font-size:16px">—</div>
-      </div>
     </div>
+    <button class="btn-request-payout" id="btn-request-payout" onclick="requestPayout()" disabled>정산 신청</button>
     <div class="revenue-pending-notice" id="rev-notice">
-      적립액은 매월 익월 10일에 확정되며, 잔액 50,000원 이상일 때 정산을 신청할 수 있습니다. 신청분은 익월 15일에 지급됩니다.
+      적립 잔액이 일정 금액 이상일 때 정산을 신청할 수 있습니다.
     </div>
   </div>
 
@@ -1119,22 +1137,31 @@ async function loadRevenue(manual) {
   try {
     const r = await apiFetch('GET', '/api/dj/revenue', undefined, djToken);
     if (r) {
-      const minPayout = r.minPayout ?? 50000;
       const balance   = r.balance ?? 0;
       const est = document.getElementById('rev-estimate');
       const bal = document.getElementById('rev-balance');
-      const nxt = document.getElementById('rev-nextdate');
       if (est) est.innerHTML = fmt(r.thisMonthEstimate) + unit;
       if (bal) bal.innerHTML = fmt(balance) + unit;
-      if (nxt) nxt.textContent = r.nextPayoutDate || '—';
+
+      const btn = document.getElementById('btn-request-payout');
       const notice = document.getElementById('rev-notice');
-      if (notice) {
-        const base = `적립액은 매월 익월 10일에 확정되며, 잔액 ${fmt(minPayout)}원 이상일 때 정산을 신청할 수 있습니다. 신청분은 익월 15일에 지급됩니다.`;
-        if (r.canRequest) {
-          notice.innerHTML = base + '<br><strong style="color:#16a34a">현재 정산 신청이 가능합니다.</strong>';
+      const pending = !!r.hasPendingRequest;
+      if (btn) {
+        if (pending) {
+          btn.disabled = true;
+          btn.textContent = '정산 신청 완료';
         } else {
-          const remain = Math.max(0, minPayout - balance);
-          notice.innerHTML = base + `<br>최소 신청 금액까지 <strong>${fmt(remain)}원</strong> 남았습니다.`;
+          btn.disabled = !r.canRequest;
+          btn.textContent = '정산 신청';
+        }
+      }
+      if (notice) {
+        if (pending) {
+          notice.innerHTML = '<strong style="color:#16a34a">정산 신청이 접수되었습니다.</strong> 운영팀 확인 후 지급됩니다.';
+        } else if (r.canRequest) {
+          notice.innerHTML = '<strong style="color:#16a34a">현재 정산 신청이 가능합니다.</strong>';
+        } else {
+          notice.innerHTML = '적립 잔액이 일정 금액 이상일 때 정산을 신청할 수 있습니다.';
         }
       }
     }
@@ -1142,6 +1169,27 @@ async function loadRevenue(manual) {
     console.warn('정산 정보 로드 실패:', e);
   } finally {
     if (btn) setTimeout(() => btn.classList.remove('spinning'), 400);
+  }
+}
+
+// 정산 신청 (POST /api/dj/revenue/request)
+async function requestPayout() {
+  if (!djToken) return;
+  const btn = document.getElementById('btn-request-payout');
+  if (!btn || btn.disabled) return;
+  if (!confirm('현재 적립 잔액으로 정산을 신청하시겠습니까?')) return;
+  btn.disabled = true;
+  const prevText = btn.textContent;
+  btn.textContent = '신청 중...';
+  try {
+    await apiFetch('POST', '/api/dj/revenue/request', undefined, djToken);
+    alert('정산 신청이 접수되었습니다. 운영팀 확인 후 지급됩니다.');
+    await loadRevenue();
+  } catch (e) {
+    console.warn('정산 신청 실패:', e);
+    alert((e && e.message) ? e.message : '정산 신청에 실패했습니다. 잠시 후 다시 시도해 주세요.');
+    btn.disabled = false;
+    btn.textContent = prevText;
   }
 }
 
