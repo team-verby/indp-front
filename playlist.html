@@ -400,54 +400,6 @@
       display: none;
       margin-top: 40px;
     }
-    .dj-dashboard-banner {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 20px;
-      background: linear-gradient(135deg, #0e0e12 0%, #1a1030 100%);
-      border-radius: 16px;
-      padding: 28px 32px;
-      margin-bottom: 36px;
-    }
-    .dj-banner-text h3 {
-      font-size: 17px;
-      font-weight: 700;
-      color: #fff;
-      margin-bottom: 6px;
-    }
-    .dj-banner-text p {
-      font-size: 13px;
-      color: rgba(255,255,255,0.55);
-      line-height: 1.5;
-    }
-    .dj-dashboard-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      background: #7c3aed;
-      color: #fff;
-      font-size: 14px;
-      font-weight: 700;
-      padding: 12px 22px;
-      border-radius: 10px;
-      text-decoration: none;
-      white-space: nowrap;
-      transition: background 0.15s, transform 0.1s;
-      flex-shrink: 0;
-    }
-    .dj-dashboard-btn:hover {
-      background: #6d28d9;
-      transform: translateY(-1px);
-    }
-    @media (max-width: 580px) {
-      .dj-dashboard-banner {
-        flex-direction: column;
-        align-items: flex-start;
-        padding: 22px 22px;
-      }
-      .dj-dashboard-btn { width: 100%; justify-content: center; }
-    }
 
     .my-store-label {
       display: flex;
@@ -523,16 +475,6 @@
     <div id="dj-section" style="display:block;margin-top:40px">
       <div class="my-store-label">DJ 큐레이션 플레이리스트</div>
       <div class="store-grid" id="dj-store-grid"></div>
-      <!-- DJ 대시보드 배너 (항상 노출, 미로그인 시 입장 클릭 → 로그인으로 이동) -->
-      <div id="dj-dashboard-banner" class="dj-dashboard-banner" style="margin-top:32px">
-        <div class="dj-banner-text">
-          <h3>DJ 플레이리스트 관리</h3>
-          <p>플레이리스트 업로드, 트랙 관리, 매장 배포 현황을<br>DJ 대시보드에서 확인하세요.</p>
-        </div>
-        <a href="#" class="dj-dashboard-btn" onclick="enterDjDashboard(event)">
-          🎧 DJ 대시보드 입장
-        </a>
-      </div>
     </div>
 
     <!-- 내 매장 (로그인 시에만 표시) -->
@@ -627,16 +569,6 @@
         console.warn('DJ 플레이리스트 로드 실패:', e);
         grid.innerHTML = emptyHtml;
       }
-    }
-
-    function enterDjDashboard(e) {
-      e.preventDefault();
-      const djToken = localStorage.getItem('djToken');
-      if (!djToken) {
-        location.href = 'login.html';
-        return;
-      }
-      location.href = 'dj-dashboard.html';
     }
 
     let brandRendered = false;
