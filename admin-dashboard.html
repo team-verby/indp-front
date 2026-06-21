@@ -4556,6 +4556,14 @@
         : `<div class="cr-drawer-avatar"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>`;
       const fmtD = d => d ? new Date(d).toLocaleDateString('ko-KR', { year:'numeric', month:'2-digit', day:'2-digit' }) : '-';
 
+      // 정산 적립액 (어드민 전용) — 1원 단위 내림이 아닌 계산 로직 그대로의 소수점 금액.
+      const accrued = (typeof c.accruedWon === 'number') ? c.accruedWon : 0;
+      const accruedStr = accrued.toLocaleString('ko-KR', { minimumFractionDigits: 2, maximumFractionDigits: 4 });
+      const floorWon = Math.floor(accrued).toLocaleString('ko-KR');
+      const lsec = c.totalListenSeconds || 0;
+      const lh = Math.floor(lsec / 3600), lm = Math.floor((lsec % 3600) / 60), lsx = lsec % 60;
+      const listenStr = lh > 0 ? `${lh}시간 ${lm}분` : (lm > 0 ? `${lm}분 ${lsx}초` : `${lsx}초`);
+
       document.getElementById('detail-creator-wrap').innerHTML = `
         <div class="cr-drawer-profile">
           ${thumbHtml}
@@ -4570,6 +4578,11 @@
           <div class="cr-info-item"><div class="cr-info-label">휴대폰</div><div class="cr-info-value">${c.phone || '-'}</div></div>
           <div class="cr-info-item"><div class="cr-info-label">이메일</div><div class="cr-info-value" style="font-size:12px">${c.email || '-'}</div></div>
           <div class="cr-info-item"><div class="cr-info-label">생성일</div><div class="cr-info-value">${fmtD(c.createdAt)}</div></div>
+          <div class="cr-info-item" style="grid-column:1/-1">
+            <div class="cr-info-label">정산 적립액 <span style="color:rgba(255,255,255,0.35);font-weight:400">(누적 청취 기준 · 어드민 전용)</span></div>
+            <div class="cr-info-value" style="font-size:16px;font-weight:700">${accruedStr}원</div>
+            <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:3px">지급 기준(내림) ${floorWon}원 · 누적 청취 ${listenStr}</div>
+          </div>
         </div>
       `;
       document.getElementById('creator-detail-panel').style.display = '';
