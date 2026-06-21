@@ -1257,16 +1257,17 @@ function renderTracks() {
   compact.style.display  = 'flex';
   listWrap.style.display = '';
 
-  // 총 길이 및 예상 종료 시간 계산
+  // 전체 재생 길이 계산 (라이브는 끝나면 처음부터 무한 반복 재생)
   const doneTracks = tracks.filter(t => !t.uploading);
   const totalSecs  = doneTracks.reduce((a, t) => a + (t.secs || 0), 0);
   const totalH     = Math.floor(totalSecs / 3600);
   const totalM     = Math.floor((totalSecs % 3600) / 60);
-  const totalStr   = totalH > 0 ? `${totalH}시간 ${totalM}분` : `${totalM}분`;
-  const endTime    = new Date(Date.now() + totalSecs * 1000);
-  const endStr     = `${String(endTime.getHours()).padStart(2,'0')}:${String(endTime.getMinutes()).padStart(2,'0')}`;
+  const totalS     = totalSecs % 60;
+  const totalStr   = totalH > 0
+    ? `${totalH}시간 ${totalM}분`
+    : (totalM > 0 ? `${totalM}분 ${totalS}초` : `${totalS}초`);
   document.getElementById('track-count').textContent = doneTracks.length > 0
-    ? `총 ${tracks.length}개 · ${totalStr} · 지금 시작 시 ${endStr} 종료`
+    ? `총 ${tracks.length}개 · 전체 길이 ${totalStr} · 끝나면 처음부터 반복 재생`
     : `총 ${tracks.length}개`;
 
   // 전체 삭제 버튼: 서버에 등록된 트랙이 1개 이상일 때만 노출
