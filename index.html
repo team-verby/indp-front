@@ -1148,6 +1148,303 @@
       border-radius: 100px;
     }
 
+    /* ───────────── DJ 크리에이터 모집 배너 ───────────── */
+    .dj-recruit {
+      padding: 100px 0;
+      background: var(--white);
+    }
+
+    .dj-recruit-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    .dj-recruit-card {
+      position: relative;
+      overflow: hidden;
+      background: linear-gradient(135deg, #1b1b1d 0%, #23252c 100%);
+      border-radius: 32px;
+      padding: clamp(40px, 6vw, 72px);
+      text-align: center;
+    }
+
+    .dj-recruit-card::before {
+      content: '';
+      position: absolute;
+      width: 420px;
+      height: 420px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(35, 62, 255, 0.5) 0%, rgba(35, 62, 255, 0) 70%);
+      top: -160px;
+      right: -90px;
+      pointer-events: none;
+    }
+
+    .dj-recruit-badge {
+      position: relative;
+      z-index: 1;
+      display: inline-block;
+      background: var(--blue);
+      color: var(--white);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      padding: 6px 14px;
+      border-radius: 100px;
+      margin-bottom: 24px;
+    }
+
+    .dj-recruit-heading {
+      position: relative;
+      z-index: 1;
+      font-size: clamp(28px, 4.5vw, 44px);
+      font-weight: 800;
+      color: var(--white);
+      line-height: 1.3;
+      margin-bottom: 16px;
+    }
+
+    .dj-recruit-heading .accent {
+      color: #6d83ff;
+    }
+
+    .dj-recruit-desc {
+      position: relative;
+      z-index: 1;
+      font-size: clamp(15px, 2vw, 18px);
+      font-weight: 400;
+      color: rgba(255, 255, 255, 0.7);
+      line-height: 1.7;
+      margin-bottom: 32px;
+    }
+
+    .dj-recruit-points {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 12px 24px;
+      margin-bottom: 36px;
+    }
+
+    .dj-recruit-point {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.85);
+    }
+
+    .dj-recruit-point-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #5dff6e;
+      flex-shrink: 0;
+    }
+
+    .dj-recruit-cta {
+      position: relative;
+      z-index: 1;
+      display: inline-block;
+      background: var(--blue);
+      color: var(--white);
+      font-size: 16px;
+      font-weight: 700;
+      font-family: inherit;
+      padding: 16px 32px;
+      border: none;
+      border-radius: 100px;
+      text-decoration: none;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+
+    .dj-recruit-cta:hover { opacity: 0.88; }
+
+    /* 크리에이터 지원 모달 */
+    .ca-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      background: rgba(0, 0, 0, 0.55);
+      padding: 20px;
+      overflow-y: auto;
+    }
+
+    .ca-overlay.open {
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+    }
+
+    .ca-modal {
+      position: relative;
+      width: 100%;
+      max-width: 440px;
+      margin: auto;
+      background: var(--white);
+      border-radius: 24px;
+      padding: 36px 28px 28px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+    }
+
+    .ca-close {
+      position: absolute;
+      top: 18px;
+      right: 18px;
+      width: 32px;
+      height: 32px;
+      border: none;
+      background: #f1f2f5;
+      border-radius: 50%;
+      font-size: 18px;
+      color: var(--text-gray);
+      cursor: pointer;
+      line-height: 1;
+    }
+
+    .ca-title {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--dark);
+      margin-bottom: 6px;
+    }
+
+    .ca-sub {
+      font-size: 14px;
+      color: var(--text-gray);
+      line-height: 1.5;
+      margin-bottom: 22px;
+    }
+
+    .ca-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-sub);
+      margin-bottom: 7px;
+    }
+
+    .ca-req { color: var(--blue); }
+
+    .ca-input,
+    .ca-textarea {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 13px 14px;
+      border: 1px solid #e3e5ea;
+      border-radius: 12px;
+      font-size: 14px;
+      font-family: inherit;
+      color: var(--text-main);
+      margin-bottom: 16px;
+      transition: border-color 0.15s;
+    }
+
+    .ca-input:focus,
+    .ca-textarea:focus {
+      outline: none;
+      border-color: var(--blue);
+    }
+
+    .ca-textarea { resize: vertical; min-height: 72px; }
+
+    .ca-consent {
+      display: flex;
+      align-items: flex-start;
+      gap: 9px;
+      font-size: 13px;
+      color: var(--text-sub);
+      line-height: 1.5;
+      cursor: pointer;
+      margin-bottom: 10px;
+    }
+
+    .ca-consent input { margin-top: 2px; flex-shrink: 0; width: 16px; height: 16px; accent-color: var(--blue); }
+
+    .ca-consent-detail {
+      font-size: 12px;
+      color: var(--text-gray);
+      background: #f8f9fb;
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-bottom: 16px;
+      line-height: 1.6;
+    }
+
+    .ca-consent-detail summary { cursor: pointer; font-weight: 700; color: var(--text-sub); }
+
+    .ca-consent-detail ul { margin: 8px 0 0; padding-left: 16px; }
+
+    .ca-error {
+      display: none;
+      font-size: 13px;
+      color: #e05a5a;
+      margin-bottom: 12px;
+    }
+
+    .ca-submit {
+      width: 100%;
+      padding: 15px;
+      border: none;
+      border-radius: 100px;
+      background: var(--blue);
+      color: var(--white);
+      font-size: 15px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+
+    .ca-submit:hover { opacity: 0.9; }
+
+    .ca-submit:disabled { opacity: 0.5; cursor: default; }
+
+    .ca-success {
+      text-align: center;
+      padding: 20px 0 8px;
+    }
+
+    .ca-success-icon {
+      width: 56px;
+      height: 56px;
+      margin: 0 auto 16px;
+      background: #eaf0ff;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+    }
+
+    .ca-success-title {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--dark);
+      margin-bottom: 8px;
+    }
+
+    .ca-success-desc {
+      font-size: 14px;
+      color: var(--text-gray);
+      line-height: 1.6;
+      margin-bottom: 22px;
+    }
+
+    .dj-recruit-note {
+      position: relative;
+      z-index: 1;
+      margin-top: 18px;
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.45);
+    }
+
     /* ───────────── FAQ ───────────── */
     .faq {
       padding: 100px 0;
@@ -2047,6 +2344,73 @@
     </div>
   </section>
 
+  <!-- DJ 크리에이터 모집 배너 -->
+  <section class="dj-recruit">
+    <div class="dj-recruit-inner">
+      <div class="dj-recruit-card">
+        <span class="dj-recruit-badge">CREATOR 모집</span>
+        <h2 class="dj-recruit-heading">Plan A 전용 <span class="accent">DJ 크리에이터</span>를<br>모집합니다</h2>
+        <p class="dj-recruit-desc">당신이 만든 음악을 전국 매장과 청취자에게 송출하고,<br>청취 시간만큼 수익을 정산받으세요.</p>
+        <div class="dj-recruit-points">
+          <span class="dj-recruit-point"><span class="dj-recruit-point-dot"></span>내 음원 업로드</span>
+          <span class="dj-recruit-point"><span class="dj-recruit-point-dot"></span>실시간 라이브 송출</span>
+          <span class="dj-recruit-point"><span class="dj-recruit-point-dot"></span>청취 기반 수익 정산</span>
+        </div>
+        <button type="button" class="dj-recruit-cta" onclick="openCreatorApply()">크리에이터 지원하기 →</button>
+        <p class="dj-recruit-note">개인 창작자·DJ 누구나 지원할 수 있습니다.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 크리에이터 지원 모달 -->
+  <div class="ca-overlay" id="caOverlay" onclick="if(event.target===this)closeCreatorApply()">
+    <div class="ca-modal" role="dialog" aria-modal="true" aria-labelledby="caTitle">
+      <button type="button" class="ca-close" onclick="closeCreatorApply()" aria-label="닫기">×</button>
+      <div id="caForm">
+        <h3 class="ca-title" id="caTitle">DJ 크리에이터 지원</h3>
+        <p class="ca-sub">아래 정보를 남겨주시면 담당자가 검토 후 연락드립니다.</p>
+
+        <label class="ca-label" for="caName">이름 <span class="ca-req">*</span></label>
+        <input class="ca-input" id="caName" type="text" placeholder="실명을 입력해 주세요" autocomplete="name">
+
+        <label class="ca-label" for="caPhone">연락처 <span class="ca-req">*</span></label>
+        <input class="ca-input" id="caPhone" type="tel" placeholder="010-0000-0000" autocomplete="tel">
+
+        <label class="ca-label" for="caEmail">이메일 <span class="ca-req">*</span></label>
+        <input class="ca-input" id="caEmail" type="email" placeholder="회신받을 이메일" autocomplete="email">
+
+        <label class="ca-label" for="caYoutube">유튜브 플레이리스트 URL <span class="ca-req">*</span></label>
+        <input class="ca-input" id="caYoutube" type="url" placeholder="https://youtube.com/playlist?list=...">
+
+        <label class="ca-label" for="caIntro">간단 소개 (선택)</label>
+        <textarea class="ca-textarea" id="caIntro" placeholder="활동 이력, 음악 장르 등 자유롭게 적어주세요"></textarea>
+
+        <label class="ca-consent">
+          <input type="checkbox" id="caConsent">
+          <span>개인정보 수집·이용에 동의합니다. <span class="ca-req">*</span></span>
+        </label>
+        <details class="ca-consent-detail">
+          <summary>수집·이용 안내 보기</summary>
+          <ul>
+            <li>수집 항목: 이름, 연락처, 이메일, 유튜브 URL, 소개</li>
+            <li>이용 목적: DJ 크리에이터 지원 접수 및 검토·연락</li>
+            <li>보유 기간: 검토 종료 후 1년 또는 동의 철회 시까지</li>
+          </ul>
+        </details>
+
+        <p class="ca-error" id="caError"></p>
+        <button type="button" class="ca-submit" id="caSubmit" onclick="submitCreatorApply()">지원서 제출하기</button>
+      </div>
+
+      <div class="ca-success" id="caSuccess" style="display:none;">
+        <div class="ca-success-icon">✓</div>
+        <div class="ca-success-title">지원이 접수되었습니다</div>
+        <p class="ca-success-desc">소중한 지원 감사합니다.<br>담당자가 검토 후 입력하신 이메일로 연락드리겠습니다.</p>
+        <button type="button" class="ca-submit" onclick="closeCreatorApply()">닫기</button>
+      </div>
+    </div>
+  </div>
+
   <!-- FAQ -->
   <section class="faq">
     <div class="faq-inner">
@@ -2412,6 +2776,69 @@
         if (e.key === 'Escape') overlay.classList.remove('open');
       });
     })();
+  </script>
+
+  <script>
+    function openCreatorApply() {
+      document.getElementById('caForm').style.display = 'block';
+      document.getElementById('caSuccess').style.display = 'none';
+      document.getElementById('caError').style.display = 'none';
+      document.getElementById('caOverlay').classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeCreatorApply() {
+      document.getElementById('caOverlay').classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    function caShowError(msg) {
+      const el = document.getElementById('caError');
+      el.textContent = msg;
+      el.style.display = 'block';
+    }
+
+    async function submitCreatorApply() {
+      const name = document.getElementById('caName').value.trim();
+      const phone = document.getElementById('caPhone').value.trim();
+      const email = document.getElementById('caEmail').value.trim();
+      const youtubeUrl = document.getElementById('caYoutube').value.trim();
+      const introduction = document.getElementById('caIntro').value.trim();
+      const privacyConsent = document.getElementById('caConsent').checked;
+
+      if (!name || !phone || !email || !youtubeUrl) {
+        caShowError('이름, 연락처, 이메일, 유튜브 플레이리스트 URL은 필수입니다.');
+        return;
+      }
+      if (!privacyConsent) {
+        caShowError('개인정보 수집·이용에 동의해야 지원할 수 있습니다.');
+        return;
+      }
+      document.getElementById('caError').style.display = 'none';
+
+      const btn = document.getElementById('caSubmit');
+      btn.disabled = true;
+      btn.textContent = '제출 중...';
+      try {
+        const res = await fetch(BASE_URL + '/api/creator-applications', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, phone, email, youtubeUrl, introduction, privacyConsent })
+        });
+        if (!res.ok) throw new Error('failed');
+        document.getElementById('caForm').style.display = 'none';
+        document.getElementById('caSuccess').style.display = 'block';
+      } catch (e) {
+        caShowError('제출에 실패했습니다. 잠시 후 다시 시도해 주세요.');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '지원서 제출하기';
+      }
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeCreatorApply();
+    });
   </script>
 </body>
 </html>
