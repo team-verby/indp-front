@@ -1730,7 +1730,7 @@
     window.onYouTubeIframeAPIReady = function() {
       ytPlayer = new YT.Player('yt-player', {
         height: '0', width: '0',
-        playerVars: { autoplay: 1, controls: 0, playsinline: 1 },
+        playerVars: { autoplay: 1, mute: 1, controls: 0, playsinline: 1 },
         events: {
           onReady: () => {
             ytReady = true;
@@ -1826,6 +1826,8 @@
       let startPl = ytSongMap.indexOf(headIdx % allSongs.length);
       if (startPl < 0) startPl = 0;
       seekOnPlay = elapsed > 0 ? elapsed : 0;
+      // 클릭 전에는 소리가 절대 나지 않도록, 자동재생은 항상 음소거 상태로 시작
+      if (isMuted && ytPlayer.mute) ytPlayer.mute();
       ytPlayer.loadPlaylist({ playlist: ids, index: startPl, startSeconds: elapsed || 0 });
       if (isMuted) showUnmuteTooltip();
       updateMediaSession();
