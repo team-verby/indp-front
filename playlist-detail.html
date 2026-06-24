@@ -1678,6 +1678,7 @@
 
     // wall clock 기준으로 현재 곡·위치 재계산 (throttling으로 건너뛴 곡 일괄 처리)
     function syncFromWallClock() {
+      if (!songStartedAt) return false; // songStartedAt 미초기화 시 800만 회 루프 방지
       let wallElapsed = Math.floor((Date.now() - songStartedAt) / 1000);
       let changed = false;
       while (allSongs.length > 0) {
@@ -1719,6 +1720,7 @@
     let seekOnPlay = 0;
     let pendingUnmute = false;
     let ytSongMap = []; // loadPlaylist 인덱스 → allSongs 인덱스 매핑
+    let _errorSkipTimer = null; // onError 연속 발화 debounce
 
     // YouTube IFrame API 동적 로드 (콜백 정의 후 로드해야 타이밍 보장)
     (function() {
@@ -1741,14 +1743,16 @@
             }
           },
           onError: () => {
-            // 임베드 불가 영상 → 다음 곡으로 건너뜀 (플레이리스트 내 자동 이동)
-            ytPlayer.nextVideo();
+            // 임베드 불가 영상 → 다음 곡으로 건너뜀, debounce로 연속 에러 폭주 방지
+            if (_errorSkipTimer) return;
+            _errorSkipTimer = setTimeout(() => {
+              _errorSkipTimer = null;
+              ytPlayer.nextVideo();
+            }, 500);
           },
           onStateChange: (e) => {
             if (!isMyStore) return;
             if (e.data === YT.PlayerState.PLAYING) {
-              // 곡이 바뀔 때마다 유튜브가 화질을 재선택하므로 매번 최저 화질 재적용
-              try { ytPlayer.setPlaybackQuality('small'); } catch (err) {}
               // YouTube 플레이리스트 인덱스로 headIdx 동기화
               const ytIdx = ytPlayer.getPlaylistIndex();
               if (ytIdx >= 0 && ytIdx < ytSongMap.length) {
