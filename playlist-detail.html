@@ -1734,6 +1734,8 @@
         events: {
           onReady: () => {
             ytReady = true;
+            // 오디오만 사용하므로 최저 화질 고정 → 영상 디코딩 부하·발열·데이터 절감
+            try { ytPlayer.setPlaybackQuality('small'); } catch (err) {}
             if (allSongs.length > 0 && shouldPlay) {
               syncYTPlaylist();
             }
@@ -1745,6 +1747,8 @@
           onStateChange: (e) => {
             if (!isMyStore) return;
             if (e.data === YT.PlayerState.PLAYING) {
+              // 곡이 바뀔 때마다 유튜브가 화질을 재선택하므로 매번 최저 화질 재적용
+              try { ytPlayer.setPlaybackQuality('small'); } catch (err) {}
               // YouTube 플레이리스트 인덱스로 headIdx 동기화
               const ytIdx = ytPlayer.getPlaylistIndex();
               if (ytIdx >= 0 && ytIdx < ytSongMap.length) {
