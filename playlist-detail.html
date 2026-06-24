@@ -1822,17 +1822,23 @@
     // Chrome이 loadVideoById(매 곡)처럼 autoplay 재평가를 하지 않아 언뮤트 상태 유지됨
     function syncYTPlaylist() {
       if (!isMyStore || !ytReady || allSongs.length === 0) return;
+      // YouTube IFrame API는 플레이리스트를 최대 200곡까지만 로드한다. 200을 넘는 인덱스를
+      // 지정하면 무시되고 첫 곡(0)부터 재생되므로, 현재곡을 맨 앞에 두고 그 지점부터
+      // 끝까지(최대 200곡) 윈도우로 로드한다. (목록은 별도로 전체를 렌더링)
+      const YT_MAX = 200;
+      const start = headIdx % allSongs.length;
+      const count = Math.min(allSongs.length - start, YT_MAX);
       const ids = [];
       ytSongMap = [];
-      for (let i = 0; i < allSongs.length; i++) {
+      for (let k = 0; k < count; k++) {
+        const i = start + k;
         if (allSongs[i].videoId) {
           ids.push(allSongs[i].videoId);
           ytSongMap.push(i);
         }
       }
       if (ids.length === 0) return;
-      let startPl = ytSongMap.indexOf(headIdx % allSongs.length);
-      if (startPl < 0) startPl = 0;
+      const startPl = 0; // 현재곡을 윈도우 맨 앞에 배치
       seekOnPlay = elapsed > 0 ? elapsed : 0;
       // 클릭 전에는 소리가 절대 나지 않도록, 자동재생은 항상 음소거 상태로 시작
       if (isMuted && ytPlayer.mute) ytPlayer.mute();
