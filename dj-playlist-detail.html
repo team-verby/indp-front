@@ -564,7 +564,7 @@
     let timer   = null;
 
     /* 프리뷰 상태 (비구독자 + 라이브 채널) */
-    const PREVIEW_SECS   = 30;
+    const PREVIEW_SECS   = 15;
     let   previewMode    = false;
     let   previewElapsed = 0;
     let   previewEnded   = false;
@@ -675,7 +675,7 @@
           <p class="now-playing-label live" id="np-label">● NOW PLAYING</p>
           <div class="waveform-bar" id="waveform"></div>
           <div class="preview-bar">
-            <span class="preview-bar-text">🎵 30초 미리 듣기</span>
+            <span class="preview-bar-text">🎵 ${PREVIEW_SECS}초 미리 듣기</span>
             <span class="preview-countdown" id="preview-countdown">남은 시간 ${PREVIEW_SECS}초</span>
           </div>
           <div class="preview-notice">
@@ -706,7 +706,7 @@
       npEl.innerHTML = `
         <div class="preview-ended-wrap">
           <div class="preview-ended-icon">🎵</div>
-          <div class="preview-ended-title">30초 미리 듣기가 끝났습니다</div>
+          <div class="preview-ended-title">${PREVIEW_SECS}초 미리 듣기가 끝났습니다</div>
           <div class="preview-ended-desc">
             전체 재생을 원하신다면 Plan A 라이트 요금제를 구독해 주세요.<br>
             월 4,400원으로 모든 DJ 플레이리스트를 무제한으로 들을 수 있습니다.
@@ -818,7 +818,13 @@
           const remain = PREVIEW_SECS - Math.floor(audio.currentTime);
           const countEl = document.getElementById('preview-countdown');
           if (countEl) countEl.textContent = remain > 0 ? `남은 시간 ${remain}초` : '0초';
-          if (audio.currentTime >= PREVIEW_SECS) { audio.pause(); endPreview(); return; }
+          if (audio.currentTime >= PREVIEW_SECS) {
+            audio.pause();
+            endPreview(); // previewEnded=true 설정 → 아래 abort의 error/abort 이벤트는 무시됨
+            // 미리듣기 종료 후 백그라운드 다운로드 취소 → 불필요한 대역폭(비용) 차단
+            try { audio.removeAttribute('src'); audio.load(); } catch (e) {}
+            return;
+          }
         }
 
         buildWaveform(elapsed, t.secs);
@@ -837,6 +843,7 @@
 
       /* 재생 실패 시 파형 애니메이션으로 폴백 */
       audio.addEventListener('error', () => {
+        if (previewEnded) return; // 프리뷰 종료 후 의도적 다운로드 중단은 무시(폴백 금지)
         console.warn('오디오 재생 실패 — 파형 시뮬레이션으로 전환');
         startTimer();
       });
