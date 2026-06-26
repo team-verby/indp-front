@@ -604,16 +604,25 @@
       return h > 0 ? `${h}시간 ${m}분` : `${m}분`;
     }
 
-    /* ── 파형 바 생성 ── */
+    /* ── 파형 바 생성 ──
+       timeupdate는 초당 수회~수십회 발생하므로, 칠해진 막대 수가 실제로
+       바뀐 경우(또는 바 DOM이 교체된 경우)에만 갱신해 불필요한 재렌더를 막는다. */
     const WAVE_HEIGHTS = [8,14,22,10,28,6,20,12,26,8,18,24,10,28,14,24,6,20,16,26,9,22,8,26,14,20,10,24,6,18,22,9,28,12,22,7,16,26,11,20,6,27,14,23,18];
+    let _waveBar = null;        // 현재 렌더된 waveform DOM 참조
+    let _wavePlayed = -1;       // 마지막으로 칠한 막대 수
     function buildWaveform(currentSecs, totalSecs) {
       const bar = document.getElementById('waveform');
       if (!bar) return;
-      const pct = totalSecs > 0 ? currentSecs / totalSecs : 0;
+      const pct = totalSecs > 0 ? Math.min(currentSecs / totalSecs, 1) : 0;
+      const playedCount = Math.round(pct * WAVE_HEIGHTS.length);
+      // 동일한 bar에 칠한 막대 수가 그대로면 DOM 작업 생략
+      if (bar === _waveBar && playedCount === _wavePlayed) return;
       bar.innerHTML = WAVE_HEIGHTS.map((h, i) => {
-        const played = i / WAVE_HEIGHTS.length < pct;
+        const played = i < playedCount;
         return `<span style="height:${h}px" class="${played ? 'played' : ''}"></span>`;
       }).join('');
+      _waveBar = bar;
+      _wavePlayed = playedCount;
     }
 
     /* ── 메인 렌더 ── */
@@ -805,14 +814,18 @@
       audio = new Audio();
       audio.preload = 'auto';
       let idx = pl.currentIdx || 0;
+      let switching = false;      // 트랙 전환(src 교체) 직후의 abort성 error 무시용
 
       function loadTrack(i) {
         const t = pl.tracks[i];
         if (!t) return;
         elapsed = 0;
         lastBeatCT = 0;            // 트랙 전환 시 재생 델타 기준 리셋
+        _wavePlayed = -1;          // 새 곡: 파형 강제 재계산
+        switching = true;          // src 교체로 인한 이전 리소스 abort error는 폴백 금지
         audio.src = normalizeStreamUrl(t.streamUrl);
-        audio.play().catch(() => showPlayButton());
+        audio.play().then(() => { switching = false; })
+                    .catch(() => { switching = false; showPlayButton(); });
       }
 
       audio.addEventListener('timeupdate', () => {
@@ -862,9 +875,13 @@
       /* 일시정지 시 누적분 즉시 전송 + 재개 시 다시 조기 등록되도록 플래그 리셋 */
       audio.addEventListener('pause', () => { flushListening(false); joinedBeatSent = false; });
 
-      /* 재생 실패 시 파형 애니메이션으로 폴백 */
+      /* 재생 실패 시 파형 애니메이션으로 폴백.
+         단, 트랙 전환(src 교체)으로 발생하는 abort성 error나 실제 미디어 에러가
+         아닌 경우는 무시 — 매 전환마다 startTimer가 누적되어 CPU 폭주하던 문제 차단. */
       audio.addEventListener('error', () => {
         if (previewEnded) return; // 프리뷰 종료 후 의도적 다운로드 중단은 무시(폴백 금지)
+        if (switching) return;    // 곡 전환 직후의 이전 리소스 abort는 정상 동작
+        if (!audio.error) return; // 실제 MediaError가 없으면 폴백하지 않음
         console.warn('오디오 재생 실패 — 파형 시뮬레이션으로 전환');
         startTimer();
       });
@@ -877,6 +894,7 @@
     function startTimer() {
       if (!pl || !pl.isLive) return;
       if (!canPlay && !previewMode) return;
+      if (timer) return;          // 멱등: 이미 폴백 타이머가 돌고 있으면 중복 생성 금지(인터벌 누수 차단)
       const t = pl.tracks[pl.currentIdx];
       timer = setInterval(() => {
         elapsed++;
