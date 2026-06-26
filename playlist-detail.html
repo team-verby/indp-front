@@ -1753,8 +1753,8 @@
           onStateChange: (e) => {
             if (!isMyStore) return;
             if (e.data === YT.PlayerState.PLAYING) {
-              // 곡 전환 때마다 화질이 올라갈 수 있어 매 재생 시작 시 최저 화질 재확인
-              try { ytPlayer.setPlaybackQuality('tiny'); } catch (err) {}
+              // 주의: 여기서 setPlaybackQuality 호출 금지 — PLAYING 재발화 무한루프로
+              // 브라우저 freeze 유발(6ff1141에서 제거). 화질은 onReady·loadPlaylist에서만 지정.
               // YouTube 플레이리스트 인덱스로 headIdx 동기화
               const ytIdx = ytPlayer.getPlaylistIndex();
               if (ytIdx >= 0 && ytIdx < ytSongMap.length) {
