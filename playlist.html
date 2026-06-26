@@ -572,13 +572,24 @@
     }
 
     let brandRendered = false;
+    let currentPlTab = 'dj';        // 현재 활성 탭
+    let myStoreHasContent = false;  // 로그인 점주의 '나의 공간' 카드 존재 여부
+
+    // '나의 공간'은 브랜드(매장) 탭에서, 내 매장이 있을 때만 노출
+    function syncMyStoreVisibility() {
+      const sec = document.getElementById('my-store-section');
+      if (sec) sec.style.display = (currentPlTab === 'brand' && myStoreHasContent) ? 'block' : 'none';
+    }
+
     function switchPlTab(name, btn) {
       document.querySelectorAll('.pl-tab-btn').forEach(b => b.classList.remove('active'));
       if (btn) btn.classList.add('active');
 
       const isBrand = name === 'brand';
+      currentPlTab = isBrand ? 'brand' : 'dj';
       document.getElementById('brand-section').style.display = isBrand ? '' : 'none';
       document.getElementById('dj-section').style.display    = isBrand ? 'none' : 'block';
+      syncMyStoreVisibility();
 
       if (isBrand) {
         if (!brandRendered) { brandRendered = true; renderDynamicStores(); }
@@ -782,7 +793,8 @@
           grid.appendChild(card);
         });
 
-        document.getElementById('my-store-section').style.display = 'block';
+        myStoreHasContent = true;
+        syncMyStoreVisibility();   // 브랜드 탭일 때만 표시 (DJ 탭에서는 숨김)
         buildSoundwaves();
 
         // 재생 중 여부 재확인
