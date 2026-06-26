@@ -552,8 +552,29 @@
   <div class="copyright">Copyright 2026. VERBY Co. all rights reserved.</div>
 
   <script>
-    /* ── 구독 인증 확인 ── */
-    const canPlay = !!(getUserToken() || localStorage.getItem('djToken') || getOwnerToken());
+    /* ── 구독 인증 확인 ──
+       전체 재생은 "Plan A를 결제한(ACTIVE 구독) 사용자"에게만 허용한다.
+       점주(ownerToken)·DJ(djToken)·미구독 사용자는 미리듣기로 처리한다.
+       판정 기준: userToken으로 GET /api/user/subscription 호출 시 ACTIVE 구독 반환(200) 여부.
+       (이 엔드포인트는 @LoginUser라 점주/DJ 토큰으로는 호출 자체가 안 됨) */
+    let canPlay = false;
+
+    async function resolveCanPlay() {
+      const userToken = getUserToken();
+      if (!userToken) return false;           // 점주/DJ/비로그인 → 미구독 취급
+      try {
+        const sub = await apiFetch('GET', '/api/user/subscription', undefined, userToken);
+        if (!sub) return false;
+        // 서버는 ACTIVE만 반환하지만, 만료일 경과분(자정 만료 스케줄러 이전)을 안전망으로 한 번 더 차단
+        if (sub.endDate) {
+          const today = new Date(); today.setHours(0, 0, 0, 0);
+          if (new Date(sub.endDate) < today) return false;
+        }
+        return true;
+      } catch (e) {
+        return false;                         // 404(구독 없음) 등 → 미구독
+      }
+    }
 
     /* ── URL 파라미터 ── */
     const plId = parseInt(new URLSearchParams(location.search).get('id')) || 1;
@@ -564,7 +585,7 @@
     let timer   = null;
 
     /* 프리뷰 상태 (비구독자 + 라이브 채널) */
-    const PREVIEW_SECS   = 30;
+    const PREVIEW_SECS   = 15;
     let   previewMode    = false;
     let   previewElapsed = 0;
     let   previewEnded   = false;
@@ -666,7 +687,7 @@
         /* 비구독자 + 라이브 */
         const t = pl.tracks[pl.currentIdx];
         const npEl = document.getElementById('np-section');
-        const isLoggedIn = !!getOwnerToken();
+        const isLoggedIn = !!(getUserToken() || getOwnerToken() || localStorage.getItem('djToken'));
         const ctaBtns = isLoggedIn
           ? `<a href="plan.html" class="btn-subscribe">구독하기</a>`
           : `<a href="login.html" class="btn-login-soft">로그인</a>
@@ -675,7 +696,7 @@
           <p class="now-playing-label live" id="np-label">● NOW PLAYING</p>
           <div class="waveform-bar" id="waveform"></div>
           <div class="preview-bar">
-            <span class="preview-bar-text">🎵 30초 미리 듣기</span>
+            <span class="preview-bar-text">🎵 ${PREVIEW_SECS}초 미리 듣기</span>
             <span class="preview-countdown" id="preview-countdown">남은 시간 ${PREVIEW_SECS}초</span>
           </div>
           <div class="preview-notice">
@@ -706,7 +727,7 @@
       npEl.innerHTML = `
         <div class="preview-ended-wrap">
           <div class="preview-ended-icon">🎵</div>
-          <div class="preview-ended-title">30초 미리 듣기가 끝났습니다</div>
+          <div class="preview-ended-title">${PREVIEW_SECS}초 미리 듣기가 끝났습니다</div>
           <div class="preview-ended-desc">
             전체 재생을 원하신다면 Plan A 라이트 요금제를 구독해 주세요.<br>
             월 4,400원으로 모든 DJ 플레이리스트를 무제한으로 들을 수 있습니다.
@@ -818,7 +839,13 @@
           const remain = PREVIEW_SECS - Math.floor(audio.currentTime);
           const countEl = document.getElementById('preview-countdown');
           if (countEl) countEl.textContent = remain > 0 ? `남은 시간 ${remain}초` : '0초';
-          if (audio.currentTime >= PREVIEW_SECS) { audio.pause(); endPreview(); return; }
+          if (audio.currentTime >= PREVIEW_SECS) {
+            audio.pause();
+            endPreview(); // previewEnded=true 설정 → 아래 abort의 error/abort 이벤트는 무시됨
+            // 미리듣기 종료 후 백그라운드 다운로드 취소 → 불필요한 대역폭(비용) 차단
+            try { audio.removeAttribute('src'); audio.load(); } catch (e) {}
+            return;
+          }
         }
 
         buildWaveform(elapsed, t.secs);
@@ -837,6 +864,7 @@
 
       /* 재생 실패 시 파형 애니메이션으로 폴백 */
       audio.addEventListener('error', () => {
+        if (previewEnded) return; // 프리뷰 종료 후 의도적 다운로드 중단은 무시(폴백 금지)
         console.warn('오디오 재생 실패 — 파형 시뮬레이션으로 전환');
         startTimer();
       });
@@ -872,6 +900,7 @@
       try {
         pl = await apiFetch('GET', `/api/dj/playlists/${plId}`);
         elapsed = 0;
+        canPlay = await resolveCanPlay();      // Plan A ACTIVE 구독자만 true
         previewMode = !canPlay && !!(pl?.isLive);
       } catch(e) {
         console.warn('DJ 플레이리스트 로드 실패:', e);
