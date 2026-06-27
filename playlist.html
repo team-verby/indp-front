@@ -253,6 +253,29 @@
       color: var(--text-gray);
     }
 
+    .card-info-listeners {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      margin-top: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #e8344e;
+    }
+
+    .card-info-listeners .listen-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #e8344e;
+      animation: listen-pulse 1.4s ease-in-out infinite;
+    }
+
+    @keyframes listen-pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.35; transform: scale(0.7); }
+    }
+
     /* ── CTA + Footer Section ── */
     .playlist-cta-footer {
       background: var(--blue);
@@ -537,6 +560,7 @@
         </div>
         <div class="card-info">
           <p class="card-info-name">${pl.name}</p>
+          ${pl.isLive ? `<p class="card-info-listeners"><span class="listen-dot"></span>${pl.listeners || 0}명 청취 중</p>` : ''}
           <p class="card-info-addr">${pl.djName}</p>
         </div>`;
     }
