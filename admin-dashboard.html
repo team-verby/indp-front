@@ -3531,6 +3531,7 @@
         atmosphere, lighting,
         applicant:    apply.applicantName  || '',
         contact:      apply.applicantPhone || '',
+        loginId:      apply.loginId        || '',
         plan, planRaw: sub.planType || sub.plan || '', appliedAt,
         period: fmtPeriod(subStart, subEnd),
         _sub: { ...sub, startDate: subStart, endDate: subEnd },
@@ -3706,6 +3707,7 @@
           <div class="detail-grid">
             <div class="detail-item"><p class="detail-label">신청자</p><p class="detail-value">${d.applicant || '-'}</p></div>
             <div class="detail-item"><p class="detail-label">연락처</p><p class="detail-value">${d.contact || '-'}</p></div>
+            <div class="detail-item"><p class="detail-label">아이디</p><p class="detail-value">${d.loginId || '-'}</p></div>
             <div class="detail-item"><p class="detail-label">요금제</p><p class="detail-value">${d.plan || '-'}</p></div>
             <div class="detail-item"><p class="detail-label">이용 기간</p><p class="detail-value" style="white-space:pre-line;line-height:1.7">${d.period || '-'}</p></div>
             <div class="detail-item"><p class="detail-label">구독 시작일</p><p class="detail-value">${d.appliedAt || '-'}</p></div>
