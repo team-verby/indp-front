@@ -2816,7 +2816,7 @@
         <div class="panel-header">
           <div>
             <h2 class="panel-title">매장 관리</h2>
-            <p class="panel-subtitle">총 <strong id="store-count" style="color:#fff">6</strong>건의 도입 문의가 접수되었습니다</p>
+            <p class="panel-subtitle">총 <strong id="store-count" style="color:#fff">–</strong>건의 도입 문의가 접수되었습니다</p>
           </div>
         </div>
 
@@ -3555,6 +3555,8 @@
 
     async function loadStores(page = 0) {
       storePage = page;
+      // 응답 전까지 옛 카운트가 깜빡이지 않도록 중립 표시
+      document.getElementById('store-count').textContent = '–';
       try {
         const data = await apiFetch('GET', `/api/admin/stores?page=${page}&size=${PAGE_SIZE}`, undefined, adminToken);
         console.log('[admin/stores 응답 전체]', JSON.stringify(data));
