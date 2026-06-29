@@ -794,8 +794,15 @@
         console.log('[apply 응답]', JSON.stringify(result));
         const { orderId, amount, orderName } = result;
 
-        openTossModal();
-        await initTossWidget(orderId, amount, orderName);
+        // ── 계좌이체 모드 (결제 모듈 점검 중) ──
+        // 결제 모듈 복구 시: 아래 BANK_TRANSFER 블록을 지우고 토스 2줄 주석을 해제하면 원복된다.
+        localStorage.setItem('pendingOrderId', orderId);
+        localStorage.setItem('pendingAmount', String(amount));
+        localStorage.setItem('paymentMode', 'BANK_TRANSFER');
+        location.href = `${window.location.origin}/complete.html?mode=bank`;
+        return;
+        // openTossModal();
+        // await initTossWidget(orderId, amount, orderName);
       } catch(e) {
         // 서버 오류 메시지가 전달되지 못하고 "Failed to fetch"(네트워크/CORS)로 오는 경우 친화적 안내.
         // Plan A에서 이 단계의 실패는 대개 아이디 중복(이메일은 중복 허용)이다.
