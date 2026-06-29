@@ -92,3 +92,16 @@ sw.*
 
 # 로컬 매핑 백업(공개 배포 금지)
 .mood-schedule-backup.json
+
+# Playwright 테스트 산출물(영상/스크린샷/리포트)
+/test-results/
+/e2e/report/
+*.webm
+
+# 백엔드 시딩용 테스트 음원 바이너리(프론트 배포 대상 아님)
+/songtest/
+
+# 내부 문서/스크립트(정적 사이트로 노출 금지)
+/BACKEND_*.md
+/delete-stores.sql
+/*.csv
