@@ -1631,6 +1631,8 @@
     let songStartedAt = 0; // 현재 곡이 시작된 wall clock (Date.now())
     let ticker      = null;
     let shouldPlay  = false; // currentSong이 있을 때만 true
+    let ytWindowEnd = 0;     // 현재 YouTube 윈도우가 커버하는 allSongs 끝(다음 윈도우 시작) 인덱스
+    let advancingWindow = false; // 윈도우 이어붙이기 진행 중 플래그(ENDED 중복 발화 방지)
 
     function toMMSS(s) {
       return `${String(Math.floor(s / 60)).padStart(2,'0')}:${String(s % 60).padStart(2,'0')}`;
@@ -1762,6 +1764,7 @@
           onStateChange: (e) => {
             if (!isMyStore) return;
             if (e.data === YT.PlayerState.PLAYING) {
+              advancingWindow = false; // 새 윈도우 재생 시작 → 이어붙이기 가드 해제
               // 주의: 여기서 setPlaybackQuality 호출 금지 — PLAYING 재발화 무한루프로
               // 브라우저 freeze 유발(6ff1141에서 제거). 화질은 onReady·loadPlaylist에서만 지정.
               // YouTube 플레이리스트 인덱스로 headIdx 동기화
@@ -1796,7 +1799,22 @@
                 hideUnmuteTooltip();
               }
             } else if (e.data === YT.PlayerState.ENDED) {
-              showPlaylistDone();
+              // YouTube는 한 번에 최대 200곡만 로드한다. 윈도우 끝(ENDED)에 닿았을 때
+              // 뒤에 곡이 더 남아 있으면 새로고침 없이 다음 윈도우를 이어 로드한다.
+              // 진짜 마지막 곡(ytWindowEnd >= allSongs.length)에서만 종료 배너를 띄워
+              // 처음으로 되감기는 무한루프를 차단한다. 재로드는 SSE 추천 때와 동일한
+              // loadPlaylist 단일 호출이라 추가 부하·타이머가 없다.
+              if (!advancingWindow && ytWindowEnd < allSongs.length) {
+                advancingWindow = true;
+                headIdx = ytWindowEnd;
+                elapsed = 0;
+                seekOnPlay = 0;
+                songStartedAt = Date.now();
+                renderQueue();
+                syncYTPlaylist();
+              } else if (!advancingWindow) {
+                showPlaylistDone();
+              }
             }
           }
         }
@@ -1836,9 +1854,13 @@
       // YouTube IFrame API는 플레이리스트를 최대 200곡까지만 로드한다. 200을 넘는 인덱스를
       // 지정하면 무시되고 첫 곡(0)부터 재생되므로, 현재곡을 맨 앞에 두고 그 지점부터
       // 끝까지(최대 200곡) 윈도우로 로드한다. (목록은 별도로 전체를 렌더링)
-      const YT_MAX = 200;
+      // 운영 기본 200곡(YouTube IFrame 한계). dev 테스트 한정: ?ytmax=N(1~199)으로
+      // 윈도우를 축소해 200곡 경계 이어붙이기를 빠르게 검증한다. 200 이상/미지정은 기본값.
+      const _ytmaxParam = parseInt(new URLSearchParams(location.search).get('ytmax'), 10);
+      const YT_MAX = (_ytmaxParam > 0 && _ytmaxParam < 200) ? _ytmaxParam : 200;
       const start = headIdx % allSongs.length;
       const count = Math.min(allSongs.length - start, YT_MAX);
+      ytWindowEnd = start + count; // 이 윈도우 다음에 이어 로드할 시작 인덱스
       const ids = [];
       ytSongMap = [];
       for (let k = 0; k < count; k++) {
