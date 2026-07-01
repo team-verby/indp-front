@@ -2790,6 +2790,21 @@
     .cr-stat-val { font-size: 20px; font-weight: 800; color: #fff; }
     .cr-stat-lbl { font-size: 11px; color: rgba(255,255,255,0.35); margin-top: 2px; }
     .cr-revenue-placeholder { background: rgba(255,255,255,0.04); border-radius: 10px; padding: 16px; text-align: center; font-size: 13px; color: rgba(255,255,255,0.3); }
+    /* 크리에이터 상세 — 정산 신청 내역 */
+    .cr-settle-empty { font-size: 13px; color: rgba(255,255,255,0.3); padding: 8px 0; }
+    .cr-settle-item {
+      background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 10px; padding: 12px 14px; margin-bottom: 8px;
+    }
+    .cr-settle-item:last-child { margin-bottom: 0; }
+    .cr-settle-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .cr-settle-amount { font-size: 15px; font-weight: 700; color: #fff; }
+    .cr-settle-status { font-size: 12px; font-weight: 700; white-space: nowrap; }
+    .cr-settle-meta { font-size: 11px; color: rgba(255,255,255,0.35); margin-top: 5px; }
+    .cr-settle-tax-btn {
+      margin-top: 9px; background: #23272e; color: #fff; border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 6px; padding: 5px 11px; font-size: 12px; font-weight: 600; font-family: inherit; cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -4734,12 +4749,54 @@
             <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:3px">지급 기준(내림) ${floorWon}원 · 누적 청취 ${listenStr}</div>
           </div>
         </div>
+
+        <div class="cr-section">
+          <div class="cr-section-title">정산 신청 내역</div>
+          <div id="cr-settlement-list"><div class="cr-settle-empty">불러오는 중...</div></div>
+        </div>
       `;
+      acLoadCreatorSettlements(c.id);
       document.getElementById('creator-detail-panel').style.display = '';
       document.getElementById('store-detail-panel').style.display = 'none';
       document.querySelectorAll('[data-store-only]').forEach(t => t.style.display = 'none');
       document.getElementById('drawer-backdrop').classList.add('open');
       document.getElementById('detail-drawer').classList.add('open');
+    }
+
+    // 크리에이터 상세 — 해당 크리에이터의 정산 신청 내역 로드 (정산 관리 메뉴와 동일 데이터)
+    async function acLoadCreatorSettlements(creatorId) {
+      const wrap = document.getElementById('cr-settlement-list');
+      if (!wrap) return;
+      try {
+        const data = await apiFetch('GET', '/api/admin/settlements', undefined, adminToken);
+        const all = data.settlements || [];
+        // 세금정보 상세 모달(openSettlementTax)이 참조하는 맵을 함께 채워 둔다.
+        all.forEach(s => { settlementMap[s.settlementRequestId] = s; });
+        const list = all.filter(s => s.creatorId === creatorId);
+        if (!list.length) {
+          wrap.innerHTML = '<div class="cr-settle-empty">정산 신청 내역이 없습니다.</div>';
+          return;
+        }
+        wrap.innerHTML = list.map(s => {
+          const statusKo = SETTLEMENT_STATUS_KO[s.status] || s.status;
+          const statusColor = SETTLEMENT_STATUS_COLOR[s.status] || '#888';
+          const taxBtn = s.taxInfo
+            ? `<button class="cr-settle-tax-btn" onclick="openSettlementTax(${s.settlementRequestId})">세금·계좌 정보</button>`
+            : '';
+          const meta = `신청 ${fmtSettlementDateTime(s.requestedAt)}`
+            + (s.processedAt ? ` · 처리 ${fmtSettlementDateTime(s.processedAt)}` : '');
+          return `<div class="cr-settle-item">
+            <div class="cr-settle-row">
+              <span class="cr-settle-amount">${(s.amount || 0).toLocaleString()}원</span>
+              <span class="cr-settle-status" style="color:${statusColor}">${statusKo}</span>
+            </div>
+            <div class="cr-settle-meta">${meta}</div>
+            ${taxBtn}
+          </div>`;
+        }).join('');
+      } catch(e) {
+        wrap.innerHTML = `<div class="cr-settle-empty">정산 내역을 불러오지 못했습니다: ${e.message || ''}</div>`;
+      }
     }
 
     async function acDeactivate(creatorId, btn) {
