@@ -6564,6 +6564,9 @@
           <div class="pl-store-item-schedule" onclick="event.stopPropagation()">
             <span class="pl-schedule-label">프론트 적용 시각</span>
             <div class="pl-schedule-inputs">
+              ${mappedCount
+                ? `<button class="pl-bulk-apply-btn" style="flex-shrink:0;background:rgba(99,102,241,0.18);border-color:rgba(99,102,241,0.45)" onclick="apGenerateOne('${s.storeName}')">${hasGen ? '재생성' : '생성'}</button>`
+                : `<button class="pl-bulk-apply-btn" style="flex-shrink:0;opacity:0.4;cursor:not-allowed" disabled title="시간대별 무드 매핑을 먼저 설정해 주세요">생성</button>`}
               <input type="date" class="pl-schedule-input date-input"
                 value="${schedDate}"
                 onchange="apSetSchedule('${s.storeName}', 'date', this.value)" />
@@ -6572,7 +6575,7 @@
                 onchange="apSetSchedule('${s.storeName}', 'time', this.value)" />
               ${hasGen
                 ? `<button class="pl-bulk-apply-btn" style="flex-shrink:0" onclick="apRescheduleStore('${s.storeName}')">프론트 반영</button>`
-                : `<button class="pl-bulk-apply-btn" style="flex-shrink:0;opacity:0.4;cursor:not-allowed" disabled title="먼저 [플레이리스트 생성]으로 미리보기를 만들어 주세요">프론트 반영</button>`}
+                : `<button class="pl-bulk-apply-btn" style="flex-shrink:0;opacity:0.4;cursor:not-allowed" disabled title="먼저 생성해 미리보기를 만들어 주세요">프론트 반영</button>`}
             </div>
           </div>`;
 
@@ -6806,6 +6809,99 @@
     }
     plRestoreRandom();
 
+    // ── 단일 매장 랜덤 플리 슬롯 생성 코어 (마감+1시간 확장 포함). 전체/개별 생성 공용 ──
+    //  반환: { schedulePlaylists:[{storeName,hour,mood,songs}], skipped:['22시(무드)'] }
+    //  매핑이 아예 없으면 둘 다 빈 배열.
+    function apGenerateStoreSlots(s) {
+      const sm = apData[s.storeName] || {};
+      const slots = apOrderHours(Array.from({length:24}, (_,h) => h).filter(h => sm[String(h)]));
+      if (!slots.length) return { schedulePlaylists: [], skipped: [] };
+
+      // 영업 종료 후 1시간 추가 생성: 마지막 매핑 시간대의 무드로 1시간(18곡)을 더 붙인다.
+      // 예) 23:00 마감 → 23시 슬롯(18곡) 추가 → 생성 24:00까지. 재생 종료가 close-30min → close+30min으로 밀림.
+      const lastHour  = slots[slots.length - 1];
+      const extraHour = (lastHour + 1) % 24;
+      const moodOf    = (h) => (h === extraHour ? sm[String(lastHour)] : sm[String(h)]);
+      const genSlots  = slots.includes(extraHour) ? slots : [...slots, extraHour];  // 24시간 매장은 중복 방지
+
+      const schedulePlaylists = [];
+      const skipped = [];
+      for (const h of genSlots) {
+        const mood = moodOf(h);
+        const pool = mdData[mood] || [];
+        if (!pool.length) { skipped.push(`${String(h).padStart(2,'0')}시(${mood})`); continue; }
+
+        // 18곡 랜덤 선택
+        let picked = [...pool].sort(() => Math.random()-0.5).slice(0, 18);
+
+        // 개별 추가 곡 적용 (position 위치에 replace)
+        const extras = (apExtraSongs[s.storeName]?.[h] || [])
+          .slice()
+          .sort((a, b) => a.position - b.position);
+        for (const extra of extras) {
+          const pos = Math.max(0, Math.min(extra.position - 1, picked.length - 1));
+          picked.splice(pos, 1, {
+            title:    extra.song.title,
+            artist:   extra.song.artist,
+            vid:      extra.song.vid || genVid(),
+            playTime: extra.song.playTime,
+          });
+        }
+
+        schedulePlaylists.push({
+          storeName: s.storeName,
+          hour: h,
+          mood,
+          songs: picked.map(t => ({
+            title:    t.title,
+            artist:   t.artist,
+            vid:      t.vid || genVid(),
+            playTime: parsePlayTimeSec(t.playTime),
+          }))
+        });
+      }
+      return { schedulePlaylists, skipped };
+    }
+
+    // ── 개별 매장 플리 생성 (미리보기). 전체 생성과 동일 로직을 한 매장에만 적용 ──
+    async function apGenerateOne(storeName) {
+      // 카탈로그·시간대 무드 매핑 서버 동기화 보장
+      try { await mdInit(); } catch {}
+      try { await apInit(); } catch {}
+
+      const s = stores.find(x => x.storeName === storeName);
+      if (!s) { plToast('매장을 찾을 수 없습니다.', 'error'); return; }
+
+      const { schedulePlaylists, skipped } = apGenerateStoreSlots(s);
+
+      if (!schedulePlaylists.length) {
+        const sm = apData[storeName] || {};
+        const hasMapping = Object.keys(sm).some(k => sm[k]);
+        let msg;
+        if (!hasMapping) {
+          msg = `"${storeName}": 시간대별 무드 매핑이 없습니다. 매장을 펼쳐 [시간대별 무드 매핑]에서 지정·저장 후 다시 시도해 주세요.`;
+        } else if (mdTotalCount(mdData) === 0) {
+          msg = '음원 데이터(무드별 곡)가 없습니다. [음원 데이터 관리]에서 곡을 추가·저장해 주세요.';
+        } else {
+          msg = `"${storeName}": 매핑된 무드에 곡이 없습니다${skipped.length ? ' — ' + skipped.join(', ') : ''}.`;
+        }
+        plToast(msg, 'error');
+        return;
+      }
+
+      plGenerated[storeName] = {
+        mode: 'random',
+        slots: schedulePlaylists.map(pl => ({ hour: pl.hour, mood: pl.mood, songs: pl.songs })),
+        scheduledAt: null,   // 아직 프론트 미반영
+      };
+      plPersistRandom();
+      plSetLastCreated();
+      apRenderStoreCards();
+
+      const songCount = schedulePlaylists.reduce((n, pl) => n + pl.songs.length, 0);
+      plToast(`✓ "${storeName}" 플리 생성 완료 (${schedulePlaylists.length}개 시간대 · ${songCount}곡) — 적용 시각 설정 후 [프론트 반영]`, 'success');
+    }
+
     async function apBulkGenerate() {
       const resultArea = document.getElementById('pl-gen-result');
 
@@ -6817,53 +6913,8 @@
       const storeResults = [];
 
       for (const s of stores) {
-        const sm = apData[s.storeName] || {};
-        const slots = apOrderHours(Array.from({length:24}, (_,h) => h).filter(h => sm[String(h)]));
-        if (!slots.length) continue;
-
-        // 영업 종료 후 1시간 추가 생성: 마지막 매핑 시간대의 무드로 1시간(18곡)을 더 붙인다.
-        // 예) 23:00 마감 → 23시 슬롯(18곡) 추가 → 생성 24:00까지. 재생 종료가 close-30min → close+30min으로 밀림.
-        const lastHour  = slots[slots.length - 1];
-        const extraHour = (lastHour + 1) % 24;
-        const moodOf    = (h) => (h === extraHour ? sm[String(lastHour)] : sm[String(h)]);
-        const genSlots  = slots.includes(extraHour) ? slots : [...slots, extraHour];  // 24시간 매장은 중복 방지
-
-        const schedulePlaylists = [];
-        const skipped = [];
-        for (const h of genSlots) {
-          const mood = moodOf(h);
-          const pool = mdData[mood] || [];
-          if (!pool.length) { skipped.push(`${String(h).padStart(2,'0')}시(${mood})`); continue; }
-
-          // 18곡 랜덤 선택
-          let picked = [...pool].sort(() => Math.random()-0.5).slice(0, 18);
-
-          // 개별 추가 곡 적용 (position 위치에 replace)
-          const extras = (apExtraSongs[s.storeName]?.[h] || [])
-            .slice()
-            .sort((a, b) => a.position - b.position);
-          for (const extra of extras) {
-            const pos = Math.max(0, Math.min(extra.position - 1, picked.length - 1));
-            picked.splice(pos, 1, {
-              title:    extra.song.title,
-              artist:   extra.song.artist,
-              vid:      extra.song.vid || genVid(),
-              playTime: extra.song.playTime,
-            });
-          }
-
-          schedulePlaylists.push({
-            storeName: s.storeName,
-            hour: h,
-            mood,
-            songs: picked.map(t => ({
-              title:    t.title,
-              artist:   t.artist,
-              vid:      t.vid || genVid(),
-              playTime: parsePlayTimeSec(t.playTime),
-            }))
-          });
-        }
+        const { schedulePlaylists, skipped } = apGenerateStoreSlots(s);
+        if (!schedulePlaylists.length && !skipped.length) continue;   // 매핑 없는 매장은 제외
         storeResults.push({ storeName: s.storeName, schedulePlaylists, skipped });
         allPayload.push(...schedulePlaylists);
       }
