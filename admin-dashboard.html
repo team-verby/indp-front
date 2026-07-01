@@ -2486,14 +2486,65 @@
 
       #panel-stores .store-table td:nth-child(7) { margin-top: 8px; }
 
-      /* 구독자·정산 테이블: 컬럼이 많아 카드 변환 대신 가로 스크롤로 원형 유지 */
+      /* 구독자·정산 테이블 → 카드형 (컬럼별 라벨) */
       #panel-subscribers .store-table-wrap,
       #panel-settlements .store-table-wrap {
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
+        background: transparent; border: none; border-radius: 0; overflow: visible;
       }
-      #panel-subscribers .store-table,
-      #panel-settlements .store-table { min-width: 640px; }
+      #subscriber-table thead, #settlement-table thead { display: none; }
+      #subscriber-table, #subscriber-table tbody, #subscriber-table tr, #subscriber-table td,
+      #settlement-table, #settlement-table tbody, #settlement-table tr, #settlement-table td {
+        display: block; width: 100%;
+      }
+      #subscriber-table tbody tr, #settlement-table tbody tr {
+        background: #1a1a1e; border: 1px solid rgba(255,255,255,0.07);
+        border-radius: 14px; margin-bottom: 12px; padding: 14px 16px;
+      }
+      #subscriber-table td, #settlement-table td {
+        padding: 5px 0; border: none; white-space: normal; text-align: left;
+        font-size: 13px; color: rgba(255,255,255,0.85);
+        word-break: break-word; overflow-wrap: anywhere;
+      }
+      #subscriber-table td::before, #settlement-table td::before {
+        display: block; margin-bottom: 2px;
+        color: rgba(255,255,255,0.38); font-weight: 600; font-size: 11px; letter-spacing: 0.03em;
+      }
+      /* 첫 행(아이디·신청번호) 헤더처럼 구분선 */
+      #subscriber-table td:first-child, #settlement-table td:first-child {
+        padding-bottom: 10px; margin-bottom: 4px;
+        border-bottom: 1px solid rgba(255,255,255,0.06);
+      }
+      /* 빈/로딩 행은 라벨 없이 가운데 */
+      #subscriber-table td[colspan]::before, #settlement-table td[colspan]::before { content: none; }
+      #subscriber-table td[colspan], #settlement-table td[colspan] {
+        text-align: center; padding: 24px 0; border-bottom: none;
+      }
+      /* 구독자 컬럼 라벨 */
+      #subscriber-table td:nth-child(1)::before { content: '아이디'; }
+      #subscriber-table td:nth-child(2)::before { content: '성함'; }
+      #subscriber-table td:nth-child(3)::before { content: '이메일'; }
+      #subscriber-table td:nth-child(4)::before { content: '구독 상태'; }
+      #subscriber-table td:nth-child(5)::before { content: '이용 기간'; }
+      #subscriber-table td:nth-child(6)::before { content: '결제 금액'; }
+      #subscriber-table td:nth-child(7)::before { content: '결제 일시'; }
+      #subscriber-table td:nth-child(8)::before { content: '구독 시작일'; }
+      #subscriber-table td:nth-child(9)::before { content: '구독 만료일'; }
+      /* 정산 컬럼 라벨 */
+      #settlement-table td:nth-child(1)::before { content: '신청번호'; }
+      #settlement-table td:nth-child(2)::before { content: 'DJ(채널)명'; }
+      #settlement-table td:nth-child(3)::before { content: '신청 금액'; }
+      #settlement-table td:nth-child(4)::before { content: '세금정보'; }
+      #settlement-table td:nth-child(5)::before { content: '상태'; }
+      #settlement-table td:nth-child(6)::before { content: '신청 일시'; }
+      #settlement-table td:nth-child(7)::before { content: '처리 일시'; }
+      #settlement-table td:nth-child(8)::before { content: '처리'; }
+
+      /* 랜덤 생성 매장 카드: 프론트 적용 시각 버튼이 화면 밖으로 넘치지 않게 줄바꿈 */
+      .pl-store-item-schedule { flex-direction: column; align-items: stretch; gap: 8px; }
+      .pl-schedule-inputs { flex-wrap: wrap; }
+      .pl-schedule-inputs > .pl-bulk-apply-btn { flex: 1 1 100%; }
+      .pl-schedule-input.date-input { flex: 1 1 55%; }
+      .pl-schedule-input.time-input { flex: 1 1 35%; }
 
       /* 계정 목록 테이블: 가로 스크롤 안전장치 */
       #ac-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
