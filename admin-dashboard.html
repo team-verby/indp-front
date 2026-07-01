@@ -2434,17 +2434,20 @@
 
       .panel-title { font-size: 18px; }
 
-      /* 테이블 → 카드형 */
-      .store-table-wrap { background: transparent; border: none; border-radius: 0; }
+      /* 매장 관리 테이블 → 카드형 (매장 패널 전용: 컬럼이 매장 라벨과 1:1 대응) */
+      #panel-stores .store-table-wrap { background: transparent; border: none; border-radius: 0; }
 
-      .store-table thead { display: none; }
+      #panel-stores .store-table thead { display: none; }
 
-      .store-table, .store-table tbody, .store-table tr, .store-table td {
+      #panel-stores .store-table,
+      #panel-stores .store-table tbody,
+      #panel-stores .store-table tr,
+      #panel-stores .store-table td {
         display: block;
         width: 100%;
       }
 
-      .store-table tbody tr {
+      #panel-stores .store-table tbody tr {
         background: #1a1a1e;
         border: 1px solid rgba(255,255,255,0.07);
         border-radius: 14px;
@@ -2452,9 +2455,9 @@
         padding: 16px;
       }
 
-      .store-table tbody tr:hover { background: #1e1e22; }
+      #panel-stores .store-table tbody tr:hover { background: #1e1e22; }
 
-      .store-table td {
+      #panel-stores .store-table td {
         padding: 4px 0;
         white-space: normal;
         color: rgba(255,255,255,0.7);
@@ -2464,24 +2467,36 @@
       }
 
       /* 매장 정보 행은 위에 크게 */
-      .store-table td:first-child {
+      #panel-stores .store-table td:first-child {
         margin-bottom: 10px;
         padding-bottom: 10px;
         border-bottom: 1px solid rgba(255,255,255,0.06);
       }
 
       /* 레이블 prefix */
-      .store-table td:nth-child(2)::before { content: '신청자 · '; color: rgba(255,255,255,0.3); font-size: 12px; }
-      .store-table td:nth-child(3)::before { content: '연락처 · '; color: rgba(255,255,255,0.3); font-size: 12px; }
-      .store-table td:nth-child(4)::before { content: '요금제 · '; color: rgba(255,255,255,0.3); font-size: 12px; }
-      .store-table td:nth-child(5)::before { content: ''; }
-      .store-table td:nth-child(6)::before { content: '신청일 · '; color: rgba(255,255,255,0.3); font-size: 12px; }
+      #panel-stores .store-table td:nth-child(2)::before { content: '신청자 · '; color: rgba(255,255,255,0.3); font-size: 12px; }
+      #panel-stores .store-table td:nth-child(3)::before { content: '연락처 · '; color: rgba(255,255,255,0.3); font-size: 12px; }
+      #panel-stores .store-table td:nth-child(4)::before { content: '요금제 · '; color: rgba(255,255,255,0.3); font-size: 12px; }
+      #panel-stores .store-table td:nth-child(5)::before { content: ''; }
+      #panel-stores .store-table td:nth-child(6)::before { content: '신청일 · '; color: rgba(255,255,255,0.3); font-size: 12px; }
 
       /* 상태 + 버튼 행 */
-      .store-table td:nth-child(7),
-      .store-table td:nth-child(8) { display: inline-flex; }
+      #panel-stores .store-table td:nth-child(7),
+      #panel-stores .store-table td:nth-child(8) { display: inline-flex; }
 
-      .store-table td:nth-child(7) { margin-top: 8px; }
+      #panel-stores .store-table td:nth-child(7) { margin-top: 8px; }
+
+      /* 구독자·정산 테이블: 컬럼이 많아 카드 변환 대신 가로 스크롤로 원형 유지 */
+      #panel-subscribers .store-table-wrap,
+      #panel-settlements .store-table-wrap {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+      #panel-subscribers .store-table,
+      #panel-settlements .store-table { min-width: 640px; }
+
+      /* 계정 목록 테이블: 가로 스크롤 안전장치 */
+      #ac-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 
       /* 드로어 풀스크린 */
       .drawer { width: 100%; }
