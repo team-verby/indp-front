@@ -6821,10 +6821,17 @@
         const slots = apOrderHours(Array.from({length:24}, (_,h) => h).filter(h => sm[String(h)]));
         if (!slots.length) continue;
 
+        // 영업 종료 후 1시간 추가 생성: 마지막 매핑 시간대의 무드로 1시간(18곡)을 더 붙인다.
+        // 예) 23:00 마감 → 23시 슬롯(18곡) 추가 → 생성 24:00까지. 재생 종료가 close-30min → close+30min으로 밀림.
+        const lastHour  = slots[slots.length - 1];
+        const extraHour = (lastHour + 1) % 24;
+        const moodOf    = (h) => (h === extraHour ? sm[String(lastHour)] : sm[String(h)]);
+        const genSlots  = slots.includes(extraHour) ? slots : [...slots, extraHour];  // 24시간 매장은 중복 방지
+
         const schedulePlaylists = [];
         const skipped = [];
-        for (const h of slots) {
-          const mood = sm[String(h)];
+        for (const h of genSlots) {
+          const mood = moodOf(h);
           const pool = mdData[mood] || [];
           if (!pool.length) { skipped.push(`${String(h).padStart(2,'0')}시(${mood})`); continue; }
 
